@@ -1,0 +1,3 @@
+-- (Folded into 03_assets_table_and_view.sql above in this repo export.)
+-- Original purpose: guard against negative accumulated depreciation when
+-- acquisition_date is in the future relative to current_date.

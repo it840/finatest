@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { background-color: #F6F4EE; color: #142B27; }
+
+::selection { background: #B8902E; color: #fff; }
+
+table { border-collapse: collapse; }
+
+.scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #E1DDCF; border-radius: 4px; }
+
+@layer components {
+  .input {
+    @apply w-full border border-hairline rounded px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-gold;
+  }
+}
+
+@keyframes loading-sweep {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(60%); }
+  100% { transform: translateX(160%); }
+}
+.loading-bar-track {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  background: #E1DDCF;
+  overflow: hidden;
+}
+.loading-bar-sweep {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: 999px;
+  background: #B8902E;
+  animation: loading-sweep 1s ease-in-out infinite;
+}
+
+.top-loading-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 100;
+  overflow: hidden;
+  background: transparent;
+}
+.top-loading-bar-sweep {
+  position: absolute;
+  inset: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, #B8902E 40%, #B8902E 60%, transparent);
+  animation: loading-sweep 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

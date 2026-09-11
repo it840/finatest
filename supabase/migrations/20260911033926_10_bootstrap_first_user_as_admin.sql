@@ -1,0 +1,2 @@
+-- (Folded into 01_profiles_and_roles.sql above: handle_new_user() makes the
+-- first-ever signup an admin automatically, everyone after starts as staff.)
