@@ -33,8 +33,8 @@ export default function PropertySwitcher() {
         {currentProperty?.logo_url ? (
           <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
         ) : (
-          <span className="h-5 w-5 rounded-full bg-gold/80 flex items-center justify-center text-[10px] font-medium flex-shrink-0">
-            {currentPropertyId === 'all' ? '∀' : '?'}
+          <span className="h-5 w-5 rounded-full bg-gold/80 flex items-center justify-center text-[9px] font-semibold text-ink flex-shrink-0">
+            {currentPropertyId === 'all' ? 'All' : '—'}
           </span>
         )}
         <span className="text-sm truncate flex-1">{label}</span>
