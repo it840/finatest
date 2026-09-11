@@ -17,8 +17,8 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
       <aside className="w-60 shrink-0 bg-ink text-paper flex flex-col">
         <div className="px-5 py-6 border-b border-white/10">
           <div className="flex items-center gap-3 mb-2">
-            <img src="/virgin-logo.png" alt="Virgin Beach Resort" className="h-9 w-9 rounded-full bg-white object-contain p-1" />
-            <img src="/zhostel-logo.png" alt="Z Hostel" className="h-9 w-9 rounded-full object-contain" />
+            <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-9 w-9 rounded-full bg-white object-contain p-1" />
+            <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-9 w-9 rounded-full object-contain" />
           </div>
           <div className="font-display text-xl leading-tight">Asset Registry<br/>System</div>
         </div>

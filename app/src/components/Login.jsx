@@ -48,8 +48,8 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <img src="/virgin-logo.png" alt="Virgin Beach Resort" className="h-16 w-16 rounded-full bg-surface object-contain p-1.5 border border-hairline" />
-            <img src="/zhostel-logo.png" alt="Z Hostel" className="h-16 w-16 rounded-full object-contain" />
+            <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-16 w-16 rounded-full bg-surface object-contain p-1.5 border border-hairline" />
+            <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-16 w-16 rounded-full object-contain" />
           </div>
           <div className="font-display text-2xl text-ink">Asset Registry System</div>
           <div className="text-sm text-muted mt-1">Sign in to manage property assets</div>
