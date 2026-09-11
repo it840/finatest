@@ -105,7 +105,7 @@ export default function Dashboard() {
     const k = r.department || 'Unassigned'
     if (!deptMap[k]) deptMap[k] = { count: 0, value: 0 }
     deptMap[k].count += 1
-    deptMap[k].value += Number(r.current_asset_value || 0)
+    deptMap[k].value += Number(r.remaining_amount || 0)
   })
 
   // Upcoming maintenance (next 30 days, including overdue), soonest first
@@ -254,7 +254,7 @@ export default function Dashboard() {
                 <tr className="text-left text-xs text-muted border-b border-hairline">
                   <th className="py-2 font-medium">Department</th>
                   <th className="py-2 font-medium">Assets</th>
-                  <th className="py-2 font-medium">Current Value</th>
+                  <th className="py-2 font-medium">Remaining Amount</th>
                 </tr>
               </thead>
               <tbody>
