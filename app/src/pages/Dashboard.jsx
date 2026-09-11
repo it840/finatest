@@ -64,11 +64,12 @@ export default function Dashboard() {
   const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
   const today = todayISO()
 
+  const disposedCount = scoped.filter(r => Number(r.disposal_qty) > 0).length
+
   const totalPurchase = scoped.reduce((s, r) => s + Number(r.registered_amount || 0), 0)
   const totalDisposed = scoped.reduce((s, r) => s + Number(r.disposal_amount || 0), 0)
   const totalRemaining = scoped.reduce((s, r) => s + Number(r.remaining_amount || 0), 0)
   const totalCurrentValue = scoped.reduce((s, r) => s + Number(r.current_asset_value || 0), 0)
-  const totalDepreciation = scoped.reduce((s, r) => s + Number(r.accumulated_depreciation || 0), 0)
 
   const totalAssets = scoped.length
   const operational = scoped.filter(r => r.status === 'Active').length
@@ -132,8 +133,8 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Total Purchase Value" value={peso(totalPurchase)} sub={`${totalAssets} asset records`} />
-        <Stat label="Current Book Value" value={peso(totalCurrentValue)} sub={`${peso(totalDepreciation)} depreciated to date`} />
-        <Stat label="Total Remaining Value" value={peso(totalRemaining)} sub={`${peso(totalDisposed)} disposed`} />
+        <Stat label="Total Disposed" value={disposedCount} sub={peso(totalDisposed)} tone="text-danger" />
+        <Stat label="Total Remaining Value" value={peso(totalRemaining)} sub={`${peso(totalCurrentValue)} current book value`} />
       </div>
 
       <div className="grid grid-cols-4 gap-4">
