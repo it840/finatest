@@ -134,7 +134,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Total Purchase Value" value={peso(totalPurchase)} sub={`${totalAssets} asset records`} />
         <Stat label="Total Disposed" value={peso(totalDisposed)} sub={`${disposedCount} asset${disposedCount === 1 ? '' : 's'}`} tone="text-danger" />
-        <Stat label="Total Qty Ending" value={totalRemainingQty} sub={`${peso(totalRemaining)} total value`} />
+        <Stat label="Total Qty Ending" value={peso(totalRemaining)} sub={`${totalRemainingQty} Qty Ending`} />
       </div>
 
       <div className="grid grid-cols-4 gap-4">
