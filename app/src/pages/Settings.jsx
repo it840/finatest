@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import AccountPanel from './AccountPanel'
 import ImportExportPanel from './ImportExportPanel'
+import { useProperty } from '../lib/PropertyContext'
 
 const LOOKUP_TABLES = [
   { key: 'categories', label: 'Categories' },
@@ -253,12 +254,72 @@ function LookupPanel({ table, label }) {
   )
 }
 
+function PropertiesPanel() {
+  const { properties, reload } = useProperty()
+  const [name, setName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const add = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!name.trim()) return
+    setSaving(true)
+    const { error } = await supabase.from('properties').insert({ name: name.trim(), logo_url: logoUrl.trim() || null })
+    setSaving(false)
+    if (error) { setError(error.message); return }
+    setName(''); setLogoUrl('')
+    reload()
+  }
+
+  const remove = async (p) => {
+    if (!confirm(`Delete "${p.name}"? Assets assigned to it will become unassigned, not deleted.`)) return
+    await supabase.from('properties').delete().eq('id', p.id)
+    reload()
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <div className="border border-hairline bg-surface rounded p-4 mb-6">
+        <h3 className="font-medium text-sm mb-3">Add Property</h3>
+        <form onSubmit={add} className="flex gap-2">
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Property name" className="input" />
+          <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="Logo URL (optional)" className="input" />
+          <button disabled={saving} className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap disabled:opacity-50">
+            Add
+          </button>
+        </form>
+        {error && <div className="text-sm text-danger mt-2">{error}</div>}
+      </div>
+
+      <ul className="space-y-2">
+        {properties.map(p => (
+          <li key={p.id} className="flex items-center justify-between border border-hairline bg-surface rounded px-4 py-2.5">
+            <div className="flex items-center gap-3">
+              {p.logo_url ? (
+                <img src={p.logo_url} alt="" className="h-8 w-8 rounded-full object-contain bg-white border border-hairline" />
+              ) : (
+                <span className="h-8 w-8 rounded-full bg-hairline" />
+              )}
+              <span className="text-sm">{p.name}</span>
+            </div>
+            <button onClick={() => remove(p)} className="text-xs text-danger underline">Delete</button>
+          </li>
+        ))}
+        {properties.length === 0 && <li className="text-sm text-muted text-center py-6">No properties yet.</li>}
+      </ul>
+    </div>
+  )
+}
+
 export default function Settings({ profile, onProfileChange }) {
   const isAdmin = profile?.role === 'admin'
   const canImportExport = profile?.role === 'admin' || profile?.role === 'manager'
   const TABS = [
     { key: 'account', label: 'My Account' },
     { key: 'users', label: 'Users', show: isAdmin },
+    { key: 'properties', label: 'Properties', show: isAdmin },
     { key: 'lookups', label: 'Lookups', show: isAdmin },
     { key: 'data', label: 'Import / Export', show: canImportExport },
   ].filter(t => t.show === undefined || t.show)
@@ -267,7 +328,7 @@ export default function Settings({ profile, onProfileChange }) {
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Settings</h1>
-      <p className="text-sm text-muted mb-6">Manage your account, user roles, dropdown lists, and data import/export.</p>
+      <p className="text-sm text-muted mb-6">Manage your account, user roles, properties, dropdown lists, and data import/export.</p>
 
       <div className="flex gap-2 mb-6 border-b border-hairline">
         {TABS.map(t => (
@@ -280,6 +341,7 @@ export default function Settings({ profile, onProfileChange }) {
 
       {tab === 'account' && <AccountPanel profile={profile} onProfileChange={onProfileChange} />}
       {tab === 'users' && isAdmin && <UsersPanel currentUserId={profile?.id} />}
+      {tab === 'properties' && isAdmin && <PropertiesPanel />}
       {tab === 'lookups' && isAdmin && (
         <div className="grid grid-cols-2 gap-4">
           {LOOKUP_TABLES.map(t => <LookupPanel key={t.key} table={t.key} label={t.label} />)}

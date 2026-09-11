@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useProperty } from '../lib/PropertyContext'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
@@ -63,10 +64,11 @@ function ReportTable({ rows, empty }) {
 }
 
 export default function Reports() {
+  const { currentPropertyId, currentProperty } = useProperty()
   const [tab, setTab] = useState('daily')
-  const [rows, setRows] = useState([])
-  const [movements, setMovements] = useState([])
-  const [counts, setCounts] = useState([])
+  const [rowsRaw, setRows] = useState([])
+  const [movementsRaw, setMovements] = useState([])
+  const [countsRaw, setCounts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -84,6 +86,11 @@ export default function Reports() {
   }, [])
 
   if (loading) return <div className="text-muted text-sm">Loading reports…</div>
+
+  const inScope = (r) => currentPropertyId === 'all' || r.property_id === currentPropertyId
+  const rows = rowsRaw.filter(inScope)
+  const movements = movementsRaw.filter(inScope)
+  const counts = countsRaw.filter(inScope)
 
   const today = todayISO()
   const weekStart = iso(startOfWeek(new Date()))
@@ -126,7 +133,9 @@ export default function Reports() {
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Reports</h1>
-      <p className="text-sm text-muted mb-6">Report date: {today}</p>
+      <p className="text-sm text-muted mb-6">
+        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Report date: {today}
+      </p>
 
       <div className="flex gap-2 mb-6 border-b border-hairline">
         {['daily', 'weekly', 'monthly'].map(t => (

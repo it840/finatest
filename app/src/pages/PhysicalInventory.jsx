@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useProperty } from '../lib/PropertyContext'
 
 const EMPTY = { asset_id: '', actual_qty: '', actual_location: '', inventory_status: '', condition: '', remarks: '' }
 
 export default function PhysicalInventory({ profile }) {
+  const { currentPropertyId, currentProperty } = useProperty()
   const [rows, setRows] = useState([])
   const [assets, setAssets] = useState([])
   const [statuses, setStatuses] = useState([])
@@ -18,7 +20,7 @@ export default function PhysicalInventory({ profile }) {
     setLoading(true)
     const [pi, a, s, c, l] = await Promise.all([
       supabase.from('physical_inventory_computed').select('*').order('inventory_date', { ascending: false }),
-      supabase.from('assets').select('id, asset_code, asset_name, location, department, assigned_to, registered_qty'),
+      supabase.from('assets').select('id, asset_code, asset_name, location, department, assigned_to, registered_qty, property_id'),
       supabase.from('statuses').select('*').order('name'),
       supabase.from('conditions').select('*').order('name'),
       supabase.from('locations').select('*').order('name'),
@@ -34,6 +36,9 @@ export default function PhysicalInventory({ profile }) {
   useEffect(() => { load() }, [])
 
   const selectedAsset = assets.find(a => String(a.id) === String(form.asset_id))
+
+  const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
+  const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -59,14 +64,16 @@ export default function PhysicalInventory({ profile }) {
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Physical Inventory</h1>
-      <p className="text-sm text-muted mb-6">Record a physical count and compare it against what's registered.</p>
+      <p className="text-sm text-muted mb-6">
+        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Record a physical count and compare it against what's registered.
+      </p>
 
       <form onSubmit={submit} className="border border-hairline bg-surface rounded p-5 mb-8 grid grid-cols-3 gap-4 items-end">
         <label className="block col-span-1">
           <span className="block text-xs text-muted mb-1">Asset</span>
           <select required value={form.asset_id} onChange={e => setForm(f => ({ ...f, asset_id: e.target.value }))} className="input">
             <option value="">Select asset…</option>
-            {assets.map(a => <option key={a.id} value={a.id}>{a.asset_code} — {a.asset_name}</option>)}
+            {scopedAssets.map(a => <option key={a.id} value={a.id}>{a.asset_code} — {a.asset_name}</option>)}
           </select>
         </label>
         <label className="block">
@@ -120,7 +127,7 @@ export default function PhysicalInventory({ profile }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => (
+            {scopedRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.inventory_date}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
@@ -132,7 +139,7 @@ export default function PhysicalInventory({ profile }) {
                 <td className={`px-3 py-2 whitespace-nowrap ${r.discrepancy !== 'No Discrepancy' ? 'text-danger' : 'text-success'}`}>{r.discrepancy}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts logged yet.</td></tr>}
+            {scopedRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts logged yet.</td></tr>}
           </tbody>
         </table>
       </div>

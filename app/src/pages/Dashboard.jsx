@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useProperty } from '../lib/PropertyContext'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell,
@@ -41,6 +42,7 @@ function EmptyRow({ children }) {
 }
 
 export default function Dashboard() {
+  const { currentPropertyId, currentProperty } = useProperty()
   const [rows, setRows] = useState([])
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,26 +61,27 @@ export default function Dashboard() {
 
   if (loading) return <div className="text-muted text-sm">Loading dashboard…</div>
 
+  const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
   const today = todayISO()
 
-  const totalPurchase = rows.reduce((s, r) => s + Number(r.registered_amount || 0), 0)
-  const totalDisposed = rows.reduce((s, r) => s + Number(r.disposal_amount || 0), 0)
-  const totalRemaining = rows.reduce((s, r) => s + Number(r.remaining_amount || 0), 0)
-  const totalCurrentValue = rows.reduce((s, r) => s + Number(r.current_asset_value || 0), 0)
-  const totalDepreciation = rows.reduce((s, r) => s + Number(r.accumulated_depreciation || 0), 0)
+  const totalPurchase = scoped.reduce((s, r) => s + Number(r.registered_amount || 0), 0)
+  const totalDisposed = scoped.reduce((s, r) => s + Number(r.disposal_amount || 0), 0)
+  const totalRemaining = scoped.reduce((s, r) => s + Number(r.remaining_amount || 0), 0)
+  const totalCurrentValue = scoped.reduce((s, r) => s + Number(r.current_asset_value || 0), 0)
+  const totalDepreciation = scoped.reduce((s, r) => s + Number(r.accumulated_depreciation || 0), 0)
 
-  const totalAssets = rows.length
-  const operational = rows.filter(r => r.status === 'Active').length
-  const underMaintenance = rows.filter(r => r.status === 'Under Maintenance').length
-  const damaged = rows.filter(r => r.condition === 'Damaged').length
-  const deployed = rows.filter(r => r.status === 'In Use').length
-  const standby = rows.filter(r => r.status === 'Available').length
-  const warrantyOverdue = rows.filter(r => r.warranty_expiry && r.warranty_expiry < today)
-  const maintenanceDueToday = rows.filter(r => r.maintenance_due === today)
+  const totalAssets = scoped.length
+  const operational = scoped.filter(r => r.status === 'Active').length
+  const underMaintenance = scoped.filter(r => r.status === 'Under Maintenance').length
+  const damaged = scoped.filter(r => r.condition === 'Damaged').length
+  const deployed = scoped.filter(r => r.status === 'In Use').length
+  const standby = scoped.filter(r => r.status === 'Available').length
+  const warrantyOverdue = scoped.filter(r => r.warranty_expiry && r.warranty_expiry < today)
+  const maintenanceDueToday = scoped.filter(r => r.maintenance_due === today)
 
   // Category breakdown
   const catMap = {}
-  rows.forEach(r => {
+  scoped.forEach(r => {
     const k = r.category || 'Uncategorized'
     if (!catMap[k]) catMap[k] = { name: k.replace(/^\W+\s*/, ''), count: 0, value: 0 }
     catMap[k].count += 1
@@ -88,16 +91,16 @@ export default function Dashboard() {
 
   // Status breakdown for pie
   const statusMap = {}
-  rows.forEach(r => { statusMap[r.status] = (statusMap[r.status] || 0) + 1 })
+  scoped.forEach(r => { statusMap[r.status] = (statusMap[r.status] || 0) + 1 })
   const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }))
 
   // Condition breakdown
   const conditionMap = {}
-  rows.forEach(r => { const k = r.condition || 'Unspecified'; conditionMap[k] = (conditionMap[k] || 0) + 1 })
+  scoped.forEach(r => { const k = r.condition || 'Unspecified'; conditionMap[k] = (conditionMap[k] || 0) + 1 })
 
   // Department value table
   const deptMap = {}
-  rows.forEach(r => {
+  scoped.forEach(r => {
     const k = r.department || 'Unassigned'
     if (!deptMap[k]) deptMap[k] = { count: 0, value: 0 }
     deptMap[k].count += 1
@@ -122,7 +125,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl mb-1">Asset Dashboard</h1>
-        <p className="text-sm text-muted">Live totals across every registered asset, as of {today}.</p>
+        <p className="text-sm text-muted">
+          {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Live totals as of {today}.
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">

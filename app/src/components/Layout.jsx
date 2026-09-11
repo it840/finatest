@@ -1,4 +1,5 @@
 import React from 'react'
+import PropertySwitcher from './PropertySwitcher'
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -21,6 +22,9 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
             <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-9 w-9 rounded-full object-contain" />
           </div>
           <div className="font-display text-xl leading-tight">Asset Registry<br/>System</div>
+        </div>
+        <div className="px-5 py-3 border-b border-white/10">
+          <PropertySwitcher />
         </div>
         <nav className="flex-1 py-4">
           {NAV.filter(n => !n.managerUp || canSeeLog).map(n => (

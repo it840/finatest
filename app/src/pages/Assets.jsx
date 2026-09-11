@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useLookups } from '../lib/useLookups'
+import { useProperty } from '../lib/PropertyContext'
 
 const EMPTY = {
   asset_name: '', category: '', sub_category: '', brand: '', model: '', serial_number: '',
@@ -22,8 +23,8 @@ function Field({ label, children }) {
   )
 }
 
-function AssetForm({ initial, lookups, onSave, onCancel }) {
-  const [form, setForm] = useState(initial || EMPTY)
+function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, onCancel }) {
+  const [form, setForm] = useState(initial || { ...EMPTY, property_id: defaultPropertyId !== 'all' ? defaultPropertyId : '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const subOptions = useMemo(
@@ -61,6 +62,12 @@ function AssetForm({ initial, lookups, onSave, onCancel }) {
 
         <div className="grid grid-cols-3 gap-4">
           <Field label="Asset Name"><input required value={form.asset_name} onChange={set('asset_name')} className="input" /></Field>
+          <Field label="Property">
+            <select required value={form.property_id ?? ''} onChange={e => setForm(f => ({ ...f, property_id: e.target.value ? Number(e.target.value) : null }))} className="input">
+              <option value="">—</option>
+              {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </Field>
           <Field label="Category">
             <select value={form.category} onChange={set('category')} className="input">
               <option value="">—</option>
@@ -155,6 +162,7 @@ function AssetForm({ initial, lookups, onSave, onCancel }) {
 
 export default function Assets({ profile }) {
   const { lookups, loading: lookupsLoading } = useLookups()
+  const { properties, currentPropertyId } = useProperty()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -173,7 +181,9 @@ export default function Assets({ profile }) {
 
   useEffect(() => { load() }, [])
 
-  const filtered = rows.filter(r =>
+  const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
+
+  const filtered = scoped.filter(r =>
     !query ||
     [r.asset_code, r.asset_name, r.category, r.location, r.department, r.assigned_to, r.serial_number]
       .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
@@ -192,7 +202,7 @@ export default function Assets({ profile }) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-display text-2xl">Asset Database</h1>
-          <p className="text-sm text-muted">{rows.length} assets registered</p>
+          <p className="text-sm text-muted">{filtered.length} of {rows.length} assets shown</p>
         </div>
         {canWrite && (
           <button onClick={() => { setEditing(null); setShowForm(true) }}
@@ -209,7 +219,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Name', 'Category', 'Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Property', 'Name', 'Category', 'Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -218,6 +228,7 @@ export default function Assets({ profile }) {
             {filtered.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap font-medium">{r.asset_code}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.location}</td>
@@ -235,7 +246,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={11} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
         </table>
@@ -245,6 +256,8 @@ export default function Assets({ profile }) {
         <AssetForm
           initial={editing}
           lookups={lookups}
+          properties={properties}
+          defaultPropertyId={currentPropertyId}
           onCancel={() => setShowForm(false)}
           onSave={() => { setShowForm(false); load() }}
         />
