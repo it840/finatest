@@ -69,7 +69,7 @@ export default function Dashboard() {
   const totalPurchase = scoped.reduce((s, r) => s + Number(r.registered_amount || 0), 0)
   const totalDisposed = scoped.reduce((s, r) => s + Number(r.disposal_amount || 0), 0)
   const totalRemaining = scoped.reduce((s, r) => s + Number(r.remaining_amount || 0), 0)
-  const totalCurrentValue = scoped.reduce((s, r) => s + Number(r.current_asset_value || 0), 0)
+  const totalRemainingQty = scoped.reduce((s, r) => s + Number(r.remaining_qty || 0), 0)
 
   const totalAssets = scoped.length
   const operational = scoped.filter(r => r.status === 'Active').length
@@ -134,7 +134,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-3 gap-4">
         <Stat label="Total Purchase Value" value={peso(totalPurchase)} sub={`${totalAssets} asset records`} />
         <Stat label="Total Disposed" value={peso(totalDisposed)} sub={`${disposedCount} asset${disposedCount === 1 ? '' : 's'}`} tone="text-danger" />
-        <Stat label="Total Remaining Value" value={peso(totalRemaining)} sub={`${peso(totalCurrentValue)} current book value`} />
+        <Stat label="Total Qty Ending" value={totalRemainingQty} sub={`${peso(totalRemaining)} total value`} />
       </div>
 
       <div className="grid grid-cols-4 gap-4">
