@@ -8,11 +8,21 @@ counts, movement/transfer log, reporting, and role-based access (admin / manager
 - **Backend:** Supabase (Postgres + Auth + Row Level Security + Edge Functions)
 
 ## Project layout
-- `src/` — the React app
+- **Repo root** — the built, static site (what GitHub Pages actually serves at `https://it840.github.io/finatest/`). Don't hand-edit these files — they're generated.
+- `app/` — the actual React source code (edit here, then rebuild)
 - `supabase/migrations/` — full database schema, in order (run these against a fresh Supabase project)
 - `supabase/functions/` — two Edge Functions used for privileged admin actions:
   - `admin-create-user` — lets an admin create a new login from within the app (needs the service role key, so it can't be done from the browser directly)
   - `admin-delete-user` — lets an admin delete a user account, with safeguards (can't delete yourself, can't delete the last remaining admin)
+
+## Rebuilding after a code change
+```
+cd app
+npm install
+npx vite build --base=/finatest/ --outDir ../dist-ghpages
+```
+Then copy the contents of `dist-ghpages/` over the repo root files and commit.
+(The main deployment target is actually Netlify, which builds from `app/` with the default `/` base — GitHub Pages is a secondary mirror.)
 
 ## Setting up a new Supabase project
 1. Create a Supabase project.
