@@ -77,17 +77,31 @@ function AddUserForm({ onCancel, onCreated }) {
 function EditUserForm({ user, onCancel, onSaved }) {
   const [fullName, setFullName] = useState(user.full_name || '')
   const [department, setDepartment] = useState(user.department || '')
+  const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const submit = async (e) => {
     e.preventDefault()
-    setSaving(true); setError('')
+    setError('')
+    if (newPassword && newPassword.length < 6) { setError('New password must be at least 6 characters.'); return }
+    setSaving(true)
+
     const { error } = await supabase.from('profiles')
       .update({ full_name: fullName, department })
       .eq('id', user.id)
-    setSaving(false)
-    if (error) { setError(error.message); return }
+    if (error) { setSaving(false); setError(error.message); return }
+
+    if (newPassword) {
+      const { data, error: pwError } = await supabase.functions.invoke('admin-reset-password', {
+        body: { id: user.id, password: newPassword },
+      })
+      setSaving(false)
+      if (pwError) { setError(pwError.message || 'Failed to update password.'); return }
+      if (data?.error) { setError(data.error); return }
+    } else {
+      setSaving(false)
+    }
     onSaved()
   }
 
@@ -102,6 +116,10 @@ function EditUserForm({ user, onCancel, onSaved }) {
         <label className="block">
           <span className="block text-xs text-muted mb-1">Department</span>
           <input value={department} onChange={e => setDepartment(e.target.value)} className="input" />
+        </label>
+        <label className="block border-t border-hairline pt-4">
+          <span className="block text-xs text-muted mb-1">New password</span>
+          <input type="text" minLength={6} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="input" placeholder="Leave blank to keep current password" />
         </label>
         {error && <div className="text-sm text-danger">{error}</div>}
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
