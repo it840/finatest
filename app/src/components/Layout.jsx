@@ -1,14 +1,15 @@
 import React from 'react'
 import PropertySwitcher from './PropertySwitcher'
+import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon } from './NavIcons'
 
 const NAV = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'assets', label: 'Asset Database' },
-  { key: 'physical', label: 'Physical Inventory' },
-  { key: 'movement', label: 'Movement Log' },
-  { key: 'reports', label: 'Reports' },
-  { key: 'log', label: 'Log History', managerUp: true },
-  { key: 'settings', label: 'Settings' },
+  { key: 'dashboard', label: 'Dashboard', Icon: DashboardIcon },
+  { key: 'assets', label: 'Asset Database', Icon: AssetsIcon },
+  { key: 'physical', label: 'Physical Inventory', Icon: PhysicalIcon },
+  { key: 'movement', label: 'Movement Log', Icon: MovementIcon },
+  { key: 'reports', label: 'Reports', Icon: ReportsIcon },
+  { key: 'log', label: 'Log History', Icon: LogHistoryIcon, managerUp: true },
+  { key: 'settings', label: 'Settings', Icon: SettingsIcon },
 ]
 
 export default function Layout({ page, setPage, profile, onSignOut, children }) {
@@ -31,13 +32,14 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
             <button
               key={n.key}
               onClick={() => setPage(n.key)}
-              className={`w-full text-left px-5 py-2.5 text-sm transition-colors border-l-2 ${
+              className={`w-full flex items-center gap-3 text-left px-5 py-2.5 text-sm transition-colors border-l-2 ${
                 page === n.key
                   ? 'border-gold bg-white/5 text-white'
                   : 'border-transparent text-paper/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              {n.label}
+              <n.Icon />
+              <span>{n.label}</span>
             </button>
           ))}
         </nav>
