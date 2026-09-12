@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
+import Pagination from '../components/Pagination'
 
 const EMPTY = { asset_id: '', movement_type: '', to_location: '', reason: '', remarks: '' }
 
@@ -15,6 +16,8 @@ export default function MovementLog({ profile }) {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(30)
 
   const load = async () => {
     setLoading(true)
@@ -39,6 +42,10 @@ export default function MovementLog({ profile }) {
 
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
+
+  useEffect(() => { setPage(0) }, [currentPropertyId])
+
+  const pageRows = scopedRows.slice(page * pageSize, page * pageSize + pageSize)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -122,7 +129,7 @@ export default function MovementLog({ profile }) {
             </tr>
           </thead>
           <tbody>
-            {scopedRows.map(r => (
+            {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.movement_date}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
@@ -133,10 +140,12 @@ export default function MovementLog({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.remarks}</td>
               </tr>
             ))}
-            {scopedRows.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">No movements logged yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">No movements logged yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={scopedRows.length} />
     </div>
   )
 }

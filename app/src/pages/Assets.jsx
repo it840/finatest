@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useLookups } from '../lib/useLookups'
 import { useProperty } from '../lib/PropertyContext'
+import Pagination from '../components/Pagination'
 
 const WRITABLE_FIELDS = [
   'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
@@ -181,6 +182,8 @@ export default function Assets({ profile }) {
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(30)
 
   const canWrite = profile?.role === 'admin' || profile?.role === 'manager'
   const canDelete = profile?.role === 'admin'
@@ -201,6 +204,10 @@ export default function Assets({ profile }) {
     [r.asset_code, r.asset_name, r.category, r.location, r.department, r.assigned_to, r.serial_number]
       .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
   )
+
+  useEffect(() => { setPage(0) }, [query, currentPropertyId])
+
+  const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
 
   const remove = async (row) => {
     if (!confirm(`Delete ${row.asset_code} — ${row.asset_name}? This cannot be undone.`)) return
@@ -238,7 +245,7 @@ export default function Assets({ profile }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(r => (
+            {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap font-medium">{r.asset_code}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
@@ -258,12 +265,14 @@ export default function Assets({ profile }) {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pageRows.length === 0 && (
               <tr><td colSpan={11} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={filtered.length} />
 
       {showForm && (
         <AssetForm
