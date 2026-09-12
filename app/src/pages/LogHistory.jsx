@@ -12,7 +12,7 @@ const ACTION_LABELS = { insert: 'Created', update: 'Updated', delete: 'Deleted' 
 const ACTION_COLOR = { insert: 'text-success', update: 'text-gold', delete: 'text-danger' }
 
 const DIFF_IGNORE = new Set(['updated_at', 'created_at'])
-const PAGE_SIZE = 100
+const PAGE_SIZE_OPTIONS = [30, 40, 50, 100]
 
 function subjectFor(row, assetMap) {
   const d = row.new_data || row.old_data || {}
@@ -50,6 +50,7 @@ export default function LogHistory() {
   const [loading, setLoading] = useState(true)
   const [tableFilter, setTableFilter] = useState('all')
   const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(30)
   const [totalCount, setTotalCount] = useState(0)
 
   // load the asset id -> code map once
@@ -61,8 +62,8 @@ export default function LogHistory() {
     })
   }, [])
 
-  // reset to page 0 whenever the filter changes
-  useEffect(() => { setPage(0) }, [tableFilter])
+  // reset to page 0 whenever the filter or page size changes
+  useEffect(() => { setPage(0) }, [tableFilter, pageSize])
 
   useEffect(() => {
     (async () => {
@@ -71,7 +72,7 @@ export default function LogHistory() {
         .from('activity_log_computed')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
+        .range(page * pageSize, page * pageSize + pageSize - 1)
 
       if (tableFilter !== 'all') query = query.eq('table_name', tableFilter)
 
@@ -80,11 +81,11 @@ export default function LogHistory() {
       setTotalCount(count || 0)
       setLoading(false)
     })()
-  }, [tableFilter, page])
+  }, [tableFilter, page, pageSize])
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const rangeStart = totalCount === 0 ? 0 : page * PAGE_SIZE + 1
-  const rangeEnd = Math.min(totalCount, page * PAGE_SIZE + PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const rangeStart = totalCount === 0 ? 0 : page * pageSize + 1
+  const rangeEnd = Math.min(totalCount, page * pageSize + pageSize)
 
   return (
     <div>
@@ -138,9 +139,19 @@ export default function LogHistory() {
 
           {totalCount > 0 && (
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-hairline text-sm">
-              <span className="text-muted">
-                Showing {rangeStart}–{rangeEnd} of {totalCount}
-              </span>
+              <div className="flex items-center gap-3 text-muted">
+                <span>Showing {rangeStart}–{rangeEnd} of {totalCount}</span>
+                <label className="flex items-center gap-1.5">
+                  <span>Per page</span>
+                  <select
+                    value={pageSize}
+                    onChange={e => setPageSize(Number(e.target.value))}
+                    className="border border-hairline rounded px-2 py-1 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-gold"
+                  >
+                    {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </label>
+              </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setPage(p => Math.max(0, p - 1))}
