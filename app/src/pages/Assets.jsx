@@ -3,6 +3,15 @@ import { supabase } from '../lib/supabase'
 import { useLookups } from '../lib/useLookups'
 import { useProperty } from '../lib/PropertyContext'
 
+const WRITABLE_FIELDS = [
+  'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
+  'location', 'department', 'assigned_to', 'status', 'condition',
+  'acquisition_date', 'acquisition_type', 'purchase_cost', 'supplier',
+  'warranty_start', 'warranty_expiry', 'last_maintenance', 'maintenance_frequency_days',
+  'useful_life_years', 'disposal_date', 'disposal_reason', 'remarks',
+  'registered_qty', 'disposal_qty', 'property_id',
+]
+
 const EMPTY = {
   asset_name: '', category: '', sub_category: '', brand: '', model: '', serial_number: '',
   location: '', department: '', assigned_to: '', status: 'Active', condition: '',
@@ -40,7 +49,11 @@ function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, on
   const submit = async (e) => {
     e.preventDefault()
     setSaving(true); setError('')
-    const payload = { ...form }
+    // only send actual writable columns — `form` may carry extra computed
+    // fields (accumulated_depreciation, qr_url, property_name, etc.) when
+    // editing, since it was seeded from the assets_computed view
+    const payload = {}
+    WRITABLE_FIELDS.forEach(k => { payload[k] = form[k] })
     ;['purchase_cost', 'maintenance_frequency_days', 'useful_life_years', 'registered_qty', 'disposal_qty']
       .forEach(k => { payload[k] = payload[k] === '' ? null : Number(payload[k]) })
     ;['acquisition_date', 'warranty_start', 'warranty_expiry', 'last_maintenance', 'disposal_date']
