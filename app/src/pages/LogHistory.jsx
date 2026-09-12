@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const TABLE_LABELS = {
@@ -12,6 +12,7 @@ const ACTION_LABELS = { insert: 'Created', update: 'Updated', delete: 'Deleted' 
 const ACTION_COLOR = { insert: 'text-success', update: 'text-gold', delete: 'text-danger' }
 
 const DIFF_IGNORE = new Set(['updated_at', 'created_at'])
+const PAGE_SIZE = 100
 
 function subjectFor(row, assetMap) {
   const d = row.new_data || row.old_data || {}
@@ -48,28 +49,42 @@ export default function LogHistory() {
   const [assetMap, setAssetMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [tableFilter, setTableFilter] = useState('all')
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+
+  // load the asset id -> code map once
+  useEffect(() => {
+    supabase.from('assets').select('id, asset_code').then(({ data }) => {
+      const map = {}
+      ;(data || []).forEach(a => { map[a.id] = a.asset_code })
+      setAssetMap(map)
+    })
+  }, [])
+
+  // reset to page 0 whenever the filter changes
+  useEffect(() => { setPage(0) }, [tableFilter])
 
   useEffect(() => {
     (async () => {
       setLoading(true)
-      const [log, assets] = await Promise.all([
-        supabase.from('activity_log_computed').select('*').order('created_at', { ascending: false }).limit(500),
-        supabase.from('assets').select('id, asset_code'),
-      ])
-      const map = {}
-      ;(assets.data || []).forEach(a => { map[a.id] = a.asset_code })
-      setAssetMap(map)
-      setRows(log.data || [])
+      let query = supabase
+        .from('activity_log_computed')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
+
+      if (tableFilter !== 'all') query = query.eq('table_name', tableFilter)
+
+      const { data, count } = await query
+      setRows(data || [])
+      setTotalCount(count || 0)
       setLoading(false)
     })()
-  }, [])
+  }, [tableFilter, page])
 
-  const filtered = useMemo(
-    () => tableFilter === 'all' ? rows : rows.filter(r => r.table_name === tableFilter),
-    [rows, tableFilter]
-  )
-
-  if (loading) return <div className="text-muted text-sm">Loading log history…</div>
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const rangeStart = totalCount === 0 ? 0 : page * PAGE_SIZE + 1
+  const rangeEnd = Math.min(totalCount, page * PAGE_SIZE + PAGE_SIZE)
 
   return (
     <div>
@@ -85,37 +100,66 @@ export default function LogHistory() {
         ))}
       </div>
 
-      <div className="space-y-2">
-        {filtered.map(r => {
-          const changes = diffFields(r)
-          return (
-            <div key={`${r.table_name}-${r.id}`} className="border border-hairline bg-surface rounded px-4 py-3">
-              <div className="flex items-center justify-between text-sm">
-                <div>
-                  <span className={`font-medium ${ACTION_COLOR[r.action]}`}>{ACTION_LABELS[r.action]}</span>
-                  {' '}
-                  <span className="text-muted">{TABLE_LABELS[r.table_name] || r.table_name}</span>
-                  {' — '}
-                  <span className="font-medium">{subjectFor(r, assetMap)}</span>
+      {loading ? (
+        <div className="text-muted text-sm">Loading log history…</div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            {rows.map(r => {
+              const changes = diffFields(r)
+              return (
+                <div key={`${r.table_name}-${r.id}`} className="border border-hairline bg-surface rounded px-4 py-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <span className={`font-medium ${ACTION_COLOR[r.action]}`}>{ACTION_LABELS[r.action]}</span>
+                      {' '}
+                      <span className="text-muted">{TABLE_LABELS[r.table_name] || r.table_name}</span>
+                      {' — '}
+                      <span className="font-medium">{subjectFor(r, assetMap)}</span>
+                    </div>
+                    <div className="text-xs text-muted whitespace-nowrap">
+                      {new Date(r.created_at).toLocaleString()} · {r.actor_name || 'Unknown'}
+                    </div>
+                  </div>
+                  {changes.length > 0 && (
+                    <ul className="mt-2 text-xs text-muted space-y-0.5">
+                      {changes.map(c => (
+                        <li key={c.field}>
+                          <span className="text-ink">{c.field}</span>: {String(c.before ?? '—')} → {String(c.after ?? '—')}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <div className="text-xs text-muted whitespace-nowrap">
-                  {new Date(r.created_at).toLocaleString()} · {r.actor_name || 'Unknown'}
-                </div>
+              )
+            })}
+            {rows.length === 0 && <div className="text-sm text-muted px-4 py-6 text-center border border-hairline rounded bg-surface">No activity yet.</div>}
+          </div>
+
+          {totalCount > 0 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-hairline text-sm">
+              <span className="text-muted">
+                Showing {rangeStart}–{rangeEnd} of {totalCount}
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="px-3 py-1.5 rounded border border-hairline hover:bg-hairline/20 disabled:opacity-40 disabled:cursor-not-allowed">
+                  Previous
+                </button>
+                <span className="text-muted">Page {page + 1} of {totalPages}</span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="px-3 py-1.5 rounded border border-hairline hover:bg-hairline/20 disabled:opacity-40 disabled:cursor-not-allowed">
+                  Next
+                </button>
               </div>
-              {changes.length > 0 && (
-                <ul className="mt-2 text-xs text-muted space-y-0.5">
-                  {changes.map(c => (
-                    <li key={c.field}>
-                      <span className="text-ink">{c.field}</span>: {String(c.before ?? '—')} → {String(c.after ?? '—')}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
-          )
-        })}
-        {filtered.length === 0 && <div className="text-sm text-muted px-4 py-6 text-center border border-hairline rounded bg-surface">No activity yet.</div>}
-      </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
