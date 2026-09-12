@@ -24,6 +24,32 @@ const EMPTY = {
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
+function buildQrUrl(a) {
+  const lines = [
+    'IDENTIFICATION',
+    `Asset ID: ${a.asset_code || ''}`,
+    `Asset Name: ${a.asset_name || ''}`,
+    `Category: ${a.category || '—'}`,
+    `Sub-Category: ${a.sub_category || '—'}`,
+    '',
+    'ASSET DETAILS',
+    `Brand: ${a.brand || '—'}`,
+    `Model: ${a.model || '—'}`,
+    `Serial Number: ${a.serial_number || '—'}`,
+    '',
+    'LOCATION & ASSIGNMENT',
+    `Property: ${a.property_name || '—'}`,
+    `Location: ${a.location || '—'}`,
+    `Department: ${a.department || '—'}`,
+    `Assigned To: ${a.assigned_to || '—'}`,
+    '',
+    'STATUS',
+    `Status: ${a.status || '—'}`,
+    `Condition: ${a.condition || '—'}`,
+  ].join('\n')
+  return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(lines)}`
+}
+
 function Field({ label, children }) {
   return (
     <label className="block">
@@ -257,7 +283,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.current_asset_value)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <a href={r.qr_url} target="_blank" rel="noreferrer" className="text-gold underline">View</a>
+                  <a href={buildQrUrl(r)} target="_blank" rel="noreferrer" className="text-gold underline">View</a>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap space-x-3">
                   {canWrite && <button onClick={() => { setEditing(r); setShowForm(true) }} className="text-ink underline">Edit</button>}
