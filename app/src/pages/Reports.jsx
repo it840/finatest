@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Papa from 'papaparse'
+import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
@@ -14,6 +15,25 @@ function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0) }
 
 function downloadCsv(filename, rows) {
   const blob = new Blob([Papa.unparse(rows)], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+
+// builds a multi-sheet workbook: a KPI summary sheet plus one sheet per data table
+function downloadReportWorkbook(filename, kpis, sheets) {
+  const wb = XLSX.utils.book_new()
+  const kpiSheet = XLSX.utils.json_to_sheet(kpis.map(([label, value]) => ({ Metric: label, Value: value })))
+  XLSX.utils.book_append_sheet(wb, kpiSheet, 'Summary')
+  sheets.forEach(({ name, rows }) => {
+    if (!rows || rows.length === 0) return
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31))
+  })
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([buf], { type: 'application/octet-stream' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url; a.download = filename
@@ -190,10 +210,70 @@ export default function Reports() {
     dailyAddedTrend.push({ name: d.slice(5), count: addedBetween(d, d).length })
   }
 
+  const propertyLabel = currentPropertyId === 'all' ? 'All Properties' : (currentProperty?.name || 'Property')
+  const fileSafe = (s) => s.replace(/\s+/g, '_').toLowerCase()
+
+  const exportCurrentReport = () => {
+    if (tab === 'daily') {
+      downloadReportWorkbook(
+        `daily_report_${today}_${fileSafe(propertyLabel)}.xlsx`,
+        [
+          ['Report', 'Daily'], ['Property', propertyLabel], ['Date', today],
+          ['Total Assets', rows.length], ['Assets Added Today', addedToday.length],
+          ['Maintenance Due Today', maintenanceDueBetween(today, today).length],
+          ['Movements Logged Today', movementsBetween(today, today).length],
+          ['Counts Logged Today', countsBetween(today, today).length],
+          ['Discrepancies Today', discrepanciesBetween(today, today).length],
+        ],
+        [
+          { name: 'Assets Added Today', rows: addedToday },
+          { name: 'Movements Today', rows: movementsBetween(today, today) },
+        ]
+      )
+    } else if (tab === 'weekly') {
+      downloadReportWorkbook(
+        `weekly_report_${weekStart}_to_${weekEnd}_${fileSafe(propertyLabel)}.xlsx`,
+        [
+          ['Report', 'Weekly'], ['Property', propertyLabel], ['Week', `${weekStart} to ${weekEnd}`],
+          ['Total Assets', rows.length], ['Added This Week', addedThisWeek.length],
+          ['Operational', rows.filter(r => r.status === 'Active').length],
+          ['Deployed', rows.filter(r => r.status === 'In Use').length],
+          ['Under Maintenance', rows.filter(r => r.status === 'Under Maintenance').length],
+          ['Movements This Week', movementsBetween(weekStart, weekEnd).length],
+        ],
+        [
+          { name: 'Status Summary', rows: STATUS_LIST.map(s => ({ status: s, count: rows.filter(r => r.status === s).length })) },
+          { name: 'Warranty Expiring', rows: warrantyExpiringBetween(weekStart, weekEnd) },
+          { name: 'Added This Week', rows: addedThisWeek },
+        ]
+      )
+    } else {
+      downloadReportWorkbook(
+        `monthly_report_${monthStart.slice(0, 7)}_${fileSafe(propertyLabel)}.xlsx`,
+        [
+          ['Report', 'Monthly'], ['Property', propertyLabel], ['Month', `${monthStart} to ${monthEnd}`],
+          ['Total Assets', rows.length], ['Added This Month', addedThisMonth.length],
+          ['Disposed This Month', disposedThisMonth.length], ['Movements This Month', movementsThisMonth.length],
+          ['Warranty Overdue', warrantyOverdue.length], ['Accumulated Depreciation', totalDepreciationMonth],
+        ],
+        [
+          { name: 'Category Summary', rows: Object.entries(categoryTotals).map(([category, v]) => ({ category, count: v.count, purchase_cost: v.cost })) },
+          { name: 'Top Locations', rows: topLocations },
+          { name: 'Disposed This Month', rows: disposedThisMonth },
+          { name: 'Discrepancies This Month', rows: discrepanciesThisMonth },
+        ]
+      )
+    }
+  }
+
   return (
     <div>
       <div className="flex items-start justify-between flex-wrap gap-3 mb-1">
         <h1 className="font-display text-2xl">Reports</h1>
+        <button onClick={exportCurrentReport}
+          className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-md border border-hairline bg-surface hover:bg-hairline/20 transition-colors">
+          {ICONS.download} Export {TABS.find(t => t.key === tab)?.label} Report
+        </button>
       </div>
       <p className="text-sm text-muted mb-6">
         {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Report date: {today}
