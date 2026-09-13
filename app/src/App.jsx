@@ -26,7 +26,7 @@ export default function App() {
 
   return (
     <Layout page={page} setPage={setPage} profile={profile} onSignOut={signOut}>
-      {page === 'dashboard' && <Dashboard />}
+      {page === 'dashboard' && <Dashboard setPage={setPage} profile={profile} />}
       {page === 'assets' && <Assets profile={profile} />}
       {page === 'physical' && <PhysicalInventory profile={profile} />}
       {page === 'movement' && <MovementLog profile={profile} />}
