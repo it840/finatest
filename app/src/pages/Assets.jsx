@@ -206,6 +206,9 @@ export default function Assets({ profile }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [locationFilter, setLocationFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [page, setPage] = useState(0)
@@ -226,12 +229,16 @@ export default function Assets({ profile }) {
   const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filtered = scoped.filter(r =>
-    !query ||
-    [r.asset_code, r.asset_name, r.category, r.location, r.department, r.assigned_to, r.serial_number]
-      .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
+    (!query ||
+      [r.asset_code, r.asset_name, r.category, r.location, r.department, r.assigned_to, r.serial_number]
+        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
+    ) &&
+    (!categoryFilter || r.category === categoryFilter) &&
+    (!locationFilter || r.location === locationFilter) &&
+    (!statusFilter || r.status === statusFilter)
   )
 
-  useEffect(() => { setPage(0) }, [query, currentPropertyId])
+  useEffect(() => { setPage(0) }, [query, categoryFilter, locationFilter, statusFilter, currentPropertyId])
 
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -258,8 +265,22 @@ export default function Assets({ profile }) {
         )}
       </div>
 
-      <input placeholder="Search by ID, name, category, location, assignee…" value={query} onChange={e => setQuery(e.target.value)}
-        className="input mb-4 max-w-md" />
+      <div className="flex flex-wrap gap-3 mb-4">
+        <input placeholder="Search assets…" value={query} onChange={e => setQuery(e.target.value)}
+          className="input flex-1 min-w-[200px]" />
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto">
+          <option value="">All categories</option>
+          {lookups.categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
+          <option value="">All locations</option>
+          {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
+          <option value="">All statuses</option>
+          {lookups.statuses.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+        </select>
+      </div>
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
