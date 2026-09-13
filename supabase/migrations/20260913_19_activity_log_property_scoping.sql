@@ -1,0 +1,45 @@
+alter table public.activity_log add column if not exists property_id bigint references public.properties(id) on delete set null;
+create index if not exists idx_activity_log_property on public.activity_log(property_id);
+
+create or replace function public.log_activity()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  prop_id bigint;
+  rec record;
+begin
+  rec := coalesce(new, old);
+
+  if TG_TABLE_NAME = 'assets' then
+    prop_id := rec.property_id;
+  elsif TG_TABLE_NAME = 'profiles' then
+    prop_id := rec.property_id;
+  elsif TG_TABLE_NAME in ('physical_inventory', 'movement_log') then
+    select property_id into prop_id from public.assets where id = rec.asset_id;
+  end if;
+
+  if TG_OP = 'DELETE' then
+    insert into public.activity_log(table_name, record_id, action, actor_id, old_data, property_id)
+      values (TG_TABLE_NAME, old.id::text, 'delete', auth.uid(), to_jsonb(old), prop_id);
+    return old;
+  elsif TG_OP = 'UPDATE' then
+    insert into public.activity_log(table_name, record_id, action, actor_id, old_data, new_data, property_id)
+      values (TG_TABLE_NAME, new.id::text, 'update', auth.uid(), to_jsonb(old), to_jsonb(new), prop_id);
+    return new;
+  else
+    insert into public.activity_log(table_name, record_id, action, actor_id, new_data, property_id)
+      values (TG_TABLE_NAME, new.id::text, 'insert', auth.uid(), to_jsonb(new), prop_id);
+    return new;
+  end if;
+end $$;
+
+update public.activity_log a
+set property_id = case
+  when a.table_name = 'assets' then coalesce((a.new_data->>'property_id')::bigint, (a.old_data->>'property_id')::bigint)
+  when a.table_name = 'profiles' then coalesce((a.new_data->>'property_id')::bigint, (a.old_data->>'property_id')::bigint)
+  when a.table_name in ('physical_inventory', 'movement_log') then (
+    select ast.property_id from public.assets ast
+    where ast.id = coalesce((a.new_data->>'asset_id')::bigint, (a.old_data->>'asset_id')::bigint)
+  )
+  else null
+end
+where a.property_id is null;
