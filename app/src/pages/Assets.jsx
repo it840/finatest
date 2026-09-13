@@ -59,6 +59,143 @@ function Field({ label, children }) {
   )
 }
 
+const STATUS_DOT = {
+  Active: 'bg-success', 'In Use': 'bg-success', Available: 'bg-success',
+  'Under Maintenance': 'bg-gold', Missing: 'bg-danger', Damaged: 'bg-danger',
+  Retired: 'bg-muted', Disposed: 'bg-muted',
+}
+
+const ACTION_LABELS = { insert: 'Created', update: 'Updated', delete: 'Deleted' }
+const ACTION_COLOR = { insert: 'bg-success', update: 'bg-gold', delete: 'bg-danger' }
+const HISTORY_IGNORE = new Set(['updated_at', 'created_at', 'qr_url'])
+
+function DetailRow({ label, value }) {
+  return (
+    <div>
+      <div className="text-xs text-muted mb-0.5">{label}</div>
+      <div className="text-sm">{value || value === 0 ? value : '—'}</div>
+    </div>
+  )
+}
+
+function AssetDetailModal({ asset, onClose }) {
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const qrUrl = buildQrUrl(asset)
+
+  useEffect(() => {
+    supabase.from('activity_log_computed').select('*')
+      .eq('table_name', 'assets').eq('record_id', String(asset.id))
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setHistory(data || []); setLoading(false) })
+  }, [asset.id])
+
+  const printQr = () => {
+    const w = window.open('', '_blank', 'width=420,height=520')
+    if (!w) return
+    w.document.write(`
+      <html><head><title>${asset.asset_code}</title></head>
+      <body style="text-align:center;font-family:sans-serif;padding:24px;">
+        <img src="${qrUrl}" style="width:300px;height:300px;" onload="window.print()" />
+        <div style="margin-top:12px;font-size:14px;letter-spacing:1px;">${asset.asset_code}</div>
+      </body></html>
+    `)
+    w.document.close()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-hairline">
+          <div>
+            <span className="font-display text-xl">{asset.asset_name}</span>
+            <span className="text-muted"> — </span>
+            <span className="text-xs font-medium tracking-wide text-muted align-middle">{asset.asset_code}</span>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-ink text-xl leading-none">×</button>
+        </div>
+
+        <div className="px-6 py-5 grid grid-cols-[auto_1fr] gap-6">
+          <div className="w-44 flex flex-col items-center gap-3">
+            <div className="border border-hairline rounded-lg p-3 bg-paper">
+              <img src={qrUrl} alt="QR code" className="w-36 h-36" />
+            </div>
+            <div className="text-xs tracking-wide text-muted">{asset.asset_code}</div>
+            <button onClick={printQr} className="w-full px-3 py-2 text-xs border border-hairline rounded hover:bg-hairline/20">
+              Print QR Code
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div>
+              <div className="text-xs text-muted mb-1">Status</div>
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className={`w-2 h-2 rounded-full ${STATUS_DOT[asset.status] || 'bg-muted'}`} />
+                {asset.status || '—'}
+              </span>
+            </div>
+            <DetailRow label="Category" value={asset.category} />
+            <DetailRow label="Brand" value={asset.brand} />
+            <DetailRow label="Model" value={asset.model} />
+            <DetailRow label="Serial Number" value={asset.serial_number} />
+            <DetailRow label="Condition" value={asset.condition} />
+            <DetailRow label="Location" value={asset.location} />
+            <DetailRow label="Assigned To" value={asset.assigned_to} />
+            <DetailRow label="Acquisition Date" value={asset.acquisition_date} />
+            <DetailRow label="Purchase Cost" value={peso(asset.purchase_cost)} />
+            <DetailRow label="Warranty Expiry" value={asset.warranty_expiry} />
+            <DetailRow label="Current Value" value={peso(asset.current_asset_value)} />
+          </div>
+        </div>
+
+        {asset.remarks && (
+          <div className="px-6 pb-2">
+            <div className="text-xs text-muted mb-1">Remarks</div>
+            <div className="text-sm">{asset.remarks}</div>
+          </div>
+        )}
+
+        <div className="mx-6 mb-6 border border-hairline rounded-lg">
+          <div className="px-4 py-3 border-b border-hairline font-medium text-sm">History</div>
+          <div className="max-h-56 overflow-y-auto divide-y divide-hairline">
+            {loading && <div className="px-4 py-4 text-sm text-muted">Loading…</div>}
+            {!loading && history.length === 0 && <div className="px-4 py-4 text-sm text-muted">No history yet.</div>}
+            {history.map(h => {
+              const d = h.new_data || h.old_data || {}
+              const changes = h.action === 'update' && h.old_data && h.new_data
+                ? Object.keys({ ...h.old_data, ...h.new_data 
+                  }).filter(k => !HISTORY_IGNORE.has(k) && JSON.stringify(h.old_data[k]) !== JSON.stringify(h.new_data[k]))
+                : []
+              return (
+                <div key={h.id} className="px-4 py-3 flex gap-3">
+                  <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${ACTION_COLOR[h.action]}`} />
+                  <div>
+                    <div className="text-sm">
+                      <span className="font-medium">{ACTION_LABELS[h.action]}</span>
+                      {h.action === 'insert' && ': Asset added to inventory'}
+                      {h.action === 'delete' && ': Asset removed'}
+                      {changes.length > 0 && `: ${changes.join(', ')} changed`}
+                    </div>
+                    <div className="text-xs text-muted mt-0.5">
+                      {new Date(h.created_at).toLocaleString()} · {h.actor_name || 'Unknown'}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-end px-6 pb-6">
+          <button onClick={onClose} className="px-4 py-2 text-sm border border-hairline rounded hover:bg-hairline/20">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { ...EMPTY, property_id: defaultPropertyId !== 'all' ? defaultPropertyId : '' })
   const [saving, setSaving] = useState(false)
@@ -211,6 +348,7 @@ export default function Assets({ profile }) {
   const [statusFilter, setStatusFilter] = useState('')
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [viewingAsset, setViewingAsset] = useState(null)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
 
@@ -304,7 +442,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.current_asset_value)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <a href={buildQrUrl(r)} target="_blank" rel="noreferrer" className="text-gold underline">View</a>
+                  <button onClick={() => setViewingAsset(r)} className="text-gold underline">View</button>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap space-x-3">
                   {canWrite && <button onClick={() => { setEditing(r); setShowForm(true) }} className="text-ink underline">Edit</button>}
@@ -330,6 +468,10 @@ export default function Assets({ profile }) {
           onCancel={() => setShowForm(false)}
           onSave={() => { setShowForm(false); load() }}
         />
+      )}
+
+      {viewingAsset && (
+        <AssetDetailModal asset={viewingAsset} onClose={() => setViewingAsset(null)} />
       )}
     </div>
   )
