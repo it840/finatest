@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import AccountPanel from './AccountPanel'
 import ImportExportPanel from './ImportExportPanel'
 import { useProperty } from '../lib/PropertyContext'
+import { useLookups } from '../lib/useLookups'
 
 const LOOKUP_TABLES = [
   { key: 'categories', label: 'Categories' },
@@ -17,6 +18,7 @@ const LOOKUP_TABLES = [
 ]
 
 function AddUserForm({ onCancel, onCreated }) {
+  const { lookups } = useLookups()
   const [form, setForm] = useState({ full_name: '', email: '', password: '', role: 'staff', department: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -52,7 +54,10 @@ function AddUserForm({ onCancel, onCreated }) {
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Department</span>
-          <input value={form.department} onChange={set('department')} className="input" />
+          <select value={form.department} onChange={set('department')} className="input">
+            <option value="">—</option>
+            {lookups?.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Role</span>
@@ -75,6 +80,7 @@ function AddUserForm({ onCancel, onCreated }) {
 }
 
 function EditUserForm({ user, onCancel, onSaved }) {
+  const { lookups } = useLookups()
   const [fullName, setFullName] = useState(user.full_name || '')
   const [department, setDepartment] = useState(user.department || '')
   const [newPassword, setNewPassword] = useState('')
@@ -115,7 +121,10 @@ function EditUserForm({ user, onCancel, onSaved }) {
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Department</span>
-          <input value={department} onChange={e => setDepartment(e.target.value)} className="input" />
+          <select value={department} onChange={e => setDepartment(e.target.value)} className="input">
+            <option value="">—</option>
+            {lookups?.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
         </label>
         <label className="block border-t border-hairline pt-4">
           <span className="block text-xs text-muted mb-1">New password</span>
