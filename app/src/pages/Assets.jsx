@@ -10,7 +10,7 @@ const WRITABLE_FIELDS = [
   'acquisition_date', 'acquisition_type', 'purchase_cost', 'supplier',
   'warranty_start', 'warranty_expiry', 'last_maintenance', 'maintenance_frequency_days',
   'useful_life_years', 'disposal_date', 'disposal_reason', 'remarks',
-  'registered_qty', 'disposal_qty', 'property_id',
+  'registered_qty', 'disposal_qty', 'property_id', 'photo_url',
 ]
 
 const EMPTY = {
@@ -46,6 +46,7 @@ function buildQrUrl(a) {
     'STATUS',
     `Status: ${a.status || '—'}`,
     `Condition: ${a.condition || '—'}`,
+    ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
   ].join('\n')
   return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(lines)}`
 }
@@ -117,6 +118,9 @@ function AssetDetailModal({ asset, onClose }) {
 
         <div className="px-6 py-5 grid grid-cols-[auto_1fr] gap-6">
           <div className="w-44 flex flex-col items-center gap-3">
+            {asset.photo_url && (
+              <img src={asset.photo_url} alt={asset.asset_name} className="w-full h-32 object-cover rounded-lg border border-hairline" />
+            )}
             <div className="border border-hairline rounded-lg p-3 bg-paper">
               <img src={qrUrl} alt="QR code" className="w-36 h-36" />
             </div>
@@ -198,6 +202,9 @@ function AssetDetailModal({ asset, onClose }) {
 
 function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { ...EMPTY, property_id: defaultPropertyId !== 'all' ? defaultPropertyId : '' })
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(initial?.photo_url || '')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const subOptions = useMemo(
@@ -210,14 +217,39 @@ function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, on
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
+  const onPickPhoto = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  const removePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview('')
+    setForm(f => ({ ...f, photo_url: null }))
+  }
+
   const submit = async (e) => {
     e.preventDefault()
     setSaving(true); setError('')
+
+    let photoUrl = form.photo_url ?? null
+    if (photoFile) {
+      setUploadingPhoto(true)
+      const path = `${Date.now()}-${photoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error: uploadErr } = await supabase.storage.from('asset-photos').upload(path, photoFile, { upsert: true })
+      setUploadingPhoto(false)
+      if (uploadErr) { setSaving(false); setError(`Photo upload failed: ${uploadErr.message}`); return }
+      photoUrl = supabase.storage.from('asset-photos').getPublicUrl(path).data.publicUrl
+    }
+
     // only send actual writable columns — `form` may carry extra computed
     // fields (accumulated_depreciation, qr_url, property_name, etc.) when
     // editing, since it was seeded from the assets_computed view
     const payload = {}
     WRITABLE_FIELDS.forEach(k => { payload[k] = form[k] })
+    payload.photo_url = photoUrl
     ;['purchase_cost', 'maintenance_frequency_days', 'useful_life_years', 'registered_qty', 'disposal_qty']
       .forEach(k => { payload[k] = payload[k] === '' ? null : Number(payload[k]) })
     ;['acquisition_date', 'warranty_start', 'warranty_expiry', 'last_maintenance', 'disposal_date']
@@ -260,6 +292,26 @@ function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, on
           <Field label="Brand"><input value={form.brand} onChange={set('brand')} className="input" /></Field>
           <Field label="Model"><input value={form.model} onChange={set('model')} className="input" /></Field>
           <Field label="Serial Number"><input value={form.serial_number} onChange={set('serial_number')} className="input" /></Field>
+
+          <div className="col-span-3">
+            <span className="block text-xs text-muted mb-1">Photo</span>
+            <div className="flex items-center gap-4">
+              {photoPreview ? (
+                <img src={photoPreview} alt="" className="w-20 h-20 object-cover rounded border border-hairline" />
+              ) : (
+                <div className="w-20 h-20 rounded border border-dashed border-hairline flex items-center justify-center text-xs text-muted">No photo</div>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <label className="px-3 py-2 text-sm border border-hairline rounded hover:bg-hairline/20 cursor-pointer inline-block w-fit">
+                  {photoPreview ? 'Replace Photo' : 'Upload Photo'}
+                  <input type="file" accept="image/*" onChange={onPickPhoto} className="hidden" />
+                </label>
+                {photoPreview && (
+                  <button type="button" onClick={removePhoto} className="text-xs text-danger underline text-left w-fit">Remove photo</button>
+                )}
+              </div>
+            </div>
+          </div>
 
           <Field label="Location">
             <select value={form.location} onChange={set('location')} className="input">
@@ -329,7 +381,7 @@ function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, on
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
           <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 disabled:opacity-50">
-            {saving ? 'Saving…' : 'Save Asset'}
+            {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : 'Save Asset'}
           </button>
         </div>
       </form>
