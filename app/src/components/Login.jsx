@@ -10,6 +10,14 @@ function Spinner() {
   )
 }
 
+function ArrowIcon() {
+  return (
+    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 10h11M10.5 5.5L15 10l-4.5 4.5" />
+    </svg>
+  )
+}
+
 function BrandPanel() {
   return (
     <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-between bg-ink text-paper px-12 py-14 overflow-hidden">
@@ -132,12 +140,17 @@ export default function Login() {
 
             <div className="pt-1">
               <button disabled={busy} type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-ink text-paper rounded py-3 text-sm font-medium
-                           transition-all duration-150 hover:bg-ink/90 active:scale-[0.98]
-                           disabled:opacity-90 disabled:cursor-not-allowed
+                className="group w-full flex items-center justify-center gap-2 rounded py-3 text-sm font-medium text-paper
+                           bg-gradient-to-b from-ink to-[#0F211D]
+                           transition-all duration-200 ease-out
+                           shadow-[0_1px_2px_rgba(20,43,39,0.15)]
+                           hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
+                           active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
+                           disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
                            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
-                {busy && <Spinner />}
+                {busy ? <Spinner /> : null}
                 <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>
+                {!busy && <ArrowIcon />}
               </button>
             </div>
 
