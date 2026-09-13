@@ -19,7 +19,8 @@ const LOOKUP_TABLES = [
 
 function AddUserForm({ onCancel, onCreated }) {
   const { lookups } = useLookups()
-  const [form, setForm] = useState({ full_name: '', email: '', password: '', role: 'staff', department: '' })
+  const { properties } = useProperty()
+  const [form, setForm] = useState({ full_name: '', email: '', password: '', role: 'staff', department: '', property_id: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -28,7 +29,8 @@ function AddUserForm({ onCancel, onCreated }) {
   const submit = async (e) => {
     e.preventDefault()
     setSaving(true); setError('')
-    const { data, error } = await supabase.functions.invoke('admin-create-user', { body: form })
+    const payload = { ...form, property_id: form.property_id ? Number(form.property_id) : null }
+    const { data, error } = await supabase.functions.invoke('admin-create-user', { body: payload })
     setSaving(false)
     if (error) { setError(error.message || 'Failed to create user.'); return }
     if (data?.error) { setError(data.error); return }
@@ -60,6 +62,13 @@ function AddUserForm({ onCancel, onCreated }) {
           </select>
         </label>
         <label className="block">
+          <span className="block text-xs text-muted mb-1">Property</span>
+          <select value={form.property_id} onChange={set('property_id')} className="input">
+            <option value="">— No specific property —</option>
+            {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </label>
+        <label className="block">
           <span className="block text-xs text-muted mb-1">Role</span>
           <select value={form.role} onChange={set('role')} className="input">
             <option value="admin">Admin</option>
@@ -81,8 +90,10 @@ function AddUserForm({ onCancel, onCreated }) {
 
 function EditUserForm({ user, onCancel, onSaved }) {
   const { lookups } = useLookups()
+  const { properties } = useProperty()
   const [fullName, setFullName] = useState(user.full_name || '')
   const [department, setDepartment] = useState(user.department || '')
+  const [propertyId, setPropertyId] = useState(user.property_id ?? '')
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -94,7 +105,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
     setSaving(true)
 
     const { error } = await supabase.from('profiles')
-      .update({ full_name: fullName, department })
+      .update({ full_name: fullName, department, property_id: propertyId ? Number(propertyId) : null })
       .eq('id', user.id)
     if (error) { setSaving(false); setError(error.message); return }
 
@@ -126,6 +137,13 @@ function EditUserForm({ user, onCancel, onSaved }) {
             {lookups?.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </label>
+        <label className="block">
+          <span className="block text-xs text-muted mb-1">Property</span>
+          <select value={propertyId} onChange={e => setPropertyId(e.target.value)} className="input">
+            <option value="">— No specific property —</option>
+            {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </label>
         <label className="block border-t border-hairline pt-4">
           <span className="block text-xs text-muted mb-1">New password</span>
           <input type="text" minLength={6} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="input" placeholder="Leave blank to keep current password" />
@@ -143,6 +161,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
 }
 
 function UsersPanel({ currentUserId }) {
+  const { properties } = useProperty()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
@@ -190,6 +209,7 @@ function UsersPanel({ currentUserId }) {
             <tr>
               <th className="text-left px-3 py-2">Name</th>
               <th className="text-left px-3 py-2">Department</th>
+              <th className="text-left px-3 py-2">Property</th>
               <th className="text-left px-3 py-2">Role</th>
               <th className="text-left px-3 py-2"></th>
             </tr>
@@ -199,6 +219,9 @@ function UsersPanel({ currentUserId }) {
               <tr key={u.id} className="border-t border-hairline">
                 <td className="px-3 py-2">{u.full_name}</td>
                 <td className="px-3 py-2">{u.department}</td>
+                <td className="px-3 py-2 text-muted">
+                  {properties.find(p => p.id === u.property_id)?.name || '—'}
+                </td>
                 <td className="px-3 py-2">
                   <select value={u.role} onChange={e => setRole(u.id, e.target.value)} className="input max-w-[10rem]">
                     <option value="admin">Admin</option>

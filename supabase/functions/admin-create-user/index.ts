@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { email, password, full_name, role, department } = body ?? {};
+    const { email, password, full_name, role, department, property_id } = body ?? {};
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "Email and password are required" }), {
@@ -86,7 +86,12 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateErr } = await admin
       .from("profiles")
-      .update({ role: finalRole, full_name: full_name || email, department: department || "" })
+      .update({
+        role: finalRole,
+        full_name: full_name || email,
+        department: department || "",
+        property_id: property_id || null,
+      })
       .eq("id", newUserId);
 
     if (updateErr) {
