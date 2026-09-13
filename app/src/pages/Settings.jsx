@@ -5,6 +5,19 @@ import ImportExportPanel from './ImportExportPanel'
 import { useProperty } from '../lib/PropertyContext'
 import { useLookups } from '../lib/useLookups'
 
+// supabase-js only gives a generic "non-2xx status code" message on function errors;
+// the actual reason is in the response body, so pull it out for a useful message.
+async function extractFnError(error, data) {
+  if (data?.error) return data.error
+  if (error?.context && typeof error.context.json === 'function') {
+    try {
+      const body = await error.context.json()
+      if (body?.error) return body.error
+    } catch { /* not JSON, fall through */ }
+  }
+  return error?.message || 'Something went wrong.'
+}
+
 const LOOKUP_TABLES = [
   { key: 'categories', label: 'Categories' },
   { key: 'locations', label: 'Locations' },
@@ -32,8 +45,7 @@ function AddUserForm({ onCancel, onCreated }) {
     const payload = { ...form, property_id: form.property_id ? Number(form.property_id) : null }
     const { data, error } = await supabase.functions.invoke('admin-create-user', { body: payload })
     setSaving(false)
-    if (error) { setError(error.message || 'Failed to create user.'); return }
-    if (data?.error) { setError(data.error); return }
+    if (error || data?.error) { setError(await extractFnError(error, data)); return }
     onCreated()
   }
 
@@ -114,8 +126,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
         body: { id: user.id, password: newPassword },
       })
       setSaving(false)
-      if (pwError) { setError(pwError.message || 'Failed to update password.'); return }
-      if (data?.error) { setError(data.error); return }
+      if (pwError || data?.error) { setError(await extractFnError(pwError, data)); return }
     } else {
       setSaving(false)
     }
@@ -188,8 +199,7 @@ function UsersPanel({ currentUserId }) {
     setDeletingId(user.id); setError('')
     const { data, error } = await supabase.functions.invoke('admin-delete-user', { body: { id: user.id } })
     setDeletingId(null)
-    if (error) { setError(error.message || 'Failed to delete user.'); return }
-    if (data?.error) { setError(data.error); return }
+    if (error || data?.error) { setError(await extractFnError(error, data)); return }
     load()
   }
 
