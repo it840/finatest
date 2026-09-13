@@ -8,7 +8,7 @@ function resolveLogo(url) {
 }
 
 export default function PropertySwitcher() {
-  const { properties, currentPropertyId, currentProperty, selectProperty, loading } = useProperty()
+  const { properties, currentPropertyId, currentProperty, selectProperty, loading, isLocked } = useProperty()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef(null)
@@ -23,6 +23,19 @@ export default function PropertySwitcher() {
 
   const filtered = properties.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
   const label = currentPropertyId === 'all' ? 'All Properties' : currentProperty?.name || 'Select property'
+
+  if (isLocked) {
+    return (
+      <div className="w-full flex items-center gap-2 px-3 py-2 rounded border border-white/10 bg-white/5 text-left cursor-default">
+        {currentProperty?.logo_url ? (
+          <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
+        ) : (
+          <span className="h-5 w-5 rounded-full bg-gold/80 flex items-center justify-center text-[9px] font-semibold text-ink flex-shrink-0">—</span>
+        )}
+        <span className="text-sm truncate flex-1 text-paper/90">{label}</span>
+      </div>
+    )
+  }
 
   return (
     <div className="relative" ref={ref}>
