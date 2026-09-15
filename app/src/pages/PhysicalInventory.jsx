@@ -18,6 +18,9 @@ export default function PhysicalInventory({ profile }) {
   const [error, setError] = useState('')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
+  const [query, setQuery] = useState('')
+  const [locationFilter, setLocationFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -43,9 +46,18 @@ export default function PhysicalInventory({ profile }) {
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
-  useEffect(() => { setPage(0) }, [currentPropertyId])
+  const filteredRows = scopedRows.filter(r =>
+    (!query ||
+      [r.asset_code, r.asset_name, r.actual_location, r.department, r.assigned_to]
+        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
+    ) &&
+    (!locationFilter || r.actual_location === locationFilter) &&
+    (!statusFilter || r.inventory_status === statusFilter)
+  )
 
-  const pageRows = scopedRows.slice(page * pageSize, page * pageSize + pageSize)
+  useEffect(() => { setPage(0) }, [currentPropertyId, query, locationFilter, statusFilter])
+
+  const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -71,9 +83,10 @@ export default function PhysicalInventory({ profile }) {
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Physical Inventory</h1>
-      <p className="text-sm text-muted mb-6">
+      <p className="text-sm text-muted mb-1">
         {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Record a physical count and compare it against what's registered.
       </p>
+      <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} counts shown</p>
 
       <form onSubmit={submit} className="border border-hairline bg-surface rounded p-5 mb-8 grid grid-cols-3 gap-4 items-end">
         <label className="block col-span-1">
@@ -124,6 +137,19 @@ export default function PhysicalInventory({ profile }) {
         </div>
       </form>
 
+      <div className="flex flex-wrap gap-3 mb-4">
+        <input placeholder="Search counts…" value={query} onChange={e => setQuery(e.target.value)}
+          className="input flex-1 min-w-[200px]" />
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
+          <option value="">All locations</option>
+          {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
+          <option value="">All statuses</option>
+          {statuses.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+        </select>
+      </div>
+
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
@@ -146,12 +172,12 @@ export default function PhysicalInventory({ profile }) {
                 <td className={`px-3 py-2 whitespace-nowrap ${r.discrepancy !== 'No Discrepancy' ? 'text-danger' : 'text-success'}`}>{r.discrepancy}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts logged yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
           </tbody>
         </table>
       </div>
 
-      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={scopedRows.length} />
+      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={filteredRows.length} />
     </div>
   )
 }

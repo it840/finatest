@@ -18,6 +18,9 @@ export default function MovementLog({ profile }) {
   const [error, setError] = useState('')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
+  const [query, setQuery] = useState('')
+  const [locationFilter, setLocationFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -43,9 +46,18 @@ export default function MovementLog({ profile }) {
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
-  useEffect(() => { setPage(0) }, [currentPropertyId])
+  const filteredRows = scopedRows.filter(r =>
+    (!query ||
+      [r.asset_code, r.asset_name, r.from_location, r.to_location, r.reason]
+        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
+    ) &&
+    (!locationFilter || r.to_location === locationFilter || r.from_location === locationFilter) &&
+    (!typeFilter || r.movement_type === typeFilter)
+  )
 
-  const pageRows = scopedRows.slice(page * pageSize, page * pageSize + pageSize)
+  useEffect(() => { setPage(0) }, [currentPropertyId, query, locationFilter, typeFilter])
+
+  const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -70,9 +82,10 @@ export default function MovementLog({ profile }) {
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Asset Movement Log</h1>
-      <p className="text-sm text-muted mb-6">
+      <p className="text-sm text-muted mb-1">
         {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Every transfer, assignment, or return updates the asset's current location automatically.
       </p>
+      <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} movements shown</p>
 
       <form onSubmit={submit} className="border border-hairline bg-surface rounded p-5 mb-8 grid grid-cols-3 gap-4 items-end">
         <label className="block">
@@ -119,6 +132,19 @@ export default function MovementLog({ profile }) {
         </div>
       </form>
 
+      <div className="flex flex-wrap gap-3 mb-4">
+        <input placeholder="Search movements…" value={query} onChange={e => setQuery(e.target.value)}
+          className="input flex-1 min-w-[200px]" />
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
+          <option value="">All locations</option>
+          {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+        </select>
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="input w-auto">
+          <option value="">All types</option>
+          {types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+        </select>
+      </div>
+
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
@@ -140,12 +166,12 @@ export default function MovementLog({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.remarks}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">No movements logged yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
           </tbody>
         </table>
       </div>
 
-      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={scopedRows.length} />
+      <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={filteredRows.length} />
     </div>
   )
 }
