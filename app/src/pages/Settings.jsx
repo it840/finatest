@@ -76,7 +76,7 @@ function AddUserForm({ onCancel, onCreated }) {
         <label className="block">
           <span className="block text-xs text-muted mb-1">Property</span>
           <select value={form.property_id} onChange={set('property_id')} className="input">
-            <option value="">— No specific property —</option>
+            <option value="">All Properties</option>
             {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
@@ -151,7 +151,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
         <label className="block">
           <span className="block text-xs text-muted mb-1">Property</span>
           <select value={propertyId} onChange={e => setPropertyId(e.target.value)} className="input">
-            <option value="">— No specific property —</option>
+            <option value="">All Properties</option>
             {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
