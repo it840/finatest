@@ -13,6 +13,9 @@ function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); retu
 function iso(d) { return d.toISOString().slice(0, 10) }
 function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1) }
 function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0) }
+function niceDate(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) }
+function niceMonthDay(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }
+function niceMonthYear(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) }
 
 function downloadCsv(filename, rows) {
   const blob = new Blob([Papa.unparse(rows)], { type: 'text/csv;charset=utf-8;' })
@@ -133,6 +136,7 @@ const TABS = [
   { key: 'daily', label: 'Daily', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M7 2.5v3M13 2.5v3" /></svg>) },
   { key: 'weekly', label: 'Weekly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M6.5 11h2M11.5 11h2M6.5 13.5h2" /></svg>) },
   { key: 'monthly', label: 'Monthly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 11h7M6.5 13.5h4" /></svg>) },
+  { key: 'custom', label: 'Custom Range', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 12h1.2M9.4 12h1.2M12.2 12h1.2" /></svg>) },
 ]
 
 export default function Reports() {
@@ -147,6 +151,8 @@ export default function Reports() {
   const [dayFilter, setDayFilter] = useState(todayISO())
   const [weekAnchor, setWeekAnchor] = useState(todayISO())
   const [monthFilter, setMonthFilter] = useState(todayISO().slice(0, 7))
+  const [customFrom, setCustomFrom] = useState(iso(addDays(new Date(), -6)))
+  const [customTo, setCustomTo] = useState(todayISO())
 
   useEffect(() => {
     (async () => {
@@ -210,6 +216,14 @@ export default function Reports() {
 
   const totalDepreciationMonth = rows.reduce((s, r) => s + Number(r.accumulated_depreciation || 0), 0)
 
+  // custom range derived data
+  const addedInRange = addedBetween(customFrom, customTo)
+  const disposedInRange = disposedBetween(customFrom, customTo)
+  const movementsInRange = movementsBetween(customFrom, customTo)
+  const countsInRange = countsBetween(customFrom, customTo)
+  const discrepanciesInRange = discrepanciesBetween(customFrom, customTo)
+  const maintenanceDueInRange = maintenanceDueBetween(customFrom, customTo)
+
   // last 7 days added, for the weekly trend chart
   const dailyAddedTrend = []
   for (let i = 6; i >= 0; i--) {
@@ -254,7 +268,7 @@ export default function Reports() {
           { name: 'Added This Week', rows: addedThisWeek },
         ]
       )
-    } else {
+    } else if (tab === 'monthly') {
       downloadReportWorkbook(
         `monthly_report_${monthStart.slice(0, 7)}_${fileSafe(propertyLabel)}.xlsx`,
         [
@@ -270,6 +284,22 @@ export default function Reports() {
           { name: 'Discrepancies This Month', rows: discrepanciesThisMonth },
         ]
       )
+    } else {
+      downloadReportWorkbook(
+        `custom_report_${customFrom}_to_${customTo}_${fileSafe(propertyLabel)}.xlsx`,
+        [
+          ['Report', 'Custom Range'], ['Property', propertyLabel], ['Range', `${customFrom} to ${customTo}`],
+          ['Total Assets', rows.length], ['Added', addedInRange.length], ['Disposed', disposedInRange.length],
+          ['Movements Logged', movementsInRange.length], ['Counts Logged', countsInRange.length],
+          ['Discrepancies', discrepanciesInRange.length], ['Maintenance Due', maintenanceDueInRange.length],
+        ],
+        [
+          { name: 'Assets Added', rows: addedInRange },
+          { name: 'Disposed', rows: disposedInRange },
+          { name: 'Movements', rows: movementsInRange },
+          { name: 'Discrepancies', rows: discrepanciesInRange },
+        ]
+      )
     }
   }
 
@@ -282,15 +312,9 @@ export default function Reports() {
           {ICONS.download} Export {TABS.find(t => t.key === tab)?.label} Report
         </button>
       </div>
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-        <p className="text-sm text-muted">
-          {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Report date: {today}
-        </p>
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto">
-          <option value="">All categories</option>
-          {lookups?.categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-        </select>
-      </div>
+      <p className="text-sm text-muted mb-4">
+        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name}
+      </p>
 
       <div className="flex gap-1 mb-4 border-b border-hairline">
         {TABS.map(t => (
@@ -302,7 +326,7 @@ export default function Reports() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         {tab === 'daily' && (
           <>
             <button onClick={() => setDayFilter(iso(addDays(new Date(dayFilter), -1)))}
@@ -311,7 +335,7 @@ export default function Reports() {
             <button onClick={() => setDayFilter(iso(addDays(new Date(dayFilter), 1)))}
               className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {dayFilter !== actualToday && (
-              <button onClick={() => setDayFilter(actualToday)} className="text-sm text-gold underline ml-1">Today</button>
+              <button onClick={() => setDayFilter(actualToday)} className="text-sm text-gold underline">Today</button>
             )}
           </>
         )}
@@ -323,7 +347,7 @@ export default function Reports() {
             <button onClick={() => setWeekAnchor(iso(addDays(new Date(weekAnchor), 7)))}
               className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {weekAnchor !== actualToday && (
-              <button onClick={() => setWeekAnchor(actualToday)} className="text-sm text-gold underline ml-1">This week</button>
+              <button onClick={() => setWeekAnchor(actualToday)} className="text-sm text-gold underline">This week</button>
             )}
           </>
         )}
@@ -339,11 +363,33 @@ export default function Reports() {
               setMonthFilter(d.toISOString().slice(0, 7))
             }} className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {monthFilter !== actualToday.slice(0, 7) && (
-              <button onClick={() => setMonthFilter(actualToday.slice(0, 7))} className="text-sm text-gold underline ml-1">This month</button>
+              <button onClick={() => setMonthFilter(actualToday.slice(0, 7))} className="text-sm text-gold underline">This month</button>
             )}
           </>
         )}
+        {tab === 'custom' && (
+          <>
+            <label className="flex items-center gap-1.5 text-sm text-muted">
+              From <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="input w-auto" />
+            </label>
+            <label className="flex items-center gap-1.5 text-sm text-muted">
+              To <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="input w-auto" />
+            </label>
+          </>
+        )}
+
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto ml-auto">
+          <option value="">All categories</option>
+          {lookups?.categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
       </div>
+
+      <p className="text-sm text-muted mb-6 font-medium">
+        {tab === 'daily' && niceDate(dayFilter)}
+        {tab === 'weekly' && `Week of ${niceMonthDay(weekStart)} – ${niceMonthDay(weekEnd)}, ${weekEnd.slice(0, 4)}`}
+        {tab === 'monthly' && niceMonthYear(monthStart)}
+        {tab === 'custom' && `${niceMonthDay(customFrom)} – ${niceMonthDay(customTo)}, ${customTo.slice(0, 4)}`}
+      </p>
 
       {tab === 'daily' && (
         <div>
@@ -507,6 +553,60 @@ export default function Reports() {
             <Panel title="Discrepancies This Month" action={<ExportButton onClick={() => downloadCsv('discrepancies_this_month.csv', discrepanciesThisMonth)} />}>
               <ul className="space-y-2 text-sm">
                 {discrepanciesThisMonth.map(c => (
+                  <li key={c.id} className="flex justify-between">
+                    <span>{c.asset_code} — {c.asset_name}</span>
+                    <span className="text-danger">{c.discrepancy}</span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
+        </div>
+      )}
+
+      {tab === 'custom' && (
+        <div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <KPI iconKey="assets" label="Total Assets" value={rows.length} />
+            <KPI iconKey="added" label="Assets Added" value={addedInRange.length} />
+            <KPI iconKey="disposed" label="Disposed" value={disposedInRange.length} tone={disposedInRange.length ? TONE.danger : undefined} />
+            <KPI iconKey="movement" label="Movements Logged" value={movementsInRange.length} />
+            <KPI iconKey="count" label="Counts Logged" value={countsInRange.length} />
+            <KPI iconKey="discrepancy" label="Discrepancies" value={discrepanciesInRange.length} tone={discrepanciesInRange.length ? TONE.danger : undefined} />
+          </div>
+
+          <Panel title="Assets Added in Range"
+            action={addedInRange.length > 0 && <ExportButton onClick={() => downloadCsv(`assets_added_${customFrom}_to_${customTo}.csv`, addedInRange)} />}>
+            <ReportTable rows={addedInRange} empty="No assets added in this range." />
+          </Panel>
+
+          <Panel title="Movements in Range"
+            action={movementsInRange.length > 0 && <ExportButton onClick={() => downloadCsv(`movements_${customFrom}_to_${customTo}.csv`, movementsInRange)} />}>
+            <div className="overflow-x-auto border border-hairline rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+                  <tr>{['Asset', 'Type', 'From', 'To', 'Reason'].map(h => <th key={h} className="text-left px-3 py-2 font-medium">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {movementsInRange.map(m => (
+                    <tr key={m.id} className="border-t border-hairline">
+                      <td className="px-3 py-2">{m.asset_code} — {m.asset_name}</td>
+                      <td className="px-3 py-2">{m.movement_type}</td>
+                      <td className="px-3 py-2">{m.from_location}</td>
+                      <td className="px-3 py-2">{m.to_location}</td>
+                      <td className="px-3 py-2">{m.reason}</td>
+                    </tr>
+                  ))}
+                  {movementsInRange.length === 0 && <tr><td colSpan={5} className="px-3 py-6 text-center text-muted">No movements in this range.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+
+          {discrepanciesInRange.length > 0 && (
+            <Panel title="Discrepancies in Range" action={<ExportButton onClick={() => downloadCsv(`discrepancies_${customFrom}_to_${customTo}.csv`, discrepanciesInRange)} />}>
+              <ul className="space-y-2 text-sm">
+                {discrepanciesInRange.map(c => (
                   <li key={c.id} className="flex justify-between">
                     <span>{c.asset_code} — {c.asset_name}</span>
                     <span className="text-danger">{c.discrepancy}</span>
