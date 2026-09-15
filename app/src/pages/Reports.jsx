@@ -3,6 +3,7 @@ import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
+import { useLookups } from '../lib/useLookups'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
@@ -136,11 +137,16 @@ const TABS = [
 
 export default function Reports() {
   const { currentPropertyId, currentProperty } = useProperty()
+  const { lookups } = useLookups()
   const [tab, setTab] = useState('daily')
   const [rowsRaw, setRows] = useState([])
   const [movementsRaw, setMovements] = useState([])
   const [countsRaw, setCounts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [dayFilter, setDayFilter] = useState(todayISO())
+  const [weekAnchor, setWeekAnchor] = useState(todayISO())
+  const [monthFilter, setMonthFilter] = useState(todayISO().slice(0, 7))
 
   useEffect(() => {
     (async () => {
@@ -159,21 +165,22 @@ export default function Reports() {
   if (loading) return <div className="text-muted text-sm">Loading reports…</div>
 
   const inScope = (r) => currentPropertyId === 'all' || r.property_id === currentPropertyId
-  const rows = rowsRaw.filter(inScope)
+  const rows = rowsRaw.filter(inScope).filter(r => !categoryFilter || r.category === categoryFilter)
   const movements = movementsRaw.filter(inScope)
   const counts = countsRaw.filter(inScope)
 
-  const today = todayISO()
-  const weekStart = iso(startOfWeek(new Date()))
-  const weekEnd = iso(addDays(startOfWeek(new Date()), 6))
-  const monthStart = iso(startOfMonth(new Date()))
-  const monthEnd = iso(endOfMonth(new Date()))
+  const actualToday = todayISO()
+  const today = dayFilter // the day the Daily tab focuses on (defaults to actual today)
+  const weekStart = iso(startOfWeek(new Date(weekAnchor)))
+  const weekEnd = iso(addDays(startOfWeek(new Date(weekAnchor)), 6))
+  const monthStart = `${monthFilter}-01`
+  const monthEnd = iso(endOfMonth(new Date(`${monthFilter}-01`)))
 
   const addedBetween = (from, to) => rows.filter(r => r.acquisition_date && r.acquisition_date >= from && r.acquisition_date <= to)
   const disposedBetween = (from, to) => rows.filter(r => r.disposal_date && r.disposal_date >= from && r.disposal_date <= to)
   const maintenanceDueBetween = (from, to) => rows.filter(r => r.maintenance_due && r.maintenance_due >= from && r.maintenance_due <= to)
   const warrantyExpiringBetween = (from, to) => rows.filter(r => r.warranty_expiry && r.warranty_expiry >= from && r.warranty_expiry <= to)
-  const warrantyOverdue = rows.filter(r => r.warranty_expiry && r.warranty_expiry < today)
+  const warrantyOverdue = rows.filter(r => r.warranty_expiry && r.warranty_expiry < actualToday)
   const movementsBetween = (from, to) => movements.filter(m => m.movement_date && m.movement_date >= from && m.movement_date <= to)
   const countsBetween = (from, to) => counts.filter(c => c.inventory_date && c.inventory_date >= from && c.inventory_date <= to)
   const discrepanciesBetween = (from, to) => countsBetween(from, to).filter(c => c.discrepancy && c.discrepancy !== 'No Discrepancy')
@@ -206,7 +213,7 @@ export default function Reports() {
   // last 7 days added, for the weekly trend chart
   const dailyAddedTrend = []
   for (let i = 6; i >= 0; i--) {
-    const d = iso(addDays(new Date(), -i))
+    const d = iso(addDays(new Date(actualToday), -i))
     dailyAddedTrend.push({ name: d.slice(5), count: addedBetween(d, d).length })
   }
 
@@ -275,11 +282,17 @@ export default function Reports() {
           {ICONS.download} Export {TABS.find(t => t.key === tab)?.label} Report
         </button>
       </div>
-      <p className="text-sm text-muted mb-6">
-        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Report date: {today}
-      </p>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <p className="text-sm text-muted">
+          {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Report date: {today}
+        </p>
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto">
+          <option value="">All categories</option>
+          {lookups?.categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+      </div>
 
-      <div className="flex gap-1 mb-6 border-b border-hairline">
+      <div className="flex gap-1 mb-4 border-b border-hairline">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${tab === t.key ? 'border-gold text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
@@ -287,6 +300,49 @@ export default function Reports() {
             {t.label}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-2 mb-6">
+        {tab === 'daily' && (
+          <>
+            <button onClick={() => setDayFilter(iso(addDays(new Date(dayFilter), -1)))}
+              className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">‹</button>
+            <input type="date" value={dayFilter} onChange={e => setDayFilter(e.target.value)} className="input w-auto" />
+            <button onClick={() => setDayFilter(iso(addDays(new Date(dayFilter), 1)))}
+              className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
+            {dayFilter !== actualToday && (
+              <button onClick={() => setDayFilter(actualToday)} className="text-sm text-gold underline ml-1">Today</button>
+            )}
+          </>
+        )}
+        {tab === 'weekly' && (
+          <>
+            <button onClick={() => setWeekAnchor(iso(addDays(new Date(weekAnchor), -7)))}
+              className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">‹</button>
+            <input type="date" value={weekAnchor} onChange={e => setWeekAnchor(e.target.value)} className="input w-auto" />
+            <button onClick={() => setWeekAnchor(iso(addDays(new Date(weekAnchor), 7)))}
+              className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
+            {weekAnchor !== actualToday && (
+              <button onClick={() => setWeekAnchor(actualToday)} className="text-sm text-gold underline ml-1">This week</button>
+            )}
+          </>
+        )}
+        {tab === 'monthly' && (
+          <>
+            <button onClick={() => {
+              const d = new Date(`${monthFilter}-01`); d.setMonth(d.getMonth() - 1)
+              setMonthFilter(d.toISOString().slice(0, 7))
+            }} className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">‹</button>
+            <input type="month" value={monthFilter} onChange={e => setMonthFilter(e.target.value)} className="input w-auto" />
+            <button onClick={() => {
+              const d = new Date(`${monthFilter}-01`); d.setMonth(d.getMonth() + 1)
+              setMonthFilter(d.toISOString().slice(0, 7))
+            }} className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
+            {monthFilter !== actualToday.slice(0, 7) && (
+              <button onClick={() => setMonthFilter(actualToday.slice(0, 7))} className="text-sm text-gold underline ml-1">This month</button>
+            )}
+          </>
+        )}
       </div>
 
       {tab === 'daily' && (
