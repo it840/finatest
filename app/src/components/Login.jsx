@@ -94,83 +94,100 @@ export default function Login() {
 
       <BrandPanel />
 
-      <div className="flex-1 flex items-center justify-center px-6 py-14">
-        <div className="w-full max-w-sm">
-          {/* mobile-only brand mark, since the side panel is hidden below lg */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-11 w-11 rounded-full bg-surface object-contain p-1 border border-hairline" />
-            <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-11 w-11 rounded-full object-contain" />
-          </div>
+      <div className="relative flex-1 flex flex-col overflow-hidden">
+        {/* faint dot-grid texture, echoes the brand panel's circles without competing */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.4]" aria-hidden="true">
+          <defs>
+            <pattern id="login-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+              <circle cx="1.5" cy="1.5" r="1.5" fill="#142B27" fillOpacity="0.06" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#login-dots)" />
+        </svg>
 
-          <div className="mb-8">
-            <div className="font-display text-2xl text-ink">
-              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+        <div className="relative flex-1 flex items-center justify-center px-6 py-14">
+          <div className="w-full max-w-sm">
+            {/* mobile-only brand mark, since the side panel is hidden below lg */}
+            <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+              <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-11 w-11 rounded-full bg-surface object-contain p-1 border border-hairline" />
+              <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-11 w-11 rounded-full object-contain" />
             </div>
-            <div className="text-sm text-muted mt-1.5">
-              {mode === 'signin' ? 'Sign in to the Asset Registry System.' : 'Set up access to the Asset Registry System.'}
-            </div>
-          </div>
 
-          <form onSubmit={submit} className="space-y-5">
-            <fieldset disabled={busy} className="space-y-5 contents">
-              {mode === 'signup' && (
+            <div className="mb-8">
+              <div className="w-8 h-[3px] bg-gold rounded-full mb-4" />
+              <div className="font-display text-3xl text-ink">
+                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+              </div>
+              <div className="text-sm text-muted mt-1.5">
+                {mode === 'signin' ? 'Sign in to the Asset Registry System.' : 'Set up access to the Asset Registry System.'}
+              </div>
+            </div>
+
+            <form onSubmit={submit} className="space-y-5">
+              <fieldset disabled={busy} className="space-y-5 contents">
+                {mode === 'signup' && (
+                  <div>
+                    <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">FULL NAME</label>
+                    <input value={fullName} onChange={e => setFullName(e.target.value)} required
+                      className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
+                                 focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
+                  </div>
+                )}
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">FULL NAME</label>
-                  <input value={fullName} onChange={e => setFullName(e.target.value)} required
+                  <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">EMAIL</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
                                focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">EMAIL</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                             focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">PASSWORD</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-                  className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                             focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
-              </div>
-            </fieldset>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">PASSWORD</label>
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                    className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
+                               focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
+                </div>
+              </fieldset>
 
-            {error && <div className="text-sm text-danger">{error}</div>}
-            {info && <div className="text-sm text-success">{info}</div>}
+              {error && <div className="text-sm text-danger">{error}</div>}
+              {info && <div className="text-sm text-success">{info}</div>}
 
-            <div className="pt-1">
-              <button disabled={busy} type="submit"
-                className="group w-full flex items-center justify-center gap-2 rounded py-3 text-sm font-medium text-paper
-                           bg-gradient-to-b from-ink to-[#0F211D]
-                           transition-all duration-200 ease-out
-                           shadow-[0_1px_2px_rgba(20,43,39,0.15)]
-                           hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
-                           active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
-                           disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
-                           focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
-                {busy ? <Spinner /> : null}
-                <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>
-                {!busy && <ArrowIcon />}
+              <div className="pt-1">
+                <button disabled={busy} type="submit"
+                  className="group w-full flex items-center justify-center gap-2 rounded py-3 text-sm font-medium text-paper
+                             bg-gradient-to-b from-ink to-[#0F211D]
+                             transition-all duration-200 ease-out
+                             shadow-[0_1px_2px_rgba(20,43,39,0.15)]
+                             hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
+                             active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
+                             disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
+                  {busy ? <Spinner /> : null}
+                  <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>
+                  {!busy && <ArrowIcon />}
+                </button>
+              </div>
+
+              <button type="button" disabled={busy}
+                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}
+                className="w-full text-center text-sm text-muted hover:text-ink disabled:opacity-50">
+                {mode === 'signin' ? (
+                  <>Need an account? <span className="text-ink font-medium underline">Sign up</span></>
+                ) : (
+                  <>Already have an account? <span className="text-ink font-medium underline">Sign in</span></>
+                )}
               </button>
-            </div>
+            </form>
 
-            <button type="button" disabled={busy}
-              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}
-              className="w-full text-center text-sm text-muted hover:text-ink disabled:opacity-50">
-              {mode === 'signin' ? (
-                <>Need an account? <span className="text-ink font-medium underline">Sign up</span></>
-              ) : (
-                <>Already have an account? <span className="text-ink font-medium underline">Sign in</span></>
-              )}
-            </button>
-          </form>
+            {mode === 'signup' && (
+              <p className="text-xs text-muted mt-6 border-t border-hairline pt-4 leading-relaxed">
+                The first person to sign up becomes the admin. Everyone after that starts as staff —
+                an admin can change roles later in Settings.
+              </p>
+            )}
+          </div>
+        </div>
 
-          {mode === 'signup' && (
-            <p className="text-xs text-muted mt-6 border-t border-hairline pt-4 leading-relaxed">
-              The first person to sign up becomes the admin. Everyone after that starts as staff —
-              an admin can change roles later in Settings.
-            </p>
-          )}
+        <div className="relative hidden lg:flex justify-center pb-8">
+          <p className="text-xs text-muted">Having trouble signing in? Contact your property administrator.</p>
         </div>
       </div>
     </div>
