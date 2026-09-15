@@ -434,7 +434,6 @@ export default function Reports() {
 
       {tab === 'weekly' && (
         <div>
-          <p className="text-sm text-muted mb-4">Week of {weekStart} to {weekEnd}</p>
           <div className="grid grid-cols-3 gap-4 mb-6">
             <KPI iconKey="assets" label="Total Assets" value={rows.length} />
             <KPI iconKey="added" label="Added This Week" value={addedThisWeek.length} />
@@ -484,7 +483,6 @@ export default function Reports() {
 
       {tab === 'monthly' && (
         <div>
-          <p className="text-sm text-muted mb-4">{monthStart} to {monthEnd}</p>
           <div className="grid grid-cols-3 gap-4 mb-6">
             <KPI iconKey="assets" label="Total Assets" value={rows.length} />
             <KPI iconKey="added" label="Added This Month" value={addedThisMonth.length} />
