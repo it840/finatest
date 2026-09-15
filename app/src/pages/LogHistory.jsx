@@ -65,9 +65,15 @@ export default function LogHistory() {
   const { currentPropertyId, currentProperty } = useProperty()
   const [rows, setRows] = useState([])
   const [assetMap, setAssetMap] = useState({})
+  const [actors, setActors] = useState([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [tableFilter, setTableFilter] = useState('all')
+  const [actorFilter, setActorFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
   const [totalCount, setTotalCount] = useState(0)
@@ -78,14 +84,42 @@ export default function LogHistory() {
       ;(data || []).forEach(a => { map[a.id] = a.asset_code })
       setAssetMap(map)
     })
+    supabase.from('profiles').select('id, full_name').order('full_name').then(({ data }) => setActors(data || []))
   }, [])
 
-  useEffect(() => { setPage(0) }, [tableFilter, pageSize, currentPropertyId])
+  // debounce the free-text search so it doesn't refetch on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 400)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  useEffect(() => { setPage(0) }, [tableFilter, actorFilter, dateFrom, dateTo, search, pageSize, currentPropertyId])
 
   const buildQuery = () => {
     let query = supabase.from('activity_log_computed').select('*', { count: 'exact' }).order('created_at', { ascending: false })
     if (tableFilter !== 'all') query = query.eq('table_name', tableFilter)
     if (currentPropertyId !== 'all') query = query.eq('property_id', currentPropertyId)
+    if (actorFilter) query = query.eq('actor_id', actorFilter)
+    if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`)
+    if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59`)
+    if (search) {
+      // strip characters that would break the .or() filter's own syntax (commas, parens)
+      const safe = search.replace(/[(),]/g, ' ').trim()
+      const term = `%${safe}%`
+      query = query.or(
+        [
+          `actor_name.ilike.${term}`,
+          `new_data->>asset_code.ilike.${term}`,
+          `old_data->>asset_code.ilike.${term}`,
+          `new_data->>asset_name.ilike.${term}`,
+          `old_data->>asset_name.ilike.${term}`,
+          `new_data->>full_name.ilike.${term}`,
+          `old_data->>full_name.ilike.${term}`,
+          `new_data->>serial_number.ilike.${term}`,
+          `old_data->>serial_number.ilike.${term}`,
+        ].join(',')
+      )
+    }
     return query
   }
 
@@ -97,7 +131,7 @@ export default function LogHistory() {
       setTotalCount(count || 0)
       setLoading(false)
     })()
-  }, [tableFilter, page, pageSize, currentPropertyId])
+  }, [tableFilter, actorFilter, dateFrom, dateTo, search, page, pageSize, currentPropertyId])
 
   const exportAll = async () => {
     setExporting(true)
@@ -138,6 +172,35 @@ export default function LogHistory() {
       <p className="text-sm text-muted mb-6">
         {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Every create, edit, and delete across assets, physical counts, movements, and user roles — most recent first.
       </p>
+
+      <div className="flex flex-wrap gap-3 mb-4">
+        <input
+          placeholder="Search asset, serial, name, user…"
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          className="input flex-1 min-w-[220px]"
+        />
+        <label className="flex items-center gap-2 text-sm text-muted">
+          From
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input w-auto" />
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted">
+          To
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input w-auto" />
+        </label>
+        <select value={actorFilter} onChange={e => setActorFilter(e.target.value)} className="input w-auto">
+          <option value="">All users</option>
+          {actors.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
+        </select>
+        {(searchInput || dateFrom || dateTo || actorFilter) && (
+          <button
+            onClick={() => { setSearchInput(''); setDateFrom(''); setDateTo(''); setActorFilter('') }}
+            className="text-sm text-muted hover:text-ink underline"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
 
       <div className="flex gap-2 mb-6 border-b border-hairline flex-wrap">
         {[['all', 'All', null], ['assets', 'Assets', 'assets'], ['physical_inventory', 'Physical Inventory', 'physical_inventory'], ['movement_log', 'Movement Log', 'movement_log'], ['profiles', 'Users', 'profiles']].map(([key, label, iconKey]) => (
