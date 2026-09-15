@@ -15,8 +15,8 @@ const NAV = [
 export default function Layout({ page, setPage, profile, onSignOut, children }) {
   const canSeeLog = profile?.role === 'admin' || profile?.role === 'manager'
   return (
-    <div className="min-h-screen flex bg-paper text-ink font-body">
-      <aside className="w-60 shrink-0 bg-ink text-paper flex flex-col">
+    <div className="h-screen flex bg-paper text-ink font-body overflow-hidden">
+      <aside className="w-60 shrink-0 bg-ink text-paper flex flex-col h-full overflow-y-auto">
         <div className="px-5 py-6 border-b border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-9 w-9 rounded-full bg-white object-contain p-1" />
@@ -49,7 +49,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
           <button onClick={onSignOut} className="underline hover:text-white">Sign out</button>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 h-full overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-8">
           {children}
         </div>
