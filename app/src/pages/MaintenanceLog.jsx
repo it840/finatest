@@ -153,7 +153,7 @@ export default function MaintenanceLog({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Status', 'Type', 'Technician', 'Findings', 'Cost', 'Logged By'].map(h => (
+              {['Date', 'Asset', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Technician', 'Findings', 'Cost', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -163,15 +163,27 @@ export default function MaintenanceLog({ profile }) {
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.scheduled_date}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.model}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.serial_number}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.registered_location}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.actual_location}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.department}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.asset_status}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.last_maintenance}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.maintenance_frequency_days}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.maintenance_due}</td>
                 <td className={`px-3 py-2 whitespace-nowrap font-medium ${STATUS_COLOR[r.pms_status] || ''}`}>{r.pms_status}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.maintenance_type}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.technician}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.findings}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.maintenance_cost)}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.remarks}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.logged_by_name}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={20} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
           </tbody>
         </table>
       </div>
