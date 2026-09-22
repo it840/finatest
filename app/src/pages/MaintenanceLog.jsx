@@ -32,7 +32,7 @@ export default function MaintenanceLog({ profile }) {
     setLoading(true)
     const [ml, a, t, s] = await Promise.all([
       supabase.from('maintenance_log_computed').select('*').order('scheduled_date', { ascending: false }),
-      supabase.from('assets_computed').select('id, asset_code, asset_name, last_maintenance, maintenance_due, property_id'),
+      supabase.from('assets_computed').select('id, asset_code, asset_name, category, sub_category, brand, model, serial_number, location, actual_location, department, assigned_to, status, condition, last_maintenance, maintenance_due, property_id'),
       supabase.from('maintenance_types').select('*').order('name'),
       supabase.from('pms_statuses').select('*').order('name'),
     ])
@@ -46,6 +46,7 @@ export default function MaintenanceLog({ profile }) {
   useEffect(() => { load() }, [])
 
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
+  const selectedAsset = assets.find(a => String(a.id) === String(form.asset_id))
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filteredRows = scopedRows.filter(r =>
@@ -95,6 +96,23 @@ export default function MaintenanceLog({ profile }) {
             {scopedAssets.map(a => <option key={a.id} value={a.id}>{a.asset_code} — {a.asset_name}</option>)}
           </select>
         </label>
+
+        {selectedAsset && (
+          <div className="col-span-3 -mt-1 mb-1 grid grid-cols-6 gap-x-4 gap-y-2 text-xs border border-hairline rounded p-3 bg-paper">
+            <div><span className="text-muted block">Category</span>{selectedAsset.category || '—'}</div>
+            <div><span className="text-muted block">Sub-Category</span>{selectedAsset.sub_category || '—'}</div>
+            <div><span className="text-muted block">Brand</span>{selectedAsset.brand || '—'}</div>
+            <div><span className="text-muted block">Model</span>{selectedAsset.model || '—'}</div>
+            <div><span className="text-muted block">Serial</span>{selectedAsset.serial_number || '—'}</div>
+            <div><span className="text-muted block">Location</span>{selectedAsset.location || '—'}</div>
+            <div><span className="text-muted block">Actual Location</span>{selectedAsset.actual_location || '—'}</div>
+            <div><span className="text-muted block">Department</span>{selectedAsset.department || '—'}</div>
+            <div><span className="text-muted block">Assigned To</span>{selectedAsset.assigned_to || '—'}</div>
+            <div><span className="text-muted block">Asset Status</span>{selectedAsset.status || '—'}</div>
+            <div><span className="text-muted block">Condition</span>{selectedAsset.condition || '—'}</div>
+            <div><span className="text-muted block">Last Maintenance</span>{selectedAsset.last_maintenance || '—'}</div>
+          </div>
+        )}
         <label className="block">
           <span className="block text-xs text-muted mb-1">Date</span>
           <input type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} className="input" />
