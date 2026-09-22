@@ -314,6 +314,70 @@ function LookupPanel({ table, label }) {
   )
 }
 
+function SubCategoryPanel() {
+  const [categories, setCategories] = useState([])
+  const [subCategories, setSubCategories] = useState([])
+  const [categoryId, setCategoryId] = useState('')
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    const [c, s] = await Promise.all([
+      supabase.from('categories').select('*').order('name'),
+      supabase.from('sub_categories').select('*').order('name'),
+    ])
+    setCategories(c.data || [])
+    setSubCategories(s.data || [])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  const add = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!categoryId || !name.trim()) return
+    const { error } = await supabase.from('sub_categories').insert({ category_id: Number(categoryId), name: name.trim() })
+    if (error) { setError(error.message); return }
+    setName('')
+    load()
+  }
+
+  const remove = async (id) => {
+    await supabase.from('sub_categories').delete().eq('id', id)
+    load()
+  }
+
+  const categoryName = (id) => categories.find(c => c.id === id)?.name || 'Unknown category'
+
+  return (
+    <div className="border border-hairline bg-surface rounded p-4">
+      <h3 className="font-medium text-sm mb-3">Sub-Categories</h3>
+      <form onSubmit={add} className="flex gap-2 mb-3 flex-wrap">
+        <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="input flex-1 min-w-[140px]">
+          <option value="">Select category…</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Add sub-category…" className="input flex-1 min-w-[140px]" />
+        <button className="px-3 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap">Add</button>
+      </form>
+      {error && <div className="text-xs text-danger mb-2">{error}</div>}
+      {loading ? <div className="text-xs text-muted">Loading…</div> : (
+        <ul className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
+          {subCategories.map(s => (
+            <li key={s.id} className="flex justify-between items-center text-sm px-2 py-1 rounded hover:bg-hairline/20">
+              <span>{s.name} <span className="text-muted">— {categoryName(s.category_id)}</span></span>
+              <button onClick={() => remove(s.id)} className="text-xs text-danger underline">Remove</button>
+            </li>
+          ))}
+          {subCategories.length === 0 && <li className="text-xs text-muted px-2 py-2">No sub-categories yet.</li>}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function PropertiesPanel() {
   const { properties, reload } = useProperty()
   const [name, setName] = useState('')
@@ -404,7 +468,12 @@ export default function Settings({ profile, onProfileChange }) {
       {tab === 'properties' && isAdmin && <PropertiesPanel />}
       {tab === 'lookups' && isAdmin && (
         <div className="grid grid-cols-2 gap-4">
-          {LOOKUP_TABLES.map(t => <LookupPanel key={t.key} table={t.key} label={t.label} />)}
+          {LOOKUP_TABLES.map(t => (
+            <React.Fragment key={t.key}>
+              <LookupPanel table={t.key} label={t.label} />
+              {t.key === 'categories' && <SubCategoryPanel />}
+            </React.Fragment>
+          ))}
         </div>
       )}
       {tab === 'data' && canImportExport && <ImportExportPanel />}
