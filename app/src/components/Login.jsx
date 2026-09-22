@@ -152,18 +152,24 @@ export default function Login() {
 
               <div className="pt-1">
                 <button disabled={busy} type="submit"
-                  className="group w-full flex items-center justify-center gap-2 rounded py-3 text-sm font-medium text-paper
+                  className="group w-full flex items-center justify-center gap-2 rounded-t py-3 text-sm font-medium text-paper
                              bg-gradient-to-b from-ink to-[#0F211D]
                              transition-all duration-200 ease-out
                              shadow-[0_1px_2px_rgba(20,43,39,0.15)]
                              hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
                              active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
                              disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
-                             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                  style={busy ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}>
                   {busy ? <Spinner /> : null}
                   <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>
                   {!busy && <ArrowIcon />}
                 </button>
+                {busy && (
+                  <div className="loading-bar-track rounded-t-none">
+                    <div className="loading-bar-sweep" />
+                  </div>
+                )}
               </div>
 
               <button type="button" disabled={busy}
