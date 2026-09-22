@@ -32,7 +32,7 @@ export default function MaintenanceLog({ profile }) {
     setLoading(true)
     const [ml, a, t, s] = await Promise.all([
       supabase.from('maintenance_log_computed').select('*').order('scheduled_date', { ascending: false }),
-      supabase.from('assets').select('id, asset_code, asset_name, last_maintenance, maintenance_due, property_id'),
+      supabase.from('assets_computed').select('id, asset_code, asset_name, last_maintenance, maintenance_due, property_id'),
       supabase.from('maintenance_types').select('*').order('name'),
       supabase.from('pms_statuses').select('*').order('name'),
     ])
