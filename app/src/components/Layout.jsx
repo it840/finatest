@@ -1,12 +1,15 @@
 import React from 'react'
 import PropertySwitcher from './PropertySwitcher'
-import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon } from './NavIcons'
+import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon, PurchaseIcon, DisposalIcon, MaintenanceIcon } from './NavIcons'
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', Icon: DashboardIcon },
   { key: 'assets', label: 'Asset Database', Icon: AssetsIcon },
   { key: 'physical', label: 'Physical Inventory', Icon: PhysicalIcon },
   { key: 'movement', label: 'Movement Log', Icon: MovementIcon },
+  { key: 'purchase', label: 'Purchase Log', Icon: PurchaseIcon },
+  { key: 'disposal', label: 'Disposal Log', Icon: DisposalIcon },
+  { key: 'maintenance', label: 'Maintenance (PMS)', Icon: MaintenanceIcon },
   { key: 'reports', label: 'Reports', Icon: ReportsIcon },
   { key: 'log', label: 'Log History', Icon: LogHistoryIcon, managerUp: true },
   { key: 'settings', label: 'Settings', Icon: SettingsIcon },

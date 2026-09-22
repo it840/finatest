@@ -68,3 +68,30 @@ export function SettingsIcon() {
     </svg>
   )
 }
+
+export function PurchaseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" {...common}>
+      <rect x="3" y="6" width="14" height="10" rx="1.5" />
+      <path d="M3 9h14M7 13h2" />
+    </svg>
+  )
+}
+
+export function DisposalIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" {...common}>
+      <path d="M4.5 6h11l-.8 10.2a1.5 1.5 0 01-1.5 1.3H6.8a1.5 1.5 0 01-1.5-1.3L4.5 6z" />
+      <path d="M7.5 3.5h5a1 1 0 011 1V6h-7V4.5a1 1 0 011-1z" />
+      <path d="M8.3 9v5M11.7 9v5" />
+    </svg>
+  )
+}
+
+export function MaintenanceIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" {...common}>
+      <path d="M13.2 3.8a3 3 0 00-4 3.6L3.8 13a1.6 1.6 0 002.3 2.3l5.6-5.4a3 3 0 003.6-4l-2 2-1.7-.5-.5-1.7 2.1-2.1z" />
+    </svg>
+  )
+}

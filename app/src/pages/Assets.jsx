@@ -6,7 +6,7 @@ import Pagination from '../components/Pagination'
 
 const WRITABLE_FIELDS = [
   'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
-  'location', 'department', 'assigned_to', 'status', 'condition',
+  'location', 'actual_location', 'department', 'assigned_to', 'status', 'condition',
   'acquisition_date', 'acquisition_type', 'purchase_cost', 'supplier',
   'warranty_start', 'warranty_expiry', 'last_maintenance', 'maintenance_frequency_days',
   'useful_life_years', 'disposal_date', 'disposal_reason', 'remarks',
@@ -15,7 +15,7 @@ const WRITABLE_FIELDS = [
 
 const EMPTY = {
   asset_name: '', category: '', sub_category: '', brand: '', model: '', serial_number: '',
-  location: '', department: '', assigned_to: '', status: 'Active', condition: '',
+  location: '', actual_location: '', department: '', assigned_to: '', status: 'Active', condition: '',
   acquisition_date: '', acquisition_type: '', purchase_cost: '', supplier: '',
   warranty_start: '', warranty_expiry: '', last_maintenance: '', maintenance_frequency_days: '',
   useful_life_years: '', disposal_date: '', disposal_reason: '', remarks: '',
@@ -40,6 +40,7 @@ function buildQrUrl(a) {
     'LOCATION & ASSIGNMENT',
     `Property: ${a.property_name || '—'}`,
     `Location: ${a.location || '—'}`,
+    `Actual Location: ${a.actual_location || '—'}`,
     `Department: ${a.department || '—'}`,
     `Assigned To: ${a.assigned_to || '—'}`,
     '',
@@ -144,6 +145,7 @@ function AssetDetailModal({ asset, onClose }) {
             <DetailRow label="Serial Number" value={asset.serial_number} />
             <DetailRow label="Condition" value={asset.condition} />
             <DetailRow label="Location" value={asset.location} />
+            <DetailRow label="Actual Location" value={asset.actual_location} />
             <DetailRow label="Assigned To" value={asset.assigned_to} />
             <DetailRow label="Acquisition Date" value={asset.acquisition_date} />
             <DetailRow label="Purchase Cost" value={peso(asset.purchase_cost)} />
@@ -313,8 +315,14 @@ function AssetForm({ initial, lookups, properties, defaultPropertyId, onSave, on
             </div>
           </div>
 
-          <Field label="Location">
+          <Field label="Location (Home Base)">
             <select value={form.location} onChange={set('location')} className="input">
+              <option value="">—</option>
+              {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+            </select>
+          </Field>
+          <Field label="Actual Location (Current)">
+            <select value={form.actual_location} onChange={set('actual_location')} className="input">
               <option value="">—</option>
               {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
             </select>
@@ -476,7 +484,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Property', 'Name', 'Category', 'Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Property', 'Name', 'Category', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -489,6 +497,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.location}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
@@ -503,7 +512,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={11} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={12} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
         </table>
