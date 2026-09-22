@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropertySwitcher from './PropertySwitcher'
 import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon, PurchaseIcon, DisposalIcon, MaintenanceIcon } from './NavIcons'
 
@@ -17,6 +17,7 @@ const NAV = [
 
 export default function Layout({ page, setPage, profile, onSignOut, children }) {
   const canSeeLog = profile?.role === 'admin' || profile?.role === 'manager'
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false)
   return (
     <div className="h-screen flex bg-paper text-ink font-body overflow-hidden">
       <aside className="w-60 shrink-0 bg-ink text-paper flex flex-col h-full overflow-y-auto">
@@ -49,7 +50,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
         <div className="px-5 py-4 border-t border-white/10 text-xs text-paper/60">
           <div className="text-paper/90">{profile?.full_name}</div>
           <div className="capitalize mb-3">{profile?.role}</div>
-          <button onClick={onSignOut} className="underline hover:text-white">Sign out</button>
+          <button onClick={() => setConfirmingSignOut(true)} className="underline hover:text-white">Sign out</button>
         </div>
       </aside>
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
@@ -57,6 +58,28 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
           {children}
         </div>
       </main>
+
+      {confirmingSignOut && (
+        <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-surface rounded-lg shadow-xl w-full max-w-sm p-6">
+            <h2 className="font-display text-lg mb-2">Sign out?</h2>
+            <p className="text-sm text-muted mb-6">
+              You'll need to sign in again to access the Asset Registry System.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmingSignOut(false)} className="px-4 py-2 text-sm text-muted hover:text-ink">
+                Cancel
+              </button>
+              <button
+                onClick={() => { setConfirmingSignOut(false); onSignOut() }}
+                className="px-4 py-2 text-sm bg-danger text-paper rounded hover:bg-danger/90"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
