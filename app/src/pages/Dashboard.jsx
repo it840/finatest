@@ -88,17 +88,20 @@ export default function Dashboard({ setPage, profile }) {
   const { currentPropertyId, currentProperty } = useProperty()
   const [rows, setRows] = useState([])
   const [activity, setActivity] = useState([])
+  const [pmsLog, setPmsLog] = useState([])
   const [loading, setLoading] = useState(true)
   const canWrite = profile?.role === 'admin' || profile?.role === 'manager'
 
   useEffect(() => {
     (async () => {
-      const [a, log] = await Promise.all([
+      const [a, log, pms] = await Promise.all([
         supabase.from('assets_computed').select('*'),
         supabase.from('activity_log_computed').select('*').order('created_at', { ascending: false }).limit(6),
+        supabase.from('maintenance_log_computed').select('*'),
       ])
       setRows(a.data || [])
       setActivity(log.data || [])
+      setPmsLog(pms.data || [])
       setLoading(false)
     })()
   }, [])
@@ -106,6 +109,9 @@ export default function Dashboard({ setPage, profile }) {
   if (loading) return <div className="text-muted text-sm">Loading dashboard…</div>
 
   const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
+  const scopedPms = currentPropertyId === 'all' ? pmsLog : pmsLog.filter(r => r.property_id === currentPropertyId)
+  const pmsOverdue = scopedPms.filter(r => r.pms_status === 'OVERDUE').length
+  const pmsScheduled = scopedPms.filter(r => ['SCHEDULED', 'DUE', 'IN PROGRESS'].includes(r.pms_status)).length
   const today = todayISO()
 
   const disposedCount = scoped.filter(r => Number(r.disposal_qty) > 0).length
@@ -189,6 +195,7 @@ export default function Dashboard({ setPage, profile }) {
             <QuickAction iconKey="plus" onClick={() => setPage('assets')}>Add Asset</QuickAction>
             <QuickAction iconKey="swap" onClick={() => setPage('movement')}>Log Movement</QuickAction>
             <QuickAction iconKey="check" onClick={() => setPage('physical')}>Log Count</QuickAction>
+            <QuickAction iconKey="maintenance" onClick={() => setPage('maintenance')}>Log Maintenance</QuickAction>
           </div>
         )}
       </div>
@@ -211,6 +218,11 @@ export default function Dashboard({ setPage, profile }) {
         <Stat iconKey="standby" label="Standby / Spare" value={standby} />
         <Stat iconKey="warranty" label="Warranty Overdue" value={warrantyOverdue.length} tone={warrantyOverdue.length ? TONE.danger : undefined} />
         <Stat iconKey="due" label="Maintenance Due Today" value={maintenanceDueToday.length} tone={maintenanceDueToday.length ? TONE.gold : undefined} />
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        <Stat iconKey="maintenance" label="PMS Scheduled / In Progress" value={pmsScheduled} tone={pmsScheduled ? TONE.gold : undefined} />
+        <Stat iconKey="maintenance" label="PMS Overdue" value={pmsOverdue} tone={pmsOverdue ? TONE.danger : undefined} />
       </div>
 
       <Panel title="Assets Added — Last 8 Weeks">
