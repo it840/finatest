@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
+import { useLookups } from '../lib/useLookups'
 import Pagination from '../components/Pagination'
+import AssetForm from '../components/AssetForm'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
@@ -9,7 +11,9 @@ const EMPTY = { asset_id: '', qty: '', unit_cost: '', supplier: '', acquisition_
 
 export default function PurchaseLog({ profile }) {
   const canWrite = profile?.role === 'admin' || profile?.role === 'manager'
-  const { currentPropertyId, currentProperty } = useProperty()
+  const { currentPropertyId, currentProperty, properties } = useProperty()
+  const { lookups, loading: lookupsLoading } = useLookups()
+  const [showAssetForm, setShowAssetForm] = useState(false)
   const [rows, setRows] = useState([])
   const [assets, setAssets] = useState([])
   const [acquisitionTypes, setAcquisitionTypes] = useState([])
@@ -74,6 +78,15 @@ export default function PurchaseLog({ profile }) {
         {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Record restocks and additional-quantity purchases. Each entry adds to the asset's Registered Qty.
       </p>
       <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} purchases shown</p>
+
+      {canWrite && (
+        <div className="flex justify-end mb-4">
+          <button onClick={() => setShowAssetForm(true)}
+            className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90">
+            Add Asset
+          </button>
+        </div>
+      )}
 
       {canWrite ? (
         <form onSubmit={submit} className="border border-hairline bg-surface rounded p-5 mb-8 grid grid-cols-3 gap-4 items-end">
@@ -154,6 +167,16 @@ export default function PurchaseLog({ profile }) {
       </div>
 
       <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={filteredRows.length} />
+
+      {showAssetForm && !lookupsLoading && (
+        <AssetForm
+          lookups={lookups}
+          properties={properties}
+          defaultPropertyId={currentPropertyId}
+          onCancel={() => setShowAssetForm(false)}
+          onSave={() => { setShowAssetForm(false); load() }}
+        />
+      )}
     </div>
   )
 }
