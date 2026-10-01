@@ -193,7 +193,7 @@ export default function Dashboard({ setPage, profile }) {
         </div>
         {canWrite && setPage && (
           <div className="flex gap-2 flex-wrap">
-            <QuickAction iconKey="plus" onClick={() => setPage('assets')}>Add Asset</QuickAction>
+            <QuickAction iconKey="plus" onClick={() => setPage('purchase')}>Add Asset</QuickAction>
             <QuickAction iconKey="swap" onClick={() => setPage('movement')}>Log Movement</QuickAction>
             <QuickAction iconKey="check" onClick={() => setPage('physical')}>Log Count</QuickAction>
             <QuickAction iconKey="maintenance" onClick={() => setPage('maintenance')}>Log Maintenance</QuickAction>
