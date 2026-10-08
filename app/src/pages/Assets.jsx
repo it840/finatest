@@ -6,6 +6,7 @@ import Pagination from '../components/Pagination'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
 
+function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
 function buildQrUrl(a) {
@@ -258,7 +259,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Property', 'Name', 'Category', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Remaining', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -270,6 +271,9 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{qty(r.registered_qty)}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{qty(r.disposal_qty)}</td>
+                <td className={`px-3 py-2 whitespace-nowrap font-medium ${Number(r.remaining_qty) <= 0 ? 'text-danger' : ''}`}>{qty(r.remaining_qty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.location}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
@@ -286,7 +290,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={12} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={15} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
         </table>
