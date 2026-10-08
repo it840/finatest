@@ -4,6 +4,7 @@ import AccountPanel from './AccountPanel'
 import ImportExportPanel from './ImportExportPanel'
 import { useProperty } from '../lib/PropertyContext'
 import { useLookups } from '../lib/useLookups'
+import { forProperty, withCurrent } from '../lib/propertyScope'
 
 // supabase-js only gives a generic "non-2xx status code" message on function errors;
 // the actual reason is in the response body, so pull it out for a useful message.
@@ -70,7 +71,7 @@ function AddUserForm({ onCancel, onCreated }) {
           <span className="block text-xs text-muted mb-1">Department</span>
           <select value={form.department} onChange={set('department')} className="input">
             <option value="">—</option>
-            {lookups?.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+            {withCurrent(forProperty(lookups?.departments, form.property_id), form.department).map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </label>
         <label className="block">
@@ -145,7 +146,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
           <span className="block text-xs text-muted mb-1">Department</span>
           <select value={department} onChange={e => setDepartment(e.target.value)} className="input">
             <option value="">—</option>
-            {lookups?.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+            {withCurrent(forProperty(lookups?.departments, propertyId), department).map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
         </label>
         <label className="block">
@@ -264,6 +265,9 @@ function UsersPanel({ currentUserId }) {
 }
 
 function LookupPanel({ table, label }) {
+  const { properties } = useProperty()
+  const scoped = table === 'locations' || table === 'departments'
+  const [propId, setPropId] = useState('')
   const [items, setItems] = useState([])
   const [value, setValue] = useState('')
   const [loading, setLoading] = useState(true)
@@ -281,7 +285,9 @@ function LookupPanel({ table, label }) {
     e.preventDefault()
     setError('')
     if (!value.trim()) return
-    const { error } = await supabase.from(table).insert({ name: value.trim() })
+    const row = { name: value.trim() }
+    if (scoped && propId) row.property_id = Number(propId)
+    const { error } = await supabase.from(table).insert(row)
     if (error) { setError(error.message); return }
     setValue('')
     load()
@@ -296,6 +302,12 @@ function LookupPanel({ table, label }) {
     <div className="border border-hairline bg-surface rounded p-4">
       <h3 className="font-medium text-sm mb-3">{label}</h3>
       <form onSubmit={add} className="flex gap-2 mb-3">
+        {scoped && (
+          <select value={propId} onChange={e => setPropId(e.target.value)} className="input w-auto" title="Which property this belongs to">
+            <option value="">All properties</option>
+            {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        )}
         <input value={value} onChange={e => setValue(e.target.value)} placeholder={`Add ${label.toLowerCase().replace(/s$/, '')}…`} className="input" />
         <button className="px-3 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap">Add</button>
       </form>
@@ -304,7 +316,12 @@ function LookupPanel({ table, label }) {
         <ul className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
           {items.map(i => (
             <li key={i.id} className="flex justify-between items-center text-sm px-2 py-1 rounded hover:bg-hairline/20">
-              <span>{i.name}</span>
+              <span>
+                {i.name}
+                {scoped && (
+                  <span className="text-xs text-muted"> — {properties.find(p => p.id === i.property_id)?.name || 'All properties'}</span>
+                )}
+              </span>
               <button onClick={() => remove(i.id)} className="text-xs text-danger underline">Remove</button>
             </li>
           ))}

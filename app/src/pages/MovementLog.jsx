@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { forProperty } from '../lib/propertyScope'
 
 export default function MovementLog() {
   const { currentPropertyId, currentProperty } = useProperty()
@@ -60,7 +61,7 @@ export default function MovementLog() {
           className="input flex-1 min-w-[200px]" />
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
           <option value="">All locations</option>
-          {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+          {forProperty(locations, currentPropertyId).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
         </select>
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="input w-auto">
           <option value="">All types</option>

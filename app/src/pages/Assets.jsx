@@ -4,6 +4,7 @@ import { useLookups } from '../lib/useLookups'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
 import AssetForm from '../components/AssetForm'
+import { forProperty } from '../lib/propertyScope'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
@@ -245,7 +246,7 @@ export default function Assets({ profile }) {
         </select>
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
           <option value="">All locations</option>
-          {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+          {forProperty(lookups.locations, currentPropertyId).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
         </select>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
           <option value="">All statuses</option>

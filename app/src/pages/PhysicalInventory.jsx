@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { forProperty, withCurrent } from '../lib/propertyScope'
 
 const EMPTY = { asset_id: '', actual_qty: '', actual_location: '', inventory_status: '', condition: '', remarks: '' }
 
@@ -108,7 +109,7 @@ export default function PhysicalInventory({ profile }) {
           <span className="block text-xs text-muted mb-1">Actual Location</span>
           <select required value={form.actual_location} onChange={e => setForm(f => ({ ...f, actual_location: e.target.value }))} className="input">
             <option value="">—</option>
-            {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+            {withCurrent(forProperty(locations, selectedAsset?.property_id ?? currentPropertyId), form.actual_location).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
           </select>
         </label>
         <label className="block">
@@ -142,7 +143,7 @@ export default function PhysicalInventory({ profile }) {
           className="input flex-1 min-w-[200px]" />
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
           <option value="">All locations</option>
-          {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+          {forProperty(locations, currentPropertyId).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
         </select>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
           <option value="">All statuses</option>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { forProperty, withCurrent } from '../lib/propertyScope'
 
 export const WRITABLE_FIELDS = [
   'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
@@ -44,6 +45,25 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
   )
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  // locations and departments are limited to the selected property
+  const locationOptions = withCurrent(forProperty(lookups.locations, form.property_id), form.location)
+  const actualLocationOptions = withCurrent(forProperty(lookups.locations, form.property_id), form.actual_location)
+  const departmentOptions = withCurrent(forProperty(lookups.departments, form.property_id), form.department)
+
+  const changeProperty = (e) => {
+    const pid = e.target.value ? Number(e.target.value) : null
+    setForm(f => {
+      const ok = (list, v) => !v || forProperty(list, pid).some(i => i.name === v)
+      return {
+        ...f,
+        property_id: pid,
+        location: ok(lookups.locations, f.location) ? f.location : '',
+        actual_location: ok(lookups.locations, f.actual_location) ? f.actual_location : '',
+        department: ok(lookups.departments, f.department) ? f.department : '',
+      }
+    })
+  }
 
   const onPickPhoto = (e) => {
     const file = e.target.files?.[0]
@@ -100,7 +120,7 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
         <div className="grid grid-cols-3 gap-4">
           <Field label="Asset Name"><input required value={form.asset_name} onChange={set('asset_name')} className="input" /></Field>
           <Field label="Property">
-            <select required value={form.property_id ?? ''} onChange={e => setForm(f => ({ ...f, property_id: e.target.value ? Number(e.target.value) : null }))} className="input">
+            <select required value={form.property_id ?? ''} onChange={changeProperty} className="input">
               <option value="">—</option>
               {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -144,19 +164,19 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
           <Field label="Location (Home Base)">
             <select value={form.location} onChange={set('location')} className="input">
               <option value="">—</option>
-              {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+              {locationOptions.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
             </select>
           </Field>
           <Field label="Actual Location (Current)">
             <select value={form.actual_location} onChange={set('actual_location')} className="input">
               <option value="">—</option>
-              {lookups.locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+              {actualLocationOptions.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
             </select>
           </Field>
           <Field label="Department">
             <select value={form.department} onChange={set('department')} className="input">
               <option value="">—</option>
-              {lookups.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              {departmentOptions.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
             </select>
           </Field>
           <Field label="Assigned To">
