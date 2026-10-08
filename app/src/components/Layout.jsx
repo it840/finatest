@@ -4,11 +4,11 @@ import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, Log
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', Icon: DashboardIcon },
-  { key: 'assets', label: 'Asset Database', Icon: AssetsIcon },
+  { key: 'purchase', label: 'Purchase Log', Icon: PurchaseIcon },
   { key: 'physical', label: 'Physical Inventory', Icon: PhysicalIcon },
   { key: 'movement', label: 'Movement Log', Icon: MovementIcon },
-  { key: 'purchase', label: 'Purchase Log', Icon: PurchaseIcon },
   { key: 'disposal', label: 'Disposal Log', Icon: DisposalIcon },
+  { key: 'assets', label: 'Asset Database', Icon: AssetsIcon },
   { key: 'maintenance', label: 'Maintenance (PMS)', Icon: MaintenanceIcon },
   { key: 'reports', label: 'Reports', Icon: ReportsIcon },
   { key: 'log', label: 'Log History', Icon: LogHistoryIcon, managerUp: true },
