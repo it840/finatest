@@ -74,23 +74,12 @@ function EmptyRow({ children }) {
   return <div className="text-xs text-muted py-4 text-center">{children}</div>
 }
 
-function QuickAction({ onClick, children, iconKey }) {
-  return (
-    <button onClick={onClick}
-      className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-md border border-hairline bg-surface hover:bg-hairline/20 transition-colors">
-      <span className="text-gold">{ICONS[iconKey]}</span>
-      {children}
-    </button>
-  )
-}
-
 export default function Dashboard({ setPage, profile }) {
   const { currentPropertyId, currentProperty } = useProperty()
   const [rows, setRows] = useState([])
   const [activity, setActivity] = useState([])
   const [pmsLog, setPmsLog] = useState([])
   const [loading, setLoading] = useState(true)
-  const canWrite = profile?.role === 'admin' || profile?.role === 'manager'
 
   useEffect(() => {
     (async () => {
@@ -191,14 +180,6 @@ export default function Dashboard({ setPage, profile }) {
             {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Live totals as of {today}.
           </p>
         </div>
-        {canWrite && setPage && (
-          <div className="flex gap-2 flex-wrap">
-            <QuickAction iconKey="plus" onClick={() => setPage('purchase')}>Add Asset</QuickAction>
-            <QuickAction iconKey="swap" onClick={() => setPage('movement')}>Log Movement</QuickAction>
-            <QuickAction iconKey="check" onClick={() => setPage('physical')}>Log Count</QuickAction>
-            <QuickAction iconKey="maintenance" onClick={() => setPage('maintenance')}>Log Maintenance</QuickAction>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">
