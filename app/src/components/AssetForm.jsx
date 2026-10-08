@@ -196,14 +196,19 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
           <Field label="Useful Life (years)"><input type="number" step="0.1" value={form.useful_life_years ?? ''} onChange={set('useful_life_years')} className="input" /></Field>
           <Field label="Registered Qty"><input type="number" step="0.01" value={form.registered_qty ?? ''} onChange={set('registered_qty')} className="input" /></Field>
 
-          <Field label="Disposal Qty"><input type="number" step="0.01" value={form.disposal_qty ?? ''} onChange={set('disposal_qty')} className="input" /></Field>
-          <Field label="Disposal Date"><input type="date" value={form.disposal_date || ''} onChange={set('disposal_date')} className="input" /></Field>
-          <Field label="Disposal Reason">
-            <select value={form.disposal_reason} onChange={set('disposal_reason')} className="input">
-              <option value="">—</option>
-              {lookups.disposal_reasons.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-            </select>
-          </Field>
+          {/* Disposals for new assets are recorded in the Disposal Log, so these only show when editing */}
+          {initial?.id && (
+            <>
+            <Field label="Disposal Qty"><input type="number" step="0.01" value={form.disposal_qty ?? ''} onChange={set('disposal_qty')} className="input" /></Field>
+            <Field label="Disposal Date"><input type="date" value={form.disposal_date || ''} onChange={set('disposal_date')} className="input" /></Field>
+            <Field label="Disposal Reason">
+              <select value={form.disposal_reason} onChange={set('disposal_reason')} className="input">
+                <option value="">—</option>
+                {lookups.disposal_reasons.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </select>
+            </Field>
+            </>
+          )}
 
           <div className="col-span-3">
             <Field label="Remarks"><textarea value={form.remarks} onChange={set('remarks')} className="input" rows={2} /></Field>
