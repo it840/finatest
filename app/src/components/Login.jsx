@@ -20,20 +20,20 @@ function ArrowIcon() {
 
 function BrandPanel() {
   return (
-    <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-between bg-ink text-paper px-12 py-14 overflow-hidden">
+    <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-between bg-sage-bg text-sage-text border-r border-sage-line px-12 py-14 overflow-hidden">
       {/* decorative concentric arcs, echoing the sunburst mark */}
-      <svg className="absolute -right-32 -top-32 w-[520px] h-[520px] opacity-[0.08]" viewBox="0 0 200 200" fill="none">
-        <circle cx="100" cy="100" r="40" stroke="#B8902E" strokeWidth="1" />
-        <circle cx="100" cy="100" r="70" stroke="#B8902E" strokeWidth="1" />
-        <circle cx="100" cy="100" r="100" stroke="#B8902E" strokeWidth="1" />
+      <svg className="absolute -right-32 -top-32 w-[520px] h-[520px] opacity-[0.22]" viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="40" stroke="#1F6B4E" strokeWidth="1" />
+        <circle cx="100" cy="100" r="70" stroke="#1F6B4E" strokeWidth="1" />
+        <circle cx="100" cy="100" r="100" stroke="#1F6B4E" strokeWidth="1" />
       </svg>
-      <svg className="absolute -left-24 bottom-0 w-96 h-96 opacity-[0.06]" viewBox="0 0 200 200" fill="none">
-        <circle cx="100" cy="100" r="60" stroke="#F6F4EE" strokeWidth="1" />
-        <circle cx="100" cy="100" r="90" stroke="#F6F4EE" strokeWidth="1" />
+      <svg className="absolute -left-24 bottom-0 w-96 h-96 opacity-[0.18]" viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="60" stroke="#1F6B4E" strokeWidth="1" />
+        <circle cx="100" cy="100" r="90" stroke="#1F6B4E" strokeWidth="1" />
       </svg>
 
       <div className="relative flex items-center gap-3">
-        <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-10 w-10 rounded-full bg-paper object-contain p-1" />
+        <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-10 w-10 rounded-full bg-white object-contain p-1 border border-sage-line" />
         <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-10 w-10 rounded-full object-contain" />
       </div>
 
@@ -41,15 +41,15 @@ function BrandPanel() {
         <div className="font-display text-4xl leading-[1.15] mb-5 max-w-sm">
           Every asset,<br/>accounted for.
         </div>
-        <p className="text-paper/70 text-sm max-w-xs leading-relaxed">
+        <p className="text-sage-muted text-sm max-w-xs leading-relaxed">
           One registry for every property — track what you own, where it lives,
           and what condition it's in, from acquisition to disposal.
         </p>
       </div>
 
-      <div className="relative flex items-center gap-2 text-xs text-paper/50">
+      <div className="relative flex items-center gap-2 text-xs text-sage-muted">
         <span>Virgin Beach Resort</span>
-        <span className="w-1 h-1 rounded-full bg-paper/30" />
+        <span className="w-1 h-1 rounded-full bg-sage-muted/50" />
         <span>Z Hostel</span>
       </div>
     </div>
