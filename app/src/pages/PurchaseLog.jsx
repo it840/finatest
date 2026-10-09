@@ -5,6 +5,8 @@ import { useLookups } from '../lib/useLookups'
 import Pagination from '../components/Pagination'
 import AssetForm from '../components/AssetForm'
 
+function num(n) { return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
+function peso2(n) { return '₱' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
 export default function PurchaseLog({ profile }) {
@@ -29,9 +31,18 @@ export default function PurchaseLog({ profile }) {
 
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
-  const filteredRows = scopedRows.filter(r =>
-    !query || [r.asset_code, r.asset_name, r.supplier].filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
-  )
+  // the search box matches every column: date, asset, qty, unit cost, amount, supplier, type, remarks, logged by
+  const searchText = (r) => [
+    r.purchase_date, r.asset_code, r.asset_name, r.qty, num(r.qty), r.unit_cost, peso(r.unit_cost),
+    r.amount, peso(r.amount), num(r.amount), r.supplier, r.acquisition_type, r.remarks, r.logged_by_name,
+  ].filter(v => v !== null && v !== undefined && v !== '').join(' ').toLowerCase()
+
+  const filteredRows = scopedRows.filter(r => !query || searchText(r).includes(query.trim().toLowerCase()))
+
+  // totals cover every filtered entry, not just the current page
+  const totalQty = filteredRows.reduce((sum, r) => sum + Number(r.qty || 0), 0)
+  const totalAmount = filteredRows.reduce((sum, r) => sum + Number(r.amount || 0), 0)
+  const avgUnitCost = totalQty > 0 ? totalAmount / totalQty : 0
 
   useEffect(() => { setPage(0) }, [currentPropertyId, query])
   const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
@@ -54,7 +65,7 @@ export default function PurchaseLog({ profile }) {
       </p>
       <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} purchases shown</p>
 
-      <input placeholder="Search purchases…" value={query} onChange={e => setQuery(e.target.value)} className="input mb-4 max-w-md" />
+      <input placeholder="Search date, asset, qty, cost, amount, supplier, type, remarks, logged by…" value={query} onChange={e => setQuery(e.target.value)} className="input mb-4 max-w-xl" />
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
@@ -81,6 +92,17 @@ export default function PurchaseLog({ profile }) {
             ))}
             {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No purchases logged yet.</td></tr>}
           </tbody>
+          {filteredRows.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{num(totalQty)}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Total amount ÷ total qty">{peso2(avgUnitCost)} <span className="text-xs font-normal text-muted">avg</span></td>
+                <td className="px-3 py-2 whitespace-nowrap">{peso2(totalAmount)}</td>
+                <td className="px-3 py-2" colSpan={4}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
