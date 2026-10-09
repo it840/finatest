@@ -125,7 +125,7 @@ export default function DisposalLog({ profile }) {
         </label>
         <div>
           {error && <div className="text-sm text-danger mb-2">{error}</div>}
-          <button disabled={saving} className="w-full px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+          <button disabled={saving} className="w-full px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
             {saving ? 'Saving…' : 'Log Disposal'}
           </button>
         </div>
@@ -140,7 +140,7 @@ export default function DisposalLog({ profile }) {
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
-          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
+          <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
               {['Date', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Reason', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
@@ -164,7 +164,7 @@ export default function DisposalLog({ profile }) {
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
-              <tr className="border-t-2 border-sage-accent bg-sage-bg font-medium">
+              <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalQty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Total amount ÷ total qty">{peso2(avgUnitCost)} <span className="text-xs font-normal text-muted">avg</span></td>

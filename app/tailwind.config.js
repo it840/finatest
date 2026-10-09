@@ -7,23 +7,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#142B27",
-        paper: "#F4F8F5",
+        ink: "#24221E",
+        paper: "#F8F7F5",
         surface: "#FFFFFF",
-        hairline: "#D2DFD6",
-        muted: "#4F6A60",
+        hairline: "#DAD8D2",
+        muted: "#66625A",
         gold: "#B8902E",
         success: "#3D7A5B",
         warning: "#B8902E",
         danger: "#A83B32",
-        sage: {
-          bg: "#EDF3EF",
-          line: "#D2DFD6",
-          text: "#14302A",
-          muted: "#4F6A60",
-          hover: "#E1ECE5",
-          active: "#D3E6DA",
-          accent: "#1F6B4E",
+        theme: {
+          bg: "#F0EFEC",
+          line: "#DAD8D2",
+          text: "#24221E",
+          muted: "#66625A",
+          hover: "#E8E6E1",
+          active: "#E0DDD5",
+          accent: "#3A3733",
         },
       },
       fontFamily: {

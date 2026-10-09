@@ -266,7 +266,7 @@ export default function Assets({ profile }) {
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
-          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
+          <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
               {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Remaining', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
@@ -290,7 +290,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.current_asset_value)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <button onClick={() => setViewingAsset(r)} className="text-sage-accent underline">View</button>
+                  <button onClick={() => setViewingAsset(r)} className="text-theme-accent underline">View</button>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap space-x-3">
                   {canWrite && <button onClick={() => { setEditing(r); setShowForm(true) }} className="text-ink underline">Edit</button>}
@@ -304,7 +304,7 @@ export default function Assets({ profile }) {
           </tbody>
           {filtered.length > 0 && (
             <tfoot>
-              <tr className="border-t-2 border-sage-accent bg-sage-bg font-medium">
+              <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={4}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>

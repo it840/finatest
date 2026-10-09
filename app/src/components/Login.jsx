@@ -20,20 +20,20 @@ function ArrowIcon() {
 
 function BrandPanel() {
   return (
-    <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-between bg-sage-bg text-sage-text border-r border-sage-line px-12 py-14 overflow-hidden">
+    <div className="relative hidden lg:flex lg:w-[44%] flex-col justify-between bg-theme-bg text-theme-text border-r border-theme-line px-12 py-14 overflow-hidden">
       {/* decorative concentric arcs, echoing the sunburst mark */}
       <svg className="absolute -right-32 -top-32 w-[520px] h-[520px] opacity-[0.22]" viewBox="0 0 200 200" fill="none">
-        <circle cx="100" cy="100" r="40" stroke="#1F6B4E" strokeWidth="1" />
-        <circle cx="100" cy="100" r="70" stroke="#1F6B4E" strokeWidth="1" />
-        <circle cx="100" cy="100" r="100" stroke="#1F6B4E" strokeWidth="1" />
+        <circle cx="100" cy="100" r="40" stroke="#3A3733" strokeWidth="1" />
+        <circle cx="100" cy="100" r="70" stroke="#3A3733" strokeWidth="1" />
+        <circle cx="100" cy="100" r="100" stroke="#3A3733" strokeWidth="1" />
       </svg>
       <svg className="absolute -left-24 bottom-0 w-96 h-96 opacity-[0.18]" viewBox="0 0 200 200" fill="none">
-        <circle cx="100" cy="100" r="60" stroke="#1F6B4E" strokeWidth="1" />
-        <circle cx="100" cy="100" r="90" stroke="#1F6B4E" strokeWidth="1" />
+        <circle cx="100" cy="100" r="60" stroke="#3A3733" strokeWidth="1" />
+        <circle cx="100" cy="100" r="90" stroke="#3A3733" strokeWidth="1" />
       </svg>
 
       <div className="relative flex items-center gap-3">
-        <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-10 w-10 rounded-full bg-white object-contain p-1 border border-sage-line" />
+        <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-10 w-10 rounded-full bg-white object-contain p-1 border border-theme-line" />
         <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-10 w-10 rounded-full object-contain" />
       </div>
 
@@ -41,15 +41,15 @@ function BrandPanel() {
         <div className="font-display text-4xl leading-[1.15] mb-5 max-w-sm">
           Every asset,<br/>accounted for.
         </div>
-        <p className="text-sage-muted text-sm max-w-xs leading-relaxed">
+        <p className="text-theme-muted text-sm max-w-xs leading-relaxed">
           One registry for every property — track what you own, where it lives,
           and what condition it's in, from acquisition to disposal.
         </p>
       </div>
 
-      <div className="relative flex items-center gap-2 text-xs text-sage-muted">
+      <div className="relative flex items-center gap-2 text-xs text-theme-muted">
         <span>Virgin Beach Resort</span>
-        <span className="w-1 h-1 rounded-full bg-sage-muted/50" />
+        <span className="w-1 h-1 rounded-full bg-theme-muted/50" />
         <span>Z Hostel</span>
       </div>
     </div>
@@ -99,7 +99,7 @@ export default function Login() {
         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.4]" aria-hidden="true">
           <defs>
             <pattern id="login-dots" width="22" height="22" patternUnits="userSpaceOnUse">
-              <circle cx="1.5" cy="1.5" r="1.5" fill="#142B27" fillOpacity="0.06" />
+              <circle cx="1.5" cy="1.5" r="1.5" fill="#24221E" fillOpacity="0.06" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#login-dots)" />
@@ -114,7 +114,7 @@ export default function Login() {
             </div>
 
             <div className="mb-8">
-              <div className="w-8 h-[3px] bg-sage-accent rounded-full mb-4" />
+              <div className="w-8 h-[3px] bg-theme-accent rounded-full mb-4" />
               <div className="font-display text-3xl text-ink">
                 {mode === 'signin' ? 'Welcome back' : 'Create your account'}
               </div>
@@ -130,20 +130,20 @@ export default function Login() {
                     <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">FULL NAME</label>
                     <input value={fullName} onChange={e => setFullName(e.target.value)} required
                       className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                                 focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
+                                 focus:outline-none focus:border-theme-accent transition-colors disabled:opacity-50" />
                   </div>
                 )}
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">EMAIL</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                               focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
+                               focus:outline-none focus:border-theme-accent transition-colors disabled:opacity-50" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">PASSWORD</label>
                   <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
                     className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                               focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
+                               focus:outline-none focus:border-theme-accent transition-colors disabled:opacity-50" />
                 </div>
               </fieldset>
 
@@ -153,13 +153,13 @@ export default function Login() {
               <div className="pt-1">
                 <button disabled={busy} type="submit"
                   className="group w-full flex items-center justify-center gap-2 rounded-t py-3 text-sm font-medium text-white
-                             bg-sage-accent hover:bg-[#195A41]
+                             bg-theme-accent hover:bg-[#2B2926]
                              transition-all duration-200 ease-out
                              shadow-[0_1px_2px_rgba(20,43,39,0.15)]
                              hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
                              active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
                              disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
-                             focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                   style={busy ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}>
                   {busy ? <Spinner /> : null}
                   <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>

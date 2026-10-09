@@ -239,7 +239,7 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
 
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
-          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
             {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : 'Save Asset'}
           </button>
         </div>

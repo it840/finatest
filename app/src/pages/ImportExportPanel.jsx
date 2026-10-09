@@ -69,7 +69,7 @@ function ExportBlock({ title, description, table, filename }) {
       <h3 className="font-medium text-sm mb-1">{title}</h3>
       <p className="text-xs text-muted mb-3">{description}</p>
       <div className="flex gap-2">
-        <button onClick={() => run('csv')} disabled={!!busy} className="px-3 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+        <button onClick={() => run('csv')} disabled={!!busy} className="px-3 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
           {busy === 'csv' ? 'Exporting…' : 'Export CSV'}
         </button>
         <button onClick={() => run('xlsx')} disabled={!!busy} className="px-3 py-2 text-sm border border-hairline rounded hover:bg-hairline/20 disabled:opacity-50">
@@ -155,13 +155,13 @@ function ImportBlock() {
       </p>
       <div className="flex items-center gap-3 mb-2 flex-wrap">
         <button onClick={() => inputRef.current?.click()} disabled={busy}
-          className="px-3 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+          className="px-3 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
           {busy ? 'Importing…' : 'Choose File'}
         </button>
-        <button onClick={() => downloadTemplate('csv')} type="button" className="text-sm text-sage-accent underline">
+        <button onClick={() => downloadTemplate('csv')} type="button" className="text-sm text-theme-accent underline">
           CSV template
         </button>
-        <button onClick={() => downloadTemplate('xlsx')} type="button" className="text-sm text-sage-accent underline">
+        <button onClick={() => downloadTemplate('xlsx')} type="button" className="text-sm text-theme-accent underline">
           Excel template
         </button>
         <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" onChange={onFile} className="hidden" />

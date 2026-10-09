@@ -83,14 +83,14 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
 
   return (
     <div className="h-screen flex bg-paper text-ink font-body overflow-hidden">
-      <aside className={`relative z-20 shrink-0 h-full flex flex-col bg-sage-bg border-r border-sage-line text-sage-text transition-[width] duration-200 ${collapsed ? 'w-[72px]' : 'w-64'}`}>
+      <aside className={`relative z-20 shrink-0 h-full flex flex-col bg-theme-bg border-r border-theme-line text-theme-text transition-[width] duration-200 ${collapsed ? 'w-[72px]' : 'w-64'}`}>
         <div className={collapsed ? 'px-3 pt-5 pb-3 flex justify-center' : 'px-5 pt-5 pb-3'}>
           {collapsed ? (
-            <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Asset Registry System" className="h-9 w-9 rounded-full bg-white object-contain p-1 border border-sage-line" />
+            <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Asset Registry System" className="h-9 w-9 rounded-full bg-white object-contain p-1 border border-theme-line" />
           ) : (
             <>
               <div className="flex items-center gap-3 mb-2">
-                <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-9 w-9 rounded-full bg-white object-contain p-1 border border-sage-line" />
+                <img src={`${import.meta.env.BASE_URL}virgin-logo.png`} alt="Virgin Beach Resort" className="h-9 w-9 rounded-full bg-white object-contain p-1 border border-theme-line" />
                 <img src={`${import.meta.env.BASE_URL}zhostel-logo.png`} alt="Z Hostel" className="h-9 w-9 rounded-full object-contain" />
               </div>
               <div className="font-display text-xl leading-tight">Asset Registry<br />System</div>
@@ -109,8 +109,8 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
             return (
               <div key={group.title}>
                 {collapsed
-                  ? <div className="mx-2 mt-3 mb-2 border-t border-sage-line" />
-                  : <div className="px-3 pt-4 pb-1.5 text-xs font-medium text-sage-muted">{group.title}</div>}
+                  ? <div className="mx-2 mt-3 mb-2 border-t border-theme-line" />
+                  : <div className="px-3 pt-4 pb-1.5 text-xs font-medium text-theme-muted">{group.title}</div>}
                 {keys.map(k => {
                   const n = NAV[k]
                   const active = page === k
@@ -123,10 +123,10 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
                       title={show ? `${n.label} — ${b.count} ${b.hint}` : n.label}
                       aria-current={active ? 'page' : undefined}
                       className={`relative w-full flex items-center gap-3 rounded-lg py-2.5 my-0.5 text-[15px] transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'} ${
-                        active ? 'bg-sage-active text-sage-text font-medium' : 'text-sage-text hover:bg-sage-hover'
+                        active ? 'bg-theme-active text-theme-text font-medium' : 'text-theme-text hover:bg-theme-hover'
                       }`}
                     >
-                      <span className={`[&_svg]:w-5 [&_svg]:h-5 flex-shrink-0 ${active ? 'text-sage-accent' : 'text-sage-muted'}`}><n.Icon /></span>
+                      <span className={`[&_svg]:w-5 [&_svg]:h-5 flex-shrink-0 ${active ? 'text-theme-accent' : 'text-theme-muted'}`}><n.Icon /></span>
                       {!collapsed && <span className="flex-1 truncate">{n.label}</span>}
                       {show && !collapsed && (
                         <span className={`text-xs font-medium rounded-full px-2 border ${b.tone === 'red' ? 'bg-[#FCEBEB] text-[#791F1F] border-[#E24B4A]' : 'bg-[#FAEEDA] text-[#633806] border-[#EF9F27]'}`}>
@@ -134,7 +134,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
                         </span>
                       )}
                       {show && collapsed && (
-                        <span className={`absolute top-1.5 right-3 h-2.5 w-2.5 rounded-full border-2 border-sage-bg ${b.tone === 'red' ? 'bg-[#E24B4A]' : 'bg-[#BA7517]'}`} />
+                        <span className={`absolute top-1.5 right-3 h-2.5 w-2.5 rounded-full border-2 border-theme-bg ${b.tone === 'red' ? 'bg-[#E24B4A]' : 'bg-[#BA7517]'}`} />
                       )}
                     </button>
                   )
@@ -144,12 +144,12 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
           })}
         </nav>
 
-        <div className="px-3 pt-2 pb-3 border-t border-sage-line">
+        <div className="px-3 pt-2 pb-3 border-t border-theme-line">
           <button
             onClick={toggleCollapsed}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`w-full flex items-center gap-3 rounded-lg py-2 mb-1 text-sm text-sage-muted hover:bg-sage-hover hover:text-sage-text transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
+            className={`w-full flex items-center gap-3 rounded-lg py-2 mb-1 text-sm text-theme-muted hover:bg-theme-hover hover:text-theme-text transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'}`}
           >
             <CollapseIcon collapsed={collapsed} />
             {!collapsed && <span>Collapse sidebar</span>}
@@ -158,10 +158,10 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
           <div className="relative" ref={menuRef}>
             {menuOpen && (
               <div className={`absolute z-30 w-56 bg-surface border border-hairline rounded-lg shadow-lg p-1 ${collapsed ? 'left-full bottom-0 ml-2' : 'left-0 bottom-full mb-2'}`}>
-                <button onClick={() => { setMenuOpen(false); setPage('settings') }} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-ink hover:bg-sage-hover text-left">
+                <button onClick={() => { setMenuOpen(false); setPage('settings') }} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-ink hover:bg-theme-hover text-left">
                   <UserIcon /> My account
                 </button>
-                <button onClick={() => { setMenuOpen(false); setConfirmingSignOut(true) }} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-ink hover:bg-sage-hover text-left">
+                <button onClick={() => { setMenuOpen(false); setConfirmingSignOut(true) }} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-ink hover:bg-theme-hover text-left">
                   <SignOutIcon /> Sign out
                 </button>
               </div>
@@ -171,17 +171,17 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               title={collapsed ? `${profile?.full_name || 'Profile'} — ${profile?.role || ''}` : undefined}
-              className={`w-full flex items-center gap-3 rounded-lg py-2 hover:bg-sage-hover transition-colors text-left ${collapsed ? 'justify-center px-0' : 'px-2'}`}
+              className={`w-full flex items-center gap-3 rounded-lg py-2 hover:bg-theme-hover transition-colors text-left ${collapsed ? 'justify-center px-0' : 'px-2'}`}
             >
-              <span className="h-9 w-9 rounded-full bg-sage-accent text-white flex items-center justify-center text-xs font-medium flex-shrink-0">{initials(profile?.full_name)}</span>
+              <span className="h-9 w-9 rounded-full bg-theme-accent text-white flex items-center justify-center text-xs font-medium flex-shrink-0">{initials(profile?.full_name)}</span>
               {!collapsed && (
                 <span className="flex-1 min-w-0 leading-tight">
                   <span className="block text-sm font-medium truncate">{profile?.full_name}</span>
-                  <span className="block text-xs text-sage-muted capitalize">{profile?.role}</span>
+                  <span className="block text-xs text-theme-muted capitalize">{profile?.role}</span>
                 </span>
               )}
               {!collapsed && (
-                <svg className="w-4 h-4 text-sage-muted flex-shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 12l4-4 4 4" /></svg>
+                <svg className="w-4 h-4 text-theme-muted flex-shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 12l4-4 4 4" /></svg>
               )}
             </button>
           </div>

@@ -26,13 +26,13 @@ export default function PropertySwitcher({ collapsed = false }) {
 
   if (isLocked) {
     return (
-      <div title={label} className={`w-full flex items-center gap-2 py-2 rounded-lg border border-sage-line bg-white text-left cursor-default ${collapsed ? 'justify-center px-0' : 'px-3'}`}>
+      <div title={label} className={`w-full flex items-center gap-2 py-2 rounded-lg border border-theme-line bg-white text-left cursor-default ${collapsed ? 'justify-center px-0' : 'px-3'}`}>
         {currentProperty?.logo_url ? (
           <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
         ) : (
-          <span className="h-5 w-5 rounded-full bg-sage-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">—</span>
+          <span className="h-5 w-5 rounded-full bg-theme-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">—</span>
         )}
-        {!collapsed && <span className="text-sm truncate flex-1 text-sage-text">{label}</span>}
+        {!collapsed && <span className="text-sm truncate flex-1 text-theme-text">{label}</span>}
       </div>
     )
   }
@@ -42,18 +42,18 @@ export default function PropertySwitcher({ collapsed = false }) {
       <button
         onClick={() => setOpen(o => !o)}
         title={label}
-        className={`w-full flex items-center gap-2 py-2 rounded-lg border border-sage-line bg-white hover:bg-sage-hover text-sage-text transition-colors text-left ${collapsed ? 'justify-center px-0' : 'px-3'}`}
+        className={`w-full flex items-center gap-2 py-2 rounded-lg border border-theme-line bg-white hover:bg-theme-hover text-theme-text transition-colors text-left ${collapsed ? 'justify-center px-0' : 'px-3'}`}
       >
         {currentProperty?.logo_url ? (
           <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
         ) : (
-          <span className="h-5 w-5 rounded-full bg-sage-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">
+          <span className="h-5 w-5 rounded-full bg-theme-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">
             {currentPropertyId === 'all' ? 'All' : '—'}
           </span>
         )}
         {!collapsed && <span className="text-sm font-medium truncate flex-1">{label}</span>}
         {!collapsed && (
-          <svg className={`w-3.5 h-3.5 flex-shrink-0 text-sage-muted transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+          <svg className={`w-3.5 h-3.5 flex-shrink-0 text-theme-muted transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
           </svg>
         )}
@@ -66,7 +66,7 @@ export default function PropertySwitcher({ collapsed = false }) {
             onClick={() => { selectProperty('all'); setOpen(false) }}
             className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hairline/30 ${currentPropertyId === 'all' ? 'bg-hairline/20' : ''}`}
           >
-            <span className="h-8 w-8 rounded-full bg-sage-accent text-white flex items-center justify-center text-xs flex-shrink-0">All</span>
+            <span className="h-8 w-8 rounded-full bg-theme-accent text-white flex items-center justify-center text-xs flex-shrink-0">All</span>
             <div>
               <div className="text-sm font-medium">All Properties</div>
               <div className="text-xs text-muted">View everything at once</div>

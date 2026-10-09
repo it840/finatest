@@ -76,7 +76,7 @@ export default function MovementLog() {
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
-          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
+          <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
               {['Date', 'Asset', 'Qty', 'Type', 'From', 'To', 'Reason', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
@@ -101,7 +101,7 @@ export default function MovementLog() {
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
-              <tr className="border-t-2 border-sage-accent bg-sage-bg font-medium">
+              <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'movement' : 'movements'}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title={`${entriesWithQty} of ${filteredRows.length} entries have a recorded quantity`}>{num(totalQty)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>

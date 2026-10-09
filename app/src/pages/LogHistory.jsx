@@ -205,8 +205,8 @@ export default function LogHistory() {
       <div className="flex gap-2 mb-6 border-b border-hairline flex-wrap">
         {[['all', 'All', null], ['assets', 'Assets', 'assets'], ['physical_inventory', 'Physical Inventory', 'physical_inventory'], ['movement_log', 'Movement Log', 'movement_log'], ['profiles', 'Users', 'profiles']].map(([key, label, iconKey]) => (
           <button key={key} onClick={() => setTableFilter(key)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${tableFilter === key ? 'border-sage-accent text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
-            {iconKey && <span className={tableFilter === key ? 'text-sage-accent' : ''}>{TABLE_ICONS[iconKey]}</span>}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${tableFilter === key ? 'border-theme-accent text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
+            {iconKey && <span className={tableFilter === key ? 'text-theme-accent' : ''}>{TABLE_ICONS[iconKey]}</span>}
             {label}
           </button>
         ))}
@@ -262,7 +262,7 @@ export default function LogHistory() {
                   <select
                     value={pageSize}
                     onChange={e => setPageSize(Number(e.target.value))}
-                    className="border border-hairline rounded px-2 py-1 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-sage-accent"
+                    className="border border-hairline rounded px-2 py-1 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-theme-accent"
                   >
                     {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>

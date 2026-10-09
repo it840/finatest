@@ -43,7 +43,7 @@ export default function AccountPanel({ profile, onProfileChange }) {
           <span className="block text-xs text-muted mb-1">Full name</span>
           <input value={fullName} onChange={e => setFullName(e.target.value)} className="input" />
         </label>
-        <button disabled={busy} className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+        <button disabled={busy} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
           Save Name
         </button>
       </form>
@@ -58,7 +58,7 @@ export default function AccountPanel({ profile, onProfileChange }) {
           <span className="block text-xs text-muted mb-1">Confirm new password</span>
           <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input" minLength={6} />
         </label>
-        <button disabled={busy} className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
+        <button disabled={busy} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
           Update Password
         </button>
       </form>
