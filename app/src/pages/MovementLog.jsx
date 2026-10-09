@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import { forProperty } from '../lib/propertyScope'
 
 export default function MovementLog() {
@@ -34,15 +35,19 @@ export default function MovementLog() {
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filteredRows = scopedRows.filter(r =>
-    (!query ||
-      [r.asset_code, r.asset_name, r.from_location, r.to_location, r.reason]
-        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
-    ) &&
+    (!query || matchesQuery(query, [
+      r.movement_date, r.asset_code, r.asset_name, r.qty, r.movement_type, r.from_location,
+      r.to_location, r.reason, r.remarks, r.authorized_by_name,
+    ])) &&
     (!locationFilter || r.to_location === locationFilter || r.from_location === locationFilter) &&
     (!typeFilter || r.movement_type === typeFilter)
   )
 
   useEffect(() => { setPage(0) }, [currentPropertyId, query, locationFilter, typeFilter])
+
+  // totals cover every filtered movement; older entries with no recorded qty add nothing
+  const totalQty = filteredRows.reduce((sum, r) => sum + Number(r.qty || 0), 0)
+  const entriesWithQty = filteredRows.filter(r => r.qty !== null && r.qty !== undefined).length
 
   const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -57,7 +62,7 @@ export default function MovementLog() {
       <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} movements shown</p>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input placeholder="Search movements…" value={query} onChange={e => setQuery(e.target.value)}
+        <input placeholder="Search any column…" value={query} onChange={e => setQuery(e.target.value)}
           className="input flex-1 min-w-[200px]" />
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
           <option value="">All locations</option>
@@ -94,6 +99,15 @@ export default function MovementLog() {
             ))}
             {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
           </tbody>
+          {filteredRows.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'movement' : 'movements'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title={`${entriesWithQty} of ${filteredRows.length} entries have a recorded quantity`}>{num(totalQty)}</td>
+                <td className="px-3 py-2" colSpan={6}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

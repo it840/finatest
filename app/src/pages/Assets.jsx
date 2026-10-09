@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useLookups } from '../lib/useLookups'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
 
@@ -208,16 +209,24 @@ export default function Assets({ profile }) {
   const scoped = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filtered = scoped.filter(r =>
-    (!query ||
-      [r.asset_code, r.asset_name, r.category, r.location, r.department, r.assigned_to, r.serial_number]
-        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
-    ) &&
+    (!query || matchesQuery(query, [
+      r.asset_code, r.property_name, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
+      r.registered_qty, r.disposal_qty, r.remaining_qty, r.location, r.actual_location, r.department,
+      r.assigned_to, r.status, r.condition, r.current_asset_value,
+    ])) &&
     (!categoryFilter || r.category === categoryFilter) &&
     (!locationFilter || r.location === locationFilter) &&
     (!statusFilter || r.status === statusFilter)
   )
 
   useEffect(() => { setPage(0) }, [query, categoryFilter, locationFilter, statusFilter, currentPropertyId])
+
+  // totals cover every filtered asset, not just the current page
+  const totalReg = filtered.reduce((sum, r) => sum + Number(r.registered_qty || 0), 0)
+  const totalDisposed = filtered.reduce((sum, r) => sum + Number(r.disposal_qty || 0), 0)
+  const totalRemaining = filtered.reduce((sum, r) => sum + Number(r.remaining_qty || 0), 0)
+  // current value is per unit, so the total is value x remaining qty
+  const totalValue = filtered.reduce((sum, r) => sum + Number(r.current_asset_value || 0) * Number(r.remaining_qty || 0), 0)
 
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -239,7 +248,7 @@ export default function Assets({ profile }) {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input placeholder="Search assets…" value={query} onChange={e => setQuery(e.target.value)}
+        <input placeholder="Search any column…" value={query} onChange={e => setQuery(e.target.value)}
           className="input flex-1 min-w-[200px]" />
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto">
           <option value="">All categories</option>
@@ -293,6 +302,19 @@ export default function Assets({ profile }) {
               <tr><td colSpan={15} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
+          {filtered.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={4}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{num(totalRemaining)}</td>
+                <td className="px-3 py-2" colSpan={5}></td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Current value × remaining qty">{peso2(totalValue)} <span className="text-xs font-normal text-muted">× qty</span></td>
+                <td className="px-3 py-2" colSpan={2}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

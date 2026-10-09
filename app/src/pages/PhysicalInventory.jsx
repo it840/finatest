@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import { forProperty, withCurrent } from '../lib/propertyScope'
 
 const EMPTY = { asset_id: '', actual_qty: '', actual_location: '', inventory_status: '', condition: '', remarks: '' }
@@ -48,15 +49,21 @@ export default function PhysicalInventory({ profile }) {
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filteredRows = scopedRows.filter(r =>
-    (!query ||
-      [r.asset_code, r.asset_name, r.actual_location, r.department, r.assigned_to]
-        .filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))
-    ) &&
+    (!query || matchesQuery(query, [
+      r.inventory_date, r.asset_code, r.asset_name, r.registered_qty, r.actual_qty, r.actual_location,
+      r.inventory_status, r.condition, r.discrepancy, r.department, r.assigned_to, r.remarks,
+    ])) &&
     (!locationFilter || r.actual_location === locationFilter) &&
     (!statusFilter || r.inventory_status === statusFilter)
   )
 
   useEffect(() => { setPage(0) }, [currentPropertyId, query, locationFilter, statusFilter])
+
+  // totals cover every filtered count, not just the current page
+  const totalRegistered = filteredRows.reduce((sum, r) => sum + Number(r.registered_qty || 0), 0)
+  const totalActual = filteredRows.reduce((sum, r) => sum + Number(r.actual_qty || 0), 0)
+  const netVariance = totalActual - totalRegistered
+  const withDiscrepancy = filteredRows.filter(r => r.discrepancy && r.discrepancy !== 'No Discrepancy').length
 
   const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -139,7 +146,7 @@ export default function PhysicalInventory({ profile }) {
       </form>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input placeholder="Search counts…" value={query} onChange={e => setQuery(e.target.value)}
+        <input placeholder="Search any column…" value={query} onChange={e => setQuery(e.target.value)}
           className="input flex-1 min-w-[200px]" />
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="input w-auto">
           <option value="">All locations</option>
@@ -175,6 +182,19 @@ export default function PhysicalInventory({ profile }) {
             ))}
             {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
           </tbody>
+          {filteredRows.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'count' : 'counts'}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{num(totalRegistered)}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{num(totalActual)}</td>
+                <td className="px-3 py-2" colSpan={3}></td>
+                <td className={`px-3 py-2 whitespace-nowrap ${withDiscrepancy ? 'text-danger' : 'text-success'}`}>
+                  {withDiscrepancy ? `${withDiscrepancy} with discrepancy · net ${netVariance > 0 ? '+' : ''}${num(netVariance)}` : 'No Discrepancy'}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

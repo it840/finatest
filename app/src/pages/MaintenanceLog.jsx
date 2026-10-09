@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
+import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
@@ -50,11 +51,20 @@ export default function MaintenanceLog({ profile }) {
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
   const filteredRows = scopedRows.filter(r =>
-    (!query || [r.asset_code, r.asset_name, r.technician, r.category, r.sub_category, r.brand, r.model, r.serial_number, r.department, r.assigned_to].filter(Boolean).some(v => v.toLowerCase().includes(query.toLowerCase()))) &&
+    (!query || matchesQuery(query, [
+      r.scheduled_date, r.asset_code, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
+      r.registered_location, r.actual_location, r.department, r.assigned_to, r.asset_status, r.condition,
+      r.last_maintenance, r.maintenance_frequency_days, r.maintenance_due, r.pms_status, r.maintenance_type,
+      r.technician, r.findings, r.maintenance_cost, r.remarks, r.logged_by_name,
+    ])) &&
     (!statusFilter || r.pms_status === statusFilter)
   )
 
   useEffect(() => { setPage(0) }, [currentPropertyId, query, statusFilter])
+  // totals cover every filtered entry, not just the current page
+  const totalCost = filteredRows.reduce((sum, r) => sum + Number(r.maintenance_cost || 0), 0)
+  const completedCount = filteredRows.filter(r => r.pms_status === 'COMPLETED').length
+
   const pageRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize)
 
   const submit = async (e) => {
@@ -160,7 +170,7 @@ export default function MaintenanceLog({ profile }) {
       )}
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input placeholder="Search maintenance entries…" value={query} onChange={e => setQuery(e.target.value)} className="input flex-1 min-w-[200px]" />
+        <input placeholder="Search any column…" value={query} onChange={e => setQuery(e.target.value)} className="input flex-1 min-w-[200px]" />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
           <option value="">All statuses</option>
           {statuses.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
@@ -205,8 +215,17 @@ export default function MaintenanceLog({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.logged_by_name}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={23} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={24} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
           </tbody>
+          {filteredRows.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={21}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed</td>
+                <td className="px-3 py-2 whitespace-nowrap">{peso2(totalCost)}</td>
+                <td className="px-3 py-2" colSpan={2}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
