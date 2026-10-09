@@ -1,0 +1,5 @@
+-- Every new asset (Purchase / Add Asset) now writes a Purchase Log entry automatically
+-- (trigger trg_asset_purchase_entry -> log_asset_purchase()). apply_purchase_to_asset() skips
+-- its qty top-up for these (app.purchase_sync flag) so Registered Qty isn't counted twice.
+-- Migration 33 back-filled one entry per existing asset for the quantity not already logged.
+-- Full function bodies are in the live database.

@@ -50,7 +50,7 @@ export default function PurchaseLog({ profile }) {
         )}
       </div>
       <p className="text-sm text-muted mb-1">
-        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Add newly purchased assets and review past purchases.
+        {currentPropertyId === 'all' ? 'All properties' : currentProperty?.name} · Every asset added here (or created before) appears below with its purchase details.
       </p>
       <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} purchases shown</p>
 
@@ -60,7 +60,7 @@ export default function PurchaseLog({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Supplier', 'Type', 'Logged By'].map(h => (
+              {['Date', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Supplier', 'Type', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -75,10 +75,11 @@ export default function PurchaseLog({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.amount)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.supplier}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.acquisition_type}</td>
+                <td className="px-3 py-2">{r.remarks}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.logged_by_name}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No purchases logged yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No purchases logged yet.</td></tr>}
           </tbody>
         </table>
       </div>
