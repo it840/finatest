@@ -55,7 +55,7 @@ export default function PurchaseLog({ profile }) {
         <h1 className="font-display text-2xl">Purchase Log</h1>
         {canWrite && (
           <button onClick={() => setShowAssetForm(true)}
-            className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90">
+            className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90">
             Purchase / Add Asset
           </button>
         )}
@@ -69,7 +69,7 @@ export default function PurchaseLog({ profile }) {
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
-          <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
             <tr>
               {['Date', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Supplier', 'Type', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
@@ -94,7 +94,7 @@ export default function PurchaseLog({ profile }) {
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
-              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+              <tr className="border-t-2 border-sage-accent bg-sage-bg font-medium">
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalQty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Total amount ÷ total qty">{peso2(avgUnitCost)} <span className="text-xs font-normal text-muted">avg</span></td>

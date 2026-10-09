@@ -72,7 +72,7 @@ const TONE = {
 function KPI({ label, value, tone, iconKey }) {
   return (
     <div className="border border-hairline bg-surface rounded-lg px-4 py-3 flex gap-3">
-      <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${tone ? tone.bg : 'bg-ink/5'} ${tone ? tone.text : 'text-ink/60'}`}>
+      <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${tone ? tone.bg : 'bg-sage-bg'} ${tone ? tone.text : 'text-sage-muted'}`}>
         {ICONS[iconKey]}
       </div>
       <div className="min-w-0">
@@ -97,7 +97,7 @@ function Panel({ title, children, action }) {
 
 function ExportButton({ onClick }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-1.5 text-xs text-gold hover:underline">
+    <button onClick={onClick} className="flex items-center gap-1.5 text-xs text-sage-accent hover:underline">
       {ICONS.download} Export CSV
     </button>
   )
@@ -107,7 +107,7 @@ function ReportTable({ rows, empty }) {
   return (
     <div className="overflow-x-auto border border-hairline rounded">
       <table className="w-full text-sm">
-        <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+        <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
           <tr>{['Asset ID', 'Name', 'Category', 'Serial', 'Department', 'Location', 'Status', 'Condition'].map(h => (
             <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
           ))}</tr>
@@ -319,8 +319,8 @@ export default function Reports() {
       <div className="flex gap-1 mb-4 border-b border-hairline">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${tab === t.key ? 'border-gold text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
-            <span className={tab === t.key ? 'text-gold' : ''}>{t.icon}</span>
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${tab === t.key ? 'border-sage-accent text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
+            <span className={tab === t.key ? 'text-sage-accent' : ''}>{t.icon}</span>
             {t.label}
           </button>
         ))}
@@ -335,7 +335,7 @@ export default function Reports() {
             <button onClick={() => setDayFilter(iso(addDays(new Date(dayFilter), 1)))}
               className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {dayFilter !== actualToday && (
-              <button onClick={() => setDayFilter(actualToday)} className="text-sm text-gold underline">Today</button>
+              <button onClick={() => setDayFilter(actualToday)} className="text-sm text-sage-accent underline">Today</button>
             )}
           </>
         )}
@@ -347,7 +347,7 @@ export default function Reports() {
             <button onClick={() => setWeekAnchor(iso(addDays(new Date(weekAnchor), 7)))}
               className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {weekAnchor !== actualToday && (
-              <button onClick={() => setWeekAnchor(actualToday)} className="text-sm text-gold underline">This week</button>
+              <button onClick={() => setWeekAnchor(actualToday)} className="text-sm text-sage-accent underline">This week</button>
             )}
           </>
         )}
@@ -363,7 +363,7 @@ export default function Reports() {
               setMonthFilter(d.toISOString().slice(0, 7))
             }} className="px-2.5 py-1.5 text-sm border border-hairline rounded hover:bg-hairline/20">›</button>
             {monthFilter !== actualToday.slice(0, 7) && (
-              <button onClick={() => setMonthFilter(actualToday.slice(0, 7))} className="text-sm text-gold underline">This month</button>
+              <button onClick={() => setMonthFilter(actualToday.slice(0, 7))} className="text-sm text-sage-accent underline">This month</button>
             )}
           </>
         )}
@@ -411,7 +411,7 @@ export default function Reports() {
             action={movementsBetween(today, today).length > 0 && <ExportButton onClick={() => downloadCsv('movements_today.csv', movementsBetween(today, today))} />}>
             <div className="overflow-x-auto border border-hairline rounded">
               <table className="w-full text-sm">
-                <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+                <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
                   <tr>{['Asset', 'Type', 'From', 'To', 'Reason'].map(h => <th key={h} className="text-left px-3 py-2 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
@@ -446,11 +446,11 @@ export default function Reports() {
           <Panel title="Assets Added — Last 7 Days">
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={dailyAddedTrend} margin={{ left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E1DDCF" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#5B6660' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#5B6660' }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#D2DFD6" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#4F6A60' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#4F6A60' }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
                 <Tooltip formatter={(v) => [v, 'Assets added']} />
-                <Bar dataKey="count" fill="#B8902E" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="count" fill="#4C9A78" radius={[3, 3, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </Panel>
@@ -500,7 +500,7 @@ export default function Reports() {
             <div className="grid grid-cols-2 gap-6">
               <div className="overflow-x-auto border border-hairline rounded">
                 <table className="w-full text-sm">
-                  <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+                  <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
                     <tr><th className="text-left px-3 py-2">Category</th><th className="text-left px-3 py-2">Count</th><th className="text-left px-3 py-2">Purchase Cost</th></tr>
                   </thead>
                   <tbody>
@@ -517,11 +517,11 @@ export default function Reports() {
               <ResponsiveContainer width="100%" height={Math.max(180, Object.keys(categoryTotals).length * 28)}>
                 <BarChart data={Object.entries(categoryTotals).map(([name, v]) => ({ name: name.replace(/^\W+\s*/, ''), count: v.count }))}
                   layout="vertical" margin={{ left: 8, right: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E1DDCF" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: '#5B6660' }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D2DFD6" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#4F6A60' }} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: '#142B27' }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#142B27" radius={[0, 3, 3, 0]} barSize={14} />
+                  <Bar dataKey="count" fill="#1F6B4E" radius={[0, 3, 3, 0]} barSize={14} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -582,7 +582,7 @@ export default function Reports() {
             action={movementsInRange.length > 0 && <ExportButton onClick={() => downloadCsv(`movements_${customFrom}_to_${customTo}.csv`, movementsInRange)} />}>
             <div className="overflow-x-auto border border-hairline rounded">
               <table className="w-full text-sm">
-                <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+                <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
                   <tr>{['Asset', 'Type', 'From', 'To', 'Reason'].map(h => <th key={h} className="text-left px-3 py-2 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>

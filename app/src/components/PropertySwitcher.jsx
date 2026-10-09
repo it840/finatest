@@ -30,7 +30,7 @@ export default function PropertySwitcher({ collapsed = false }) {
         {currentProperty?.logo_url ? (
           <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
         ) : (
-          <span className="h-5 w-5 rounded-full bg-gold/80 flex items-center justify-center text-[9px] font-semibold text-ink flex-shrink-0">—</span>
+          <span className="h-5 w-5 rounded-full bg-sage-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">—</span>
         )}
         {!collapsed && <span className="text-sm truncate flex-1 text-sage-text">{label}</span>}
       </div>
@@ -47,7 +47,7 @@ export default function PropertySwitcher({ collapsed = false }) {
         {currentProperty?.logo_url ? (
           <img src={resolveLogo(currentProperty.logo_url)} alt="" className="h-5 w-5 rounded-full object-contain bg-white flex-shrink-0" />
         ) : (
-          <span className="h-5 w-5 rounded-full bg-gold/80 flex items-center justify-center text-[9px] font-semibold text-ink flex-shrink-0">
+          <span className="h-5 w-5 rounded-full bg-sage-accent flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0">
             {currentPropertyId === 'all' ? 'All' : '—'}
           </span>
         )}
@@ -66,7 +66,7 @@ export default function PropertySwitcher({ collapsed = false }) {
             onClick={() => { selectProperty('all'); setOpen(false) }}
             className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-hairline/30 ${currentPropertyId === 'all' ? 'bg-hairline/20' : ''}`}
           >
-            <span className="h-8 w-8 rounded-full bg-ink text-paper flex items-center justify-center text-xs flex-shrink-0">All</span>
+            <span className="h-8 w-8 rounded-full bg-sage-accent text-white flex items-center justify-center text-xs flex-shrink-0">All</span>
             <div>
               <div className="text-sm font-medium">All Properties</div>
               <div className="text-xs text-muted">View everything at once</div>

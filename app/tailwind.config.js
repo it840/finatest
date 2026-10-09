@@ -8,10 +8,10 @@ export default {
     extend: {
       colors: {
         ink: "#142B27",
-        paper: "#F6F4EE",
+        paper: "#F4F8F5",
         surface: "#FFFFFF",
-        hairline: "#E1DDCF",
-        muted: "#5B6660",
+        hairline: "#D2DFD6",
+        muted: "#4F6A60",
         gold: "#B8902E",
         success: "#3D7A5B",
         warning: "#B8902E",

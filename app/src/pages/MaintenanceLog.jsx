@@ -158,7 +158,7 @@ export default function MaintenanceLog({ profile }) {
         </label>
         <div className="col-span-3">
           {error && <div className="text-sm text-danger mb-2">{error}</div>}
-          <button disabled={saving} className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 disabled:opacity-50">
+          <button disabled={saving} className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
             {saving ? 'Saving…' : 'Log Maintenance'}
           </button>
         </div>
@@ -179,7 +179,7 @@ export default function MaintenanceLog({ profile }) {
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
         <table className="w-full text-sm">
-          <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
             <tr>
               {['Date', 'Asset ID', 'Asset Name', 'Category', 'Sub-Category', 'Brand', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Technician', 'Findings', 'Cost', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
@@ -219,7 +219,7 @@ export default function MaintenanceLog({ profile }) {
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
-              <tr className="border-t-2 border-ink bg-hairline/30 font-medium">
+              <tr className="border-t-2 border-sage-accent bg-sage-bg font-medium">
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={21}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso2(totalCost)}</td>
                 <td className="px-3 py-2" colSpan={2}></td>

@@ -18,7 +18,7 @@ export default function Pagination({ page, setPage, pageSize, setPageSize, total
           <select
             value={pageSize}
             onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
-            className="border border-hairline rounded px-2 py-1 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-gold"
+            className="border border-hairline rounded px-2 py-1 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-sage-accent"
           >
             {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
           </select>

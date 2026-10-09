@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
-body { background-color: #F6F4EE; color: #142B27; }
+body { background-color: #F4F8F5; color: #142B27; }
 
-::selection { background: #B8902E; color: #fff; }
+::selection { background: #1F6B4E; color: #fff; }
 
 table { border-collapse: collapse; }
 
 .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #E1DDCF; border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #C2D3C8; border-radius: 4px; }
 
 @layer components {
   .input {
-    @apply w-full border border-hairline rounded px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-gold;
+    @apply w-full border border-hairline rounded px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-sage-accent;
   }
 }
 
@@ -27,7 +27,7 @@ table { border-collapse: collapse; }
   position: relative;
   height: 3px;
   border-radius: 999px;
-  background: #E1DDCF;
+  background: #D2DFD6;
   overflow: hidden;
 }
 .loading-bar-sweep {
@@ -35,7 +35,7 @@ table { border-collapse: collapse; }
   inset: 0;
   width: 40%;
   border-radius: 999px;
-  background: #B8902E;
+  background: #1F6B4E;
   animation: loading-sweep 1s ease-in-out infinite;
 }
 

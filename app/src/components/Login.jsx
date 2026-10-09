@@ -114,7 +114,7 @@ export default function Login() {
             </div>
 
             <div className="mb-8">
-              <div className="w-8 h-[3px] bg-gold rounded-full mb-4" />
+              <div className="w-8 h-[3px] bg-sage-accent rounded-full mb-4" />
               <div className="font-display text-3xl text-ink">
                 {mode === 'signin' ? 'Welcome back' : 'Create your account'}
               </div>
@@ -130,20 +130,20 @@ export default function Login() {
                     <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">FULL NAME</label>
                     <input value={fullName} onChange={e => setFullName(e.target.value)} required
                       className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                                 focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
+                                 focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
                   </div>
                 )}
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">EMAIL</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                               focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
+                               focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">PASSWORD</label>
                   <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
                     className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                               focus:outline-none focus:border-gold transition-colors disabled:opacity-50" />
+                               focus:outline-none focus:border-sage-accent transition-colors disabled:opacity-50" />
                 </div>
               </fieldset>
 
@@ -152,14 +152,14 @@ export default function Login() {
 
               <div className="pt-1">
                 <button disabled={busy} type="submit"
-                  className="group w-full flex items-center justify-center gap-2 rounded-t py-3 text-sm font-medium text-paper
-                             bg-gradient-to-b from-ink to-[#0F211D]
+                  className="group w-full flex items-center justify-center gap-2 rounded-t py-3 text-sm font-medium text-white
+                             bg-sage-accent hover:bg-[#195A41]
                              transition-all duration-200 ease-out
                              shadow-[0_1px_2px_rgba(20,43,39,0.15)]
                              hover:shadow-[0_6px_16px_rgba(20,43,39,0.28)] hover:-translate-y-0.5
                              active:translate-y-0 active:scale-[0.98] active:shadow-[0_1px_2px_rgba(20,43,39,0.2)]
                              disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_2px_rgba(20,43,39,0.15)]
-                             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                   style={busy ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}>
                   {busy ? <Spinner /> : null}
                   <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>

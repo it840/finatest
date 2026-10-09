@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts'
 
-const PALETTE = ['#142B27', '#B8902E', '#3D7A5B', '#A83B32', '#5B6660', '#8A6D9E', '#3E6B8A', '#C77E3A']
+const PALETTE = ['#1F6B4E', '#B8902E', '#3E6B8A', '#A83B32', '#4F6A60', '#8A6D9E', '#3E6B8A', '#C77E3A']
 
 function peso(n) {
   if (n === null || n === undefined) return '—'
@@ -40,7 +40,7 @@ const ICONS = {
 function Stat({ label, value, sub, tone, iconKey }) {
   return (
     <div className="border border-hairline bg-surface rounded-lg px-5 py-4 flex gap-3">
-      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${tone ? tone.bg : 'bg-ink/5'} ${tone ? tone.text : 'text-ink/60'}`}>
+      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${tone ? tone.bg : 'bg-sage-bg'} ${tone ? tone.text : 'text-sage-muted'}`}>
         {ICONS[iconKey]}
       </div>
       <div className="min-w-0">
@@ -211,11 +211,11 @@ export default function Dashboard({ setPage, profile }) {
       <Panel title="Assets Added — Last 8 Weeks">
         <ResponsiveContainer width="100%" height={140}>
           <BarChart data={weekBuckets} margin={{ left: -20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E1DDCF" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#5B6660' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: '#5B6660' }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#D2DFD6" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#4F6A60' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#4F6A60' }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
             <Tooltip formatter={(v) => [v, 'Assets added']} />
-            <Bar dataKey="count" fill="#B8902E" radius={[3, 3, 0, 0]} maxBarSize={28} />
+            <Bar dataKey="count" fill="#4C9A78" radius={[3, 3, 0, 0]} maxBarSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </Panel>
@@ -225,11 +225,11 @@ export default function Dashboard({ setPage, profile }) {
           {categoryData.length ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={categoryData} layout="vertical" margin={{ left: 8, right: 16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E1DDCF" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#5B6660' }} allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#D2DFD6" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#4F6A60' }} allowDecimals={false} />
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: '#142B27' }} />
                 <Tooltip formatter={(v, n) => n === 'count' ? [v, 'Assets'] : [peso(v), 'Current Value']} />
-                <Bar dataKey="count" fill="#142B27" radius={[0, 3, 3, 0]} barSize={16} />
+                <Bar dataKey="count" fill="#1F6B4E" radius={[0, 3, 3, 0]} barSize={16} />
               </BarChart>
             </ResponsiveContainer>
           ) : <EmptyRow>No assets yet.</EmptyRow>}
@@ -340,7 +340,7 @@ export default function Dashboard({ setPage, profile }) {
                     <span className="text-muted">{count} · {pct}%</span>
                   </div>
                   <div className="h-1.5 bg-hairline rounded-full overflow-hidden">
-                    <div className="h-full bg-ink rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-sage-accent rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </li>
               )

@@ -92,7 +92,7 @@ function AddUserForm({ onCancel, onCreated }) {
         {error && <div className="text-sm text-danger">{error}</div>}
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
-          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 disabled:opacity-50">
+          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
             {saving ? 'Creating…' : 'Create User'}
           </button>
         </div>
@@ -163,7 +163,7 @@ function EditUserForm({ user, onCancel, onSaved }) {
         {error && <div className="text-sm text-danger">{error}</div>}
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
-          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 disabled:opacity-50">
+          <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
@@ -209,14 +209,14 @@ function UsersPanel({ currentUserId }) {
   return (
     <div>
       <div className="flex justify-end mb-3">
-        <button onClick={() => setShowAdd(true)} className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90">
+        <button onClick={() => setShowAdd(true)} className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90">
           Add User
         </button>
       </div>
       {error && <div className="text-sm text-danger mb-3">{error}</div>}
       <div className="overflow-x-auto border border-hairline rounded">
         <table className="w-full text-sm">
-          <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
+          <thead className="bg-sage-active text-sage-text text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-3 py-2">Name</th>
               <th className="text-left px-3 py-2">Department</th>
@@ -309,7 +309,7 @@ function LookupPanel({ table, label }) {
           </select>
         )}
         <input value={value} onChange={e => setValue(e.target.value)} placeholder={`Add ${label.toLowerCase().replace(/s$/, '')}…`} className="input" />
-        <button className="px-3 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap">Add</button>
+        <button className="px-3 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 whitespace-nowrap">Add</button>
       </form>
       {error && <div className="text-xs text-danger mb-2">{error}</div>}
       {loading ? <div className="text-xs text-muted">Loading…</div> : (
@@ -377,7 +377,7 @@ function SubCategoryPanel() {
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Add sub-category…" className="input flex-1 min-w-[140px]" />
-        <button className="px-3 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap">Add</button>
+        <button className="px-3 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 whitespace-nowrap">Add</button>
       </form>
       {error && <div className="text-xs text-danger mb-2">{error}</div>}
       {loading ? <div className="text-xs text-muted">Loading…</div> : (
@@ -427,7 +427,7 @@ function PropertiesPanel() {
         <form onSubmit={add} className="flex gap-2">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Property name" className="input" />
           <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="Logo URL (optional)" className="input" />
-          <button disabled={saving} className="px-4 py-2 text-sm bg-ink text-paper rounded hover:bg-ink/90 whitespace-nowrap disabled:opacity-50">
+          <button disabled={saving} className="px-4 py-2 text-sm bg-sage-accent text-white rounded hover:bg-sage-accent/90 whitespace-nowrap disabled:opacity-50">
             Add
           </button>
         </form>
@@ -474,7 +474,7 @@ export default function Settings({ profile, onProfileChange }) {
       <div className="flex gap-2 mb-6 border-b border-hairline">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm -mb-px border-b-2 ${tab === t.key ? 'border-gold text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
+            className={`px-4 py-2 text-sm -mb-px border-b-2 ${tab === t.key ? 'border-sage-accent text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
             {t.label}
           </button>
         ))}
