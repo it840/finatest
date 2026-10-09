@@ -73,7 +73,7 @@ export default function MovementLog() {
         <table className="w-full text-sm">
           <thead className="bg-ink text-paper text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Qty', 'Type', 'From', 'To', 'Reason', 'Remarks'].map(h => (
+              {['Date', 'Asset', 'Qty', 'Type', 'From', 'To', 'Reason', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -89,9 +89,10 @@ export default function MovementLog() {
                 <td className="px-3 py-2 whitespace-nowrap">{r.to_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.reason}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.remarks}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.authorized_by_name || '—'}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
           </tbody>
         </table>
       </div>

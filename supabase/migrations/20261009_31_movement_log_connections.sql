@@ -1,0 +1,8 @@
+-- Movement Log connections
+-- 1) "Tranfer" typo fixed in movement_types and existing rows
+-- 2) apply_movement_to_asset() flags its own update (app.movement_sync) so the new asset trigger doesn't log twice
+-- 3) NEW trigger trg_asset_location_movement: editing an asset's Actual Location logs a movement
+-- 4) apply_physical_count_to_movement(): compares with coalesce(actual_location, location) so a count at an
+--    asset's home location doesn't create a spurious move; uses auth.uid() when verified_by is empty
+-- 5) movement_log_computed exposes authorized_by_name (shown as "Logged By")
+-- Full function bodies are in the live database (applied as migration 31_movement_log_connections).
