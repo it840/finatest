@@ -27,6 +27,8 @@ Then copy the contents of `dist-ghpages/` over the repo root files and commit.
 ## Setting up a new Supabase project
 1. Create a Supabase project.
 2. Run every file in `supabase/migrations/` in filename order (e.g. via the SQL editor, or `supabase db push` if using the Supabase CLI).
+> **Note:** `supabase/migrations/20261105_34_clean_test_data.sql` is a one-time cleanup specific to the original installation (it removes named test records). Skip it when setting up a fresh project.
+
 3. Deploy both functions in `supabase/functions/` (`supabase functions deploy admin-create-user`, etc.).
 4. Update `src/lib/supabase.js` with your project's URL and publishable (anon) key.
 
