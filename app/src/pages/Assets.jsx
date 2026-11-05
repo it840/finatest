@@ -224,7 +224,6 @@ export default function Assets({ profile }) {
   // totals cover every filtered asset, not just the current page
   const totalReg = filtered.reduce((sum, r) => sum + Number(r.registered_qty || 0), 0)
   const totalDisposed = filtered.reduce((sum, r) => sum + Number(r.disposal_qty || 0), 0)
-  const totalRemaining = filtered.reduce((sum, r) => sum + Number(r.remaining_qty || 0), 0)
   // current value is per unit, so the total is value x remaining qty
   const totalValue = filtered.reduce((sum, r) => sum + Number(r.current_asset_value || 0) * Number(r.remaining_qty || 0), 0)
 
@@ -268,7 +267,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Remaining', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Disposal Reason', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Disposal Reason', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -282,9 +281,8 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{qty(r.registered_qty)}</td>
+                <td className={`px-3 py-2 whitespace-nowrap font-medium ${Number(r.registered_qty) <= 0 ? 'text-danger' : ''}`} title="Quantity still on hand">{qty(r.registered_qty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{qty(r.disposal_qty)}</td>
-                <td className={`px-3 py-2 whitespace-nowrap font-medium ${Number(r.remaining_qty) <= 0 ? 'text-danger' : ''}`}>{qty(r.remaining_qty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.location}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
@@ -302,7 +300,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={16} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={15} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
           {filtered.length > 0 && (
@@ -311,7 +309,6 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={4}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{num(totalRemaining)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Current value × remaining qty">{peso2(totalValue)} <span className="text-xs font-normal text-muted">× qty</span></td>
                 <td className="px-3 py-2" colSpan={2}></td>

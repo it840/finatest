@@ -38,7 +38,7 @@ export default function DisposalLog({ profile }) {
   useEffect(() => { load() }, [])
 
   const selectedAsset = assets.find(a => String(a.id) === String(form.asset_id))
-  const remainingQty = selectedAsset ? Number(selectedAsset.registered_qty || 0) - Number(selectedAsset.disposal_qty || 0) : null
+  const remainingQty = selectedAsset ? Number(selectedAsset.registered_qty || 0) : null // Reg. Qty is what is still on hand
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
@@ -65,7 +65,7 @@ export default function DisposalLog({ profile }) {
     e.preventDefault()
     setSaving(true); setError('')
     if (remainingQty !== null && Number(form.qty) > remainingQty) {
-      setSaving(false); setError(`Can't dispose more than the remaining quantity (${remainingQty}).`); return
+      setSaving(false); setError(`Can't dispose more than the quantity on hand (${remainingQty}).`); return
     }
     const { error } = await supabase.from('disposal_log').insert({
       asset_id: Number(form.asset_id),
@@ -101,7 +101,7 @@ export default function DisposalLog({ profile }) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs text-muted mb-1">Remaining Qty</span>
+          <span className="block text-xs text-muted mb-1">Qty on hand</span>
           <input disabled value={remainingQty ?? ''} className="input bg-hairline/30" />
         </label>
         <label className="block">
