@@ -28,7 +28,7 @@ export default function PhysicalInventory({ profile }) {
     setLoading(true)
     const [pi, a, s, c, l] = await Promise.all([
       supabase.from('physical_inventory_computed').select('*').order('inventory_date', { ascending: false }),
-      supabase.from('assets').select('id, asset_code, asset_name, location, department, assigned_to, registered_qty, property_id'),
+      supabase.from('assets').select('id, asset_code, asset_name, location, actual_location, department, assigned_to, registered_qty, property_id'),
       supabase.from('statuses').select('*').order('name'),
       supabase.from('conditions').select('*').order('name'),
       supabase.from('locations').select('*').order('name'),
@@ -48,9 +48,21 @@ export default function PhysicalInventory({ profile }) {
   const scopedAssets = currentPropertyId === 'all' ? assets : assets.filter(a => a.property_id === currentPropertyId)
   const scopedRows = currentPropertyId === 'all' ? rows : rows.filter(r => r.property_id === currentPropertyId)
 
+  // Previous Location = where the asset was before this count. Uses the value stored by the database;
+  // for older rows without one it falls back to the asset's previous count, then its home location.
+  const prevByRow = {}
+  const byAsset = {}
+  rows.forEach(r => { (byAsset[r.asset_id] = byAsset[r.asset_id] || []).push(r) })
+  Object.values(byAsset).forEach(list => {
+    list.sort((a, b) => (a.inventory_date || '').localeCompare(b.inventory_date || '') || a.id - b.id)
+    list.forEach((r, i) => {
+      prevByRow[r.id] = r.previous_location ?? (i > 0 ? list[i - 1].actual_location : r.registered_location) ?? null
+    })
+  })
+
   const filteredRows = scopedRows.filter(r =>
     (!query || matchesQuery(query, [
-      r.inventory_date, r.asset_code, r.asset_name, r.registered_qty, r.actual_qty, r.actual_location,
+      r.inventory_date, r.asset_code, r.asset_name, r.registered_qty, r.actual_qty, prevByRow[r.id], r.actual_location,
       r.inventory_status, r.condition, r.discrepancy, r.department, r.assigned_to, r.remarks,
     ])) &&
     (!locationFilter || r.actual_location === locationFilter) &&
@@ -118,6 +130,11 @@ export default function PhysicalInventory({ profile }) {
             <option value="">—</option>
             {withCurrent(forProperty(locations, selectedAsset?.property_id ?? currentPropertyId), form.actual_location).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
           </select>
+          {selectedAsset && (
+            <span className="block text-xs text-muted mt-1">
+              Previous location (on record): {selectedAsset.actual_location || selectedAsset.location || '—'}
+            </span>
+          )}
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Inventory Status</span>
@@ -162,7 +179,7 @@ export default function PhysicalInventory({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Registered', 'Actual', 'Location', 'Status', 'Condition', 'Discrepancy'].map(h => (
+              {['Date', 'Asset', 'Registered Qty', 'Actual Qty', 'Previous Location', 'Actual Location', 'Status', 'Condition', 'Discrepancy'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -174,13 +191,14 @@ export default function PhysicalInventory({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.registered_qty}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.actual_qty}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{r.actual_location}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{prevByRow[r.id] || '—'}</td>
+                <td className={`px-3 py-2 whitespace-nowrap ${prevByRow[r.id] && prevByRow[r.id] !== r.actual_location ? 'font-medium' : ''}`}>{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.inventory_status}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className={`px-3 py-2 whitespace-nowrap ${r.discrepancy !== 'No Discrepancy' ? 'text-danger' : 'text-success'}`}>{r.discrepancy}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
@@ -188,7 +206,7 @@ export default function PhysicalInventory({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'count' : 'counts'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalRegistered)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalActual)}</td>
-                <td className="px-3 py-2" colSpan={3}></td>
+                <td className="px-3 py-2" colSpan={4}></td>
                 <td className={`px-3 py-2 whitespace-nowrap ${withDiscrepancy ? 'text-danger' : 'text-success'}`}>
                   {withDiscrepancy ? `${withDiscrepancy} with discrepancy · net ${netVariance > 0 ? '+' : ''}${num(netVariance)}` : 'No Discrepancy'}
                 </td>
