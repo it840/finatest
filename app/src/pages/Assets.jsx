@@ -345,7 +345,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Photo', 'Asset Name', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'Property', 'QR', ''].map(h => (
+              {['Property', 'ID', 'Photo', 'Asset Name', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -353,6 +353,7 @@ export default function Assets({ profile }) {
           <tbody>
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap font-medium">
                   <button onClick={() => setViewingAsset(r)} title="View full details" className="text-theme-accent hover:underline font-medium">{r.asset_code}</button>
                 </td>
@@ -381,7 +382,6 @@ export default function Assets({ profile }) {
                     ? <button onClick={() => setPieceAsset(r)} className="text-muted hover:underline" title="Value per piece">—</button>
                     : <button onClick={() => setPieceAsset(r)} className="text-theme-accent font-medium hover:underline" title="Click for the value of each piece">{peso2(rowValue(r))}</button>}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <button onClick={() => setViewingAsset(r)} className="text-theme-accent underline">View</button>
                 </td>
@@ -398,12 +398,12 @@ export default function Assets({ profile }) {
           {filtered.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={7}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={8}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Value of one piece × pieces on hand, added up">{peso2(totalValue)}</td>
-                <td className="px-3 py-2" colSpan={3}></td>
+                <td className="px-3 py-2" colSpan={2}></td>
               </tr>
             </tfoot>
           )}
