@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import AccountPanel from './AccountPanel'
 import ImportExportPanel from './ImportExportPanel'
+import FullBackupPanel from './FullBackupPanel'
 import { useProperty } from '../lib/PropertyContext'
 import { useLookups } from '../lib/useLookups'
 import { forProperty, withCurrent } from '../lib/propertyScope'
@@ -493,7 +494,12 @@ export default function Settings({ profile, onProfileChange }) {
           ))}
         </div>
       )}
-      {tab === 'data' && canImportExport && <ImportExportPanel />}
+      {tab === 'data' && canImportExport && (
+        <div className="space-y-8">
+          <ImportExportPanel />
+          {isAdmin && <FullBackupPanel />}
+        </div>
+      )}
     </div>
   )
 }
