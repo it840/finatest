@@ -179,6 +179,74 @@ function AssetDetailModal({ asset, onClose }) {
   )
 }
 
+// Value of each piece of the same item: price each and current value each
+function PieceValueModal({ asset, onClose }) {
+  const onHand = Math.max(Math.round(Number(asset.registered_qty || 0)), 0)
+  const disposed = Math.max(Math.round(Number(asset.disposal_qty || 0)), 0)
+  const total = onHand + disposed
+  const unitPrice = asset.purchase_cost
+  const unitValue = asset.current_asset_value
+  const hasValue = unitValue !== null && unitValue !== undefined
+  const shown = Math.min(total, 500)
+  const pieces = Array.from({ length: shown }, (_, i) => ({ n: i + 1, onHand: i < onHand }))
+
+  return (
+    <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-xl">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-hairline">
+          <div>
+            <div className="font-display text-xl">{asset.asset_name}</div>
+            <div className="text-xs text-muted mt-0.5">{asset.asset_code} · {total} {total === 1 ? 'piece' : 'pieces'} purchased · {onHand} on hand · {disposed} disposed</div>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-ink text-xl leading-none">×</button>
+        </div>
+
+        <div className="px-6 py-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          <div><div className="text-xs text-muted">Price each</div><div className="font-medium">{unitPrice == null ? '—' : peso2(unitPrice)}</div></div>
+          <div><div className="text-xs text-muted">Current value each</div><div className="font-medium">{hasValue ? peso2(unitValue) : '—'}</div></div>
+          <div><div className="text-xs text-muted">Depreciation each (so far)</div><div>{asset.accumulated_depreciation == null ? '—' : peso2(asset.accumulated_depreciation)}</div></div>
+          <div><div className="text-xs text-muted">Salvage value each</div><div>{asset.salvage_value == null ? '—' : peso2(asset.salvage_value)}</div></div>
+        </div>
+        {!hasValue && (
+          <div className="mx-6 mb-3 text-xs text-muted border border-hairline rounded p-2">
+            Current value needs a purchase cost, acquisition date and useful life on the asset.
+          </div>
+        )}
+
+        <div className="mx-6 mb-4 border border-hairline rounded overflow-hidden">
+          <div className="max-h-72 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide sticky top-0">
+                <tr><th className="text-left px-3 py-2 font-medium">Piece</th><th className="text-left px-3 py-2 font-medium">Status</th><th className="text-left px-3 py-2 font-medium">Price each</th><th className="text-left px-3 py-2 font-medium">Current value</th></tr>
+              </thead>
+              <tbody>
+                {pieces.map(pc => (
+                  <tr key={pc.n} className="border-t border-hairline">
+                    <td className="px-3 py-1.5">#{pc.n}</td>
+                    <td className={`px-3 py-1.5 ${pc.onHand ? '' : 'text-muted'}`}>{pc.onHand ? 'On hand' : 'Disposed'}</td>
+                    <td className="px-3 py-1.5">{unitPrice == null ? '—' : peso2(unitPrice)}</td>
+                    <td className="px-3 py-1.5">{pc.onHand ? (hasValue ? peso2(unitValue) : '—') : '₱0.00'}</td>
+                  </tr>
+                ))}
+                {total === 0 && <tr><td colSpan={4} className="px-3 py-4 text-center text-muted">No pieces recorded.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          {total > shown && <div className="px-3 py-1.5 text-xs text-muted border-t border-hairline">Showing the first {shown} of {total} pieces.</div>}
+        </div>
+
+        <div className="mx-6 mb-5 flex items-center justify-between text-sm">
+          <span className="text-muted">Total current value ({onHand} on hand)</span>
+          <span className="font-medium">{hasValue ? peso2(Number(unitValue) * onHand) : '—'}</span>
+        </div>
+        <div className="flex justify-end px-6 pb-6">
+          <button onClick={onClose} className="px-4 py-2 text-sm border border-hairline rounded hover:bg-hairline/20">Close</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Assets({ profile }) {
   const { lookups, loading: lookupsLoading } = useLookups()
   const { properties, currentPropertyId } = useProperty()
@@ -191,6 +259,8 @@ export default function Assets({ profile }) {
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [viewingAsset, setViewingAsset] = useState(null)
+  const [pieceAsset, setPieceAsset] = useState(null)
+  const [prevLocByAsset, setPrevLocByAsset] = useState({})
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
 
@@ -199,8 +269,15 @@ export default function Assets({ profile }) {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase.from('assets_computed').select('*').order('asset_code')
-    setRows(data || [])
+    const [a, m] = await Promise.all([
+      supabase.from('assets_computed').select('*').order('asset_code'),
+      supabase.from('movement_log').select('asset_id, from_location, id').order('movement_date', { ascending: false }).order('id', { ascending: false }),
+    ])
+    // Previous Location = where the asset was before its latest movement
+    const prev = {}
+    ;(m.data || []).forEach(x => { if (x.asset_id != null && !(x.asset_id in prev)) prev[x.asset_id] = x.from_location })
+    setPrevLocByAsset(prev)
+    setRows(a.data || [])
     setLoading(false)
   }
 
@@ -211,11 +288,11 @@ export default function Assets({ profile }) {
   const filtered = scoped.filter(r =>
     (!query || matchesQuery(query, [
       r.asset_code, r.property_name, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
-      r.registered_qty, r.disposal_qty, r.remaining_qty, r.location, r.actual_location, r.department,
+      r.registered_qty, r.disposal_qty, prevLocByAsset[r.id], r.location, r.actual_location, r.department,
       r.assigned_to, r.status, r.disposal_reason, r.disposal_date, r.condition, r.current_asset_value,
     ])) &&
     (!categoryFilter || r.category === categoryFilter) &&
-    (!locationFilter || r.location === locationFilter) &&
+    (!locationFilter || r.location === locationFilter || r.actual_location === locationFilter) &&
     (!statusFilter || r.status === statusFilter)
   )
 
@@ -224,8 +301,9 @@ export default function Assets({ profile }) {
   // totals cover every filtered asset, not just the current page
   const totalReg = filtered.reduce((sum, r) => sum + Number(r.registered_qty || 0), 0)
   const totalDisposed = filtered.reduce((sum, r) => sum + Number(r.disposal_qty || 0), 0)
-  // current value is per unit, so the total is value x remaining qty
-  const totalValue = filtered.reduce((sum, r) => sum + Number(r.current_asset_value || 0) * Number(r.remaining_qty || 0), 0)
+  // each row's Current Value = value of one piece x pieces on hand
+  const rowValue = (r) => (r.current_asset_value == null ? null : Number(r.current_asset_value) * Number(r.registered_qty || 0))
+  const totalValue = filtered.reduce((sum, r) => sum + (rowValue(r) || 0), 0)
 
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -267,7 +345,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Disposal Reason', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Photo', 'Asset Name', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'Property', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -278,18 +356,32 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap font-medium">
                   <button onClick={() => setViewingAsset(r)} title="View full details" className="text-theme-accent hover:underline font-medium">{r.asset_code}</button>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
+                <td className="px-3 py-2">
+                  <button onClick={() => setViewingAsset(r)} title="View full details" className="block">
+                    {r.photo_url
+                      ? <img src={r.photo_url} alt="" className="h-10 w-10 rounded border border-hairline object-cover" />
+                      : <span className="h-10 w-10 rounded border border-dashed border-hairline flex items-center justify-center text-[10px] text-muted">No photo</span>}
+                  </button>
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.brand}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.serial_number}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.sub_category}</td>
                 <td className={`px-3 py-2 whitespace-nowrap font-medium ${Number(r.registered_qty) <= 0 ? 'text-danger' : ''}`} title="Quantity still on hand">{qty(r.registered_qty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{qty(r.disposal_qty)}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{r.location}</td>
-                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.actual_location}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{prevLocByAsset[r.id] || '—'}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
-                <td className="px-3 py-2 whitespace-nowrap" title={r.disposal_date ? `Last disposal: ${r.disposal_date}` : undefined}>{r.disposal_reason || ''}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{peso(r.current_asset_value)}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title={r.disposal_date ? `Last disposal: ${r.disposal_date}` : undefined}>{r.disposal_reason || ''}</td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {rowValue(r) == null
+                    ? <button onClick={() => setPieceAsset(r)} className="text-muted hover:underline" title="Value per piece">—</button>
+                    : <button onClick={() => setPieceAsset(r)} className="text-theme-accent font-medium hover:underline" title="Click for the value of each piece">{peso2(rowValue(r))}</button>}
+                </td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <button onClick={() => setViewingAsset(r)} className="text-theme-accent underline">View</button>
                 </td>
@@ -300,18 +392,18 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={15} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={19} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
           {filtered.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={4}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={7}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>
-                <td className="px-3 py-2 whitespace-nowrap" title="Current value × remaining qty">{peso2(totalValue)} <span className="text-xs font-normal text-muted">× qty</span></td>
-                <td className="px-3 py-2" colSpan={2}></td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Value of one piece × pieces on hand, added up">{peso2(totalValue)}</td>
+                <td className="px-3 py-2" colSpan={3}></td>
               </tr>
             </tfoot>
           )}
@@ -330,6 +422,8 @@ export default function Assets({ profile }) {
           onSave={() => { setShowForm(false); load() }}
         />
       )}
+
+      {pieceAsset && <PieceValueModal asset={pieceAsset} onClose={() => setPieceAsset(null)} />}
 
       {viewingAsset && (
         <AssetDetailModal asset={viewingAsset} onClose={() => setViewingAsset(null)} />
