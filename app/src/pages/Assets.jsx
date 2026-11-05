@@ -212,7 +212,7 @@ export default function Assets({ profile }) {
     (!query || matchesQuery(query, [
       r.asset_code, r.property_name, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
       r.registered_qty, r.disposal_qty, r.remaining_qty, r.location, r.actual_location, r.department,
-      r.assigned_to, r.status, r.condition, r.current_asset_value,
+      r.assigned_to, r.status, r.disposal_reason, r.disposal_date, r.condition, r.current_asset_value,
     ])) &&
     (!categoryFilter || r.category === categoryFilter) &&
     (!locationFilter || r.location === locationFilter) &&
@@ -268,7 +268,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Remaining', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Current Value', 'QR', ''].map(h => (
+              {['ID', 'Property', 'Name', 'Category', 'Reg. Qty', 'Disposed', 'Remaining', 'Location', 'Actual Location', 'Assigned To', 'Status', 'Disposal Reason', 'Condition', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -287,6 +287,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.actual_location}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.assigned_to}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title={r.disposal_date ? `Last disposal: ${r.disposal_date}` : undefined}>{r.disposal_reason || ''}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.current_asset_value)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
@@ -299,7 +300,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={15} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={16} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
           {filtered.length > 0 && (
@@ -309,7 +310,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalRemaining)}</td>
-                <td className="px-3 py-2" colSpan={5}></td>
+                <td className="px-3 py-2" colSpan={6}></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Current value × remaining qty">{peso2(totalValue)} <span className="text-xs font-normal text-muted">× qty</span></td>
                 <td className="px-3 py-2" colSpan={2}></td>
               </tr>
