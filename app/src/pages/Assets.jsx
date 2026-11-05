@@ -276,7 +276,9 @@ export default function Assets({ profile }) {
           <tbody>
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
-                <td className="px-3 py-2 whitespace-nowrap font-medium">{r.asset_code}</td>
+                <td className="px-3 py-2 whitespace-nowrap font-medium">
+                  <button onClick={() => setViewingAsset(r)} title="View full details" className="text-theme-accent hover:underline font-medium">{r.asset_code}</button>
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{r.property_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
