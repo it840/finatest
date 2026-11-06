@@ -8,7 +8,7 @@ const TABLES = [
   'categories', 'sub_categories', 'locations', 'departments', 'statuses', 'conditions',
   'acquisition_types', 'disposal_reasons', 'movement_types', 'movement_reasons',
   'assignees', 'maintenance_types', 'pms_statuses',
-  'assets', 'purchase_log', 'physical_inventory', 'movement_log', 'disposal_log', 'maintenance_log',
+  'assets', 'purchase_log', 'physical_inventory', 'movement_log', 'asset_transfers', 'disposal_log', 'maintenance_log',
   'activity_log',
 ]
 const PAGE = 1000
@@ -89,7 +89,7 @@ export default function FullBackupPanel() {
       <h2 className="font-display text-lg">Full database backup</h2>
       <div className="border border-hairline bg-surface rounded-lg p-4">
         <p className="text-sm text-muted mb-3">
-          Downloads every table — assets, all logs, history, users' names and roles, and every lookup list —
+          Downloads every table — assets, purchases, counts, movements, asset transfers, disposals, maintenance, the full activity history, users' names and roles, and every lookup list —
           as one file. Use <b>Excel</b> to read or share it, or <b>JSON</b> to keep an exact copy for restoring.
           Photo files stay in storage (their links are included), and passwords are never part of a backup.
         </p>
