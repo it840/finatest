@@ -32,6 +32,17 @@ export function PhysicalIcon() {
   )
 }
 
+export function TransferIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" {...common}>
+      <path d="M2.5 5.5h8v8h-8z" />
+      <path d="M10.5 8.5H14l2.5 2.5v2.5h-6" />
+      <circle cx="6" cy="15" r="1.5" />
+      <circle cx="13.5" cy="15" r="1.5" />
+    </svg>
+  )
+}
+
 export function MovementIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" {...common}>

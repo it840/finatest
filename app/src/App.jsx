@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Assets from './pages/Assets'
 import PhysicalInventory from './pages/PhysicalInventory'
 import MovementLog from './pages/MovementLog'
+import Transfers from './pages/Transfers'
 import PurchaseLog from './pages/PurchaseLog'
 import DisposalLog from './pages/DisposalLog'
 import MaintenanceLog from './pages/MaintenanceLog'
@@ -33,6 +34,7 @@ export default function App() {
       {page === 'assets' && <Assets profile={profile} />}
       {page === 'physical' && <PhysicalInventory profile={profile} />}
       {page === 'movement' && <MovementLog profile={profile} />}
+      {page === 'transfers' && <Transfers profile={profile} />}
       {page === 'purchase' && <PurchaseLog profile={profile} />}
       {page === 'disposal' && <DisposalLog profile={profile} />}
       {page === 'maintenance' && <MaintenanceLog profile={profile} />}

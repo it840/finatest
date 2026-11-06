@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import PropertySwitcher from './PropertySwitcher'
 import { useSidebarBadges } from '../lib/useSidebarBadges'
-import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon, PurchaseIcon, DisposalIcon, MaintenanceIcon } from './NavIcons'
+import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon, PurchaseIcon, DisposalIcon, MaintenanceIcon, TransferIcon } from './NavIcons'
 
 const NAV = {
   dashboard: { label: 'Dashboard', Icon: DashboardIcon },
   purchase: { label: 'Purchase Log', Icon: PurchaseIcon },
   physical: { label: 'Physical Inventory', Icon: PhysicalIcon },
   movement: { label: 'Movement Log', Icon: MovementIcon },
+  transfers: { label: 'Transfers', Icon: TransferIcon },
   disposal: { label: 'Disposal Log', Icon: DisposalIcon },
   assets: { label: 'Asset Database', Icon: AssetsIcon },
   maintenance: { label: 'Maintenance (PMS)', Icon: MaintenanceIcon },
@@ -18,7 +19,7 @@ const NAV = {
 
 const GROUPS = [
   { title: 'Overview', items: ['dashboard'] },
-  { title: 'Operations', items: ['purchase', 'physical', 'movement', 'disposal', 'maintenance'] },
+  { title: 'Operations', items: ['purchase', 'physical', 'movement', 'transfers', 'disposal', 'maintenance'] },
   { title: 'Records', items: ['assets', 'reports', 'log'] },
   { title: 'Admin', items: ['settings'] },
 ]
@@ -79,6 +80,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
   const badgeFor = {
     physical: { count: badges.physical, tone: 'red', hint: 'count discrepancies in the last 30 days' },
     maintenance: { count: badges.maintenance, tone: 'amber', hint: 'overdue maintenance entries' },
+    transfers: { count: badges.transfers, tone: 'amber', hint: 'transfers waiting to be received' },
   }
 
   return (
