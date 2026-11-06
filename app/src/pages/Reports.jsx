@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import { useLookups } from '../lib/useLookups'
+import { num } from '../lib/tableUtils'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
@@ -13,6 +14,8 @@ function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); retu
 function iso(d) { return d.toISOString().slice(0, 10) }
 function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1) }
 function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0) }
+function localDay(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+function daysBetweenTs(from, to) { return Math.max((new Date(to) - new Date(from)) / 86400000, 0) }
 function niceDate(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) }
 function niceMonthDay(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }
 function niceMonthYear(isoStr) { return new Date(`${isoStr}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) }
@@ -136,6 +139,7 @@ const TABS = [
   { key: 'daily', label: 'Daily', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M7 2.5v3M13 2.5v3" /></svg>) },
   { key: 'weekly', label: 'Weekly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M6.5 11h2M11.5 11h2M6.5 13.5h2" /></svg>) },
   { key: 'monthly', label: 'Monthly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 11h7M6.5 13.5h4" /></svg>) },
+  { key: 'transfers', label: 'Asset Transfers', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><path d="M2.5 5.5h8v8h-8z" /><path d="M10.5 8.5H14l2.5 2.5v2.5h-6" /><circle cx="6" cy="15" r="1.5" /><circle cx="13.5" cy="15" r="1.5" /></svg>) },
   { key: 'custom', label: 'Custom Range', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 12h1.2M9.4 12h1.2M12.2 12h1.2" /></svg>) },
 ]
 
@@ -153,14 +157,18 @@ export default function Reports() {
   const [monthFilter, setMonthFilter] = useState(todayISO().slice(0, 7))
   const [customFrom, setCustomFrom] = useState(iso(addDays(new Date(), -6)))
   const [customTo, setCustomTo] = useState(todayISO())
+  const [transfersRaw, setTransfers] = useState([])
+  const [transferDir, setTransferDir] = useState('all')
 
   useEffect(() => {
     (async () => {
-      const [a, m, p] = await Promise.all([
+      const [a, m, p, tr] = await Promise.all([
         supabase.from('assets_computed').select('*'),
         supabase.from('movement_log_computed').select('*'),
         supabase.from('physical_inventory_computed').select('*'),
+        supabase.from('asset_transfers_computed').select('*').order('sent_at', { ascending: false }),
       ])
+      setTransfers(tr.data || [])
       setRows(a.data || [])
       setMovements(m.data || [])
       setCounts(p.data || [])
@@ -174,6 +182,45 @@ export default function Reports() {
   const rows = rowsRaw.filter(inScope).filter(r => !categoryFilter || r.category === categoryFilter)
   const movements = movementsRaw.filter(inScope)
   const counts = countsRaw.filter(inScope)
+
+  // ----- Asset Transfers report -----
+  const inTransferScope = (t) => {
+    if (currentPropertyId === 'all') return true
+    if (transferDir === 'outgoing') return t.from_property_id === currentPropertyId
+    if (transferDir === 'incoming') return t.to_property_id === currentPropertyId
+    return t.from_property_id === currentPropertyId || t.to_property_id === currentPropertyId
+  }
+  const transferScope = transfersRaw.filter(inTransferScope).filter(t => !categoryFilter || t.category === categoryFilter)
+  const transfersInRange = transferScope.filter(t => { const d = localDay(t.sent_at); return d >= customFrom && d <= customTo })
+  const trReceived = transfersInRange.filter(t => t.status === 'Received')
+  const trCancelled = transfersInRange.filter(t => t.status === 'Cancelled')
+  const trInTransit = transfersInRange.filter(t => t.status === 'In Transit')
+  const stillInTransit = transferScope.filter(t => t.status === 'In Transit')
+  const trAvgDays = trReceived.length ? trReceived.reduce((sum, t) => sum + daysBetweenTs(t.sent_at, t.received_at), 0) / trReceived.length : null
+  const trQtyReceived = trReceived.reduce((sum, t) => sum + Number(t.qty || 0), 0)
+  const verifyEvents = transfersInRange.flatMap(t => [t.send_verified_method, t.receive_verified_method]).filter(Boolean)
+  const trQrPct = verifyEvents.length ? Math.round((verifyEvents.filter(m => m === 'qr').length / verifyEvents.length) * 100) : null
+  const routeMap = {}
+  transfersInRange.forEach(t => {
+    const k = `${t.from_property_name} → ${t.to_property_name}`
+    if (!routeMap[k]) routeMap[k] = { route: k, transfers: 0, received: 0, in_transit: 0, cancelled: 0, qty: 0 }
+    routeMap[k].transfers += 1
+    routeMap[k].qty += Number(t.qty || 0)
+    if (t.status === 'Received') routeMap[k].received += 1
+    if (t.status === 'In Transit') routeMap[k].in_transit += 1
+    if (t.status === 'Cancelled') routeMap[k].cancelled += 1
+  })
+  const routeRows = Object.values(routeMap).sort((a, b) => b.transfers - a.transfers)
+  const transferExportRows = (list) => list.map(t => ({
+    Transfer: t.transfer_code, Sent: new Date(t.sent_at).toLocaleString(), 'Asset ID': t.asset_code, Asset: t.asset_name, Brand: t.brand,
+    Serial: t.serial_number, Qty: Number(t.qty), 'From property': t.from_property_name, 'From location': t.from_location,
+    'To property': t.to_property_name, 'To location': t.to_location, Status: t.status, 'Sent by': t.sent_by_name,
+    'Send verified': t.send_verified_method === 'qr' ? 'QR scan' : t.send_verified_method === 'manual' ? 'ID typed' : '',
+    'Received at': t.received_at ? new Date(t.received_at).toLocaleString() : '', 'Received by': t.received_by_name,
+    'Receive verified': t.receive_verified_method === 'qr' ? 'QR scan' : t.receive_verified_method === 'manual' ? 'ID typed' : '',
+    'Days in transit': Number(daysBetweenTs(t.sent_at, t.received_at || t.cancelled_at || new Date()).toFixed(1)),
+    Remarks: t.send_remarks, 'Receive remarks': t.receive_remarks, 'Cancel reason': t.cancel_reason,
+  }))
 
   const actualToday = todayISO()
   const today = dayFilter // the day the Daily tab focuses on (defaults to actual today)
@@ -235,6 +282,24 @@ export default function Reports() {
   const fileSafe = (s) => s.replace(/\s+/g, '_').toLowerCase()
 
   const exportCurrentReport = () => {
+    if (tab === 'transfers') {
+      downloadReportWorkbook(
+        `asset_transfers_report_${customFrom}_to_${customTo}_${fileSafe(propertyLabel)}.xlsx`,
+        [
+          ['Report', 'Asset Transfers'], ['Property', propertyLabel], ['Range', `${customFrom} to ${customTo}`],
+          ['Total transfers', transfersInRange.length], ['Received', trReceived.length], ['In transit', trInTransit.length],
+          ['Cancelled', trCancelled.length], ['Quantity received', trQtyReceived],
+          ['Average days to receive', trAvgDays === null ? '' : Number(trAvgDays.toFixed(1))],
+          ['Verified by QR scan (%)', trQrPct === null ? '' : trQrPct],
+        ],
+        [
+          { name: 'Transfers', rows: transferExportRows(transfersInRange) },
+          { name: 'By route', rows: routeRows },
+          { name: 'Still in transit', rows: transferExportRows(stillInTransit) },
+        ]
+      )
+      return
+    }
     if (tab === 'daily') {
       downloadReportWorkbook(
         `daily_report_${today}_${fileSafe(propertyLabel)}.xlsx`,
@@ -367,7 +432,7 @@ export default function Reports() {
             )}
           </>
         )}
-        {tab === 'custom' && (
+        {(tab === 'custom' || tab === 'transfers') && (
           <>
             <label className="flex items-center gap-1.5 text-sm text-muted">
               From <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="input w-auto" />
@@ -376,6 +441,13 @@ export default function Reports() {
               To <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="input w-auto" />
             </label>
           </>
+        )}
+        {tab === 'transfers' && currentPropertyId !== 'all' && (
+          <select value={transferDir} onChange={e => setTransferDir(e.target.value)} className="input w-auto">
+            <option value="all">Incoming and outgoing</option>
+            <option value="outgoing">Outgoing only</option>
+            <option value="incoming">Incoming only</option>
+          </select>
         )}
 
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input w-auto ml-auto">
@@ -388,7 +460,7 @@ export default function Reports() {
         {tab === 'daily' && niceDate(dayFilter)}
         {tab === 'weekly' && `Week of ${niceMonthDay(weekStart)} – ${niceMonthDay(weekEnd)}, ${weekEnd.slice(0, 4)}`}
         {tab === 'monthly' && niceMonthYear(monthStart)}
-        {tab === 'custom' && `${niceMonthDay(customFrom)} – ${niceMonthDay(customTo)}, ${customTo.slice(0, 4)}`}
+        {(tab === 'custom' || tab === 'transfers') && `${niceMonthDay(customFrom)} – ${niceMonthDay(customTo)}, ${customTo.slice(0, 4)}`}
       </p>
 
       {tab === 'daily' && (
@@ -613,6 +685,94 @@ export default function Reports() {
               </ul>
             </Panel>
           )}
+        </div>
+      )}
+
+      {tab === 'transfers' && (
+        <div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <KPI iconKey="movement" label="Total Transfers" value={transfersInRange.length} />
+            <KPI iconKey="deployed" label="In Transit" value={trInTransit.length} tone={trInTransit.length ? TONE.gold : undefined} />
+            <KPI iconKey="operational" label="Received" value={trReceived.length} tone={trReceived.length ? TONE.success : undefined} />
+            <KPI iconKey="discrepancy" label="Cancelled" value={trCancelled.length} tone={trCancelled.length ? TONE.danger : undefined} />
+            <KPI iconKey="depreciation" label="Average Days to Receive" value={trAvgDays === null ? '—' : trAvgDays.toFixed(1)} />
+            <KPI iconKey="count" label="Verified by QR Scan" value={trQrPct === null ? '—' : `${trQrPct}%`} />
+          </div>
+
+          {stillInTransit.length > 0 && (
+            <Panel title="Still in transit now">
+              <ul className="space-y-2 text-sm">
+                {stillInTransit.map(t => {
+                  const days = daysBetweenTs(t.sent_at, new Date())
+                  return (
+                    <li key={t.id} className="flex items-center justify-between gap-3">
+                      <span>{t.transfer_code} · {t.asset_code} — {t.asset_name} · {t.from_property_name} → {t.to_property_name}</span>
+                      <span className={`whitespace-nowrap ${days > 3 ? 'text-danger font-medium' : 'text-muted'}`}>
+                        {days < 1 ? 'less than a day' : `${Math.floor(days)} day${Math.floor(days) === 1 ? '' : 's'}`} waiting{days > 3 ? ' — follow up' : ''}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Panel>
+          )}
+
+          <Panel title="Transfers by route">
+            <div className="overflow-x-auto border border-hairline rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
+                  <tr>{['Route', 'Transfers', 'Received', 'In transit', 'Cancelled', 'Qty'].map(h => <th key={h} className="text-left px-3 py-2 font-medium">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {routeRows.map(r => (
+                    <tr key={r.route} className="border-t border-hairline">
+                      <td className="px-3 py-2">{r.route}</td><td className="px-3 py-2">{r.transfers}</td><td className="px-3 py-2">{r.received}</td>
+                      <td className="px-3 py-2">{r.in_transit}</td><td className="px-3 py-2">{r.cancelled}</td><td className="px-3 py-2">{r.qty}</td>
+                    </tr>
+                  ))}
+                  {routeRows.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-muted">No transfers in this range.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+
+          <Panel title="Transfer details"
+            action={transfersInRange.length > 0 && <ExportButton onClick={() => downloadCsv(`asset_transfers_${customFrom}_to_${customTo}.csv`, transferExportRows(transfersInRange))} />}>
+            <div className="overflow-x-auto border border-hairline rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
+                  <tr>{['Transfer', 'Sent', 'Asset', 'Qty', 'From', 'To', 'Status', 'Sent by', 'Received by', 'Verified (send / receive)', 'Days'].map(h => <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {transfersInRange.map(t => (
+                    <tr key={t.id} className="border-t border-hairline">
+                      <td className="px-3 py-2 whitespace-nowrap font-medium">{t.transfer_code}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{new Date(t.sent_at).toLocaleString()}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.asset_code} — {t.asset_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{num(t.qty)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.from_property_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.to_property_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.status}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.sent_by_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.received_by_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{t.send_verified_method ? (t.send_verified_method === 'qr' ? 'QR' : 'typed') : '—'} / {t.receive_verified_method ? (t.receive_verified_method === 'qr' ? 'QR' : 'typed') : '—'}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{daysBetweenTs(t.sent_at, t.received_at || t.cancelled_at || new Date()).toFixed(1)}</td>
+                    </tr>
+                  ))}
+                  {transfersInRange.length === 0 && <tr><td colSpan={11} className="px-3 py-6 text-center text-muted">No transfers in this range.</td></tr>}
+                </tbody>
+                {transfersInRange.length > 0 && (
+                  <tfoot>
+                    <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
+                      <td className="px-3 py-2" colSpan={3}>Total · {transfersInRange.length} {transfersInRange.length === 1 ? 'transfer' : 'transfers'}</td>
+                      <td className="px-3 py-2">{num(transfersInRange.reduce((sum, t) => sum + Number(t.qty || 0), 0))}</td>
+                      <td className="px-3 py-2" colSpan={7}></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </Panel>
         </div>
       )}
     </div>
