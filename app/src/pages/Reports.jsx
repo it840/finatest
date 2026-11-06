@@ -139,7 +139,7 @@ const TABS = [
   { key: 'daily', label: 'Daily', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M7 2.5v3M13 2.5v3" /></svg>) },
   { key: 'weekly', label: 'Weekly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13M6.5 11h2M11.5 11h2M6.5 13.5h2" /></svg>) },
   { key: 'monthly', label: 'Monthly', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 11h7M6.5 13.5h4" /></svg>) },
-  { key: 'transfers', label: 'Asset Transfers', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><path d="M2.5 5.5h8v8h-8z" /><path d="M10.5 8.5H14l2.5 2.5v2.5h-6" /><circle cx="6" cy="15" r="1.5" /><circle cx="13.5" cy="15" r="1.5" /></svg>) },
+  { key: 'transfers', label: 'Asset Transfer', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><path d="M2.5 5.5h8v8h-8z" /><path d="M10.5 8.5H14l2.5 2.5v2.5h-6" /><circle cx="6" cy="15" r="1.5" /><circle cx="13.5" cy="15" r="1.5" /></svg>) },
   { key: 'custom', label: 'Custom Range', icon: (<svg width="14" height="14" viewBox="0 0 20 20" {...icon}><rect x="3.5" y="4" width="13" height="12.5" rx="1.5" /><path d="M3.5 8h13" /><path d="M6.5 12h1.2M9.4 12h1.2M12.2 12h1.2" /></svg>) },
 ]
 
@@ -286,7 +286,7 @@ export default function Reports() {
       downloadReportWorkbook(
         `asset_transfers_report_${customFrom}_to_${customTo}_${fileSafe(propertyLabel)}.xlsx`,
         [
-          ['Report', 'Asset Transfers'], ['Property', propertyLabel], ['Range', `${customFrom} to ${customTo}`],
+          ['Report', 'Asset Transfer'], ['Property', propertyLabel], ['Range', `${customFrom} to ${customTo}`],
           ['Total transfers', transfersInRange.length], ['Received', trReceived.length], ['In transit', trInTransit.length],
           ['Cancelled', trCancelled.length], ['Quantity received', trQtyReceived],
           ['Average days to receive', trAvgDays === null ? '' : Number(trAvgDays.toFixed(1))],

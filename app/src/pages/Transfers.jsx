@@ -500,7 +500,7 @@ export default function Transfers({ profile }) {
   return (
     <div>
       <div className="flex items-start justify-between flex-wrap gap-3 mb-1">
-        <h1 className="font-display text-2xl">Asset Transfers</h1>
+        <h1 className="font-display text-2xl">Asset Transfer</h1>
         {canWrite && (
           <button onClick={() => setSending(true)} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90">
             New transfer

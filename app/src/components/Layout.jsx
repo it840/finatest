@@ -8,7 +8,7 @@ const NAV = {
   purchase: { label: 'Purchase Log', Icon: PurchaseIcon },
   physical: { label: 'Physical Inventory', Icon: PhysicalIcon },
   movement: { label: 'Movement Log', Icon: MovementIcon },
-  transfers: { label: 'Transfers', Icon: TransferIcon },
+  transfers: { label: 'Asset Transfer', Icon: TransferIcon },
   disposal: { label: 'Disposal Log', Icon: DisposalIcon },
   assets: { label: 'Asset Database', Icon: AssetsIcon },
   maintenance: { label: 'Maintenance (PMS)', Icon: MaintenanceIcon },
