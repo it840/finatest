@@ -60,7 +60,19 @@ function DetailRow({ label, value }) {
 function AssetDetailModal({ asset, onClose }) {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  const [bigPhoto, setBigPhoto] = useState(false)
   const qrUrl = buildQrUrl(asset)
+
+  // Esc closes the enlarged picture first, then the details window
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (bigPhoto) setBigPhoto(false)
+      else onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [bigPhoto, onClose])
 
   useEffect(() => {
     supabase.from('activity_log_computed').select('*')
@@ -97,7 +109,10 @@ function AssetDetailModal({ asset, onClose }) {
         <div className="px-6 py-5 grid grid-cols-[auto_1fr] gap-6">
           <div className="w-44 flex flex-col items-center gap-3">
             {asset.photo_url && (
-              <img src={asset.photo_url} alt={asset.asset_name} className="w-full h-32 object-cover rounded-lg border border-hairline" />
+              <button onClick={() => setBigPhoto(true)} title="Click to enlarge" className="block w-full cursor-zoom-in group relative">
+                <img src={asset.photo_url} alt={asset.asset_name} className="w-full h-32 object-cover rounded-lg border border-hairline group-hover:opacity-90 transition-opacity" />
+                <span className="absolute bottom-1.5 right-1.5 text-[10px] bg-ink/70 text-white rounded px-1.5 py-0.5">Click to enlarge</span>
+              </button>
             )}
             <div className="border border-hairline rounded-lg p-3 bg-paper">
               <img src={qrUrl} alt="QR code" className="w-36 h-36" />
@@ -175,6 +190,18 @@ function AssetDetailModal({ asset, onClose }) {
           </button>
         </div>
       </div>
+
+      {bigPhoto && asset.photo_url && (
+        <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={() => setBigPhoto(false)}>
+          <button onClick={() => setBigPhoto(false)} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>
+          <img src={asset.photo_url} alt={asset.asset_name} onClick={e => e.stopPropagation()}
+            className="max-w-full max-h-[88vh] object-contain rounded-lg cursor-default" />
+          <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
+            <span>{asset.asset_code} — {asset.asset_name}</span>
+            <a href={asset.photo_url} target="_blank" rel="noreferrer" className="underline hover:text-white">Open full size in a new tab</a>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
