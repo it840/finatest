@@ -36,15 +36,39 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const subOptions = useMemo(
-    () => lookups.sub_categories.filter(s => {
-      const cat = lookups.categories.find(c => c.name === form.category)
-      return cat && s.category_id === cat.id
-    }),
-    [form.category, lookups]
-  )
+  // match a category by name, ignoring emoji/punctuation (older or imported assets may be saved without the emoji)
+  const norm = (t) => (t || '').replace(/[^\p{L}\p{N}\s/&]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase()
+  const selectedCat = form.category
+    ? (lookups.categories.find(c => c.name === form.category) || lookups.categories.find(c => norm(c.name) === norm(form.category)))
+    : null
+  const subOptions = useMemo(() => {
+    const list = selectedCat ? lookups.sub_categories.filter(s => s.category_id === selectedCat.id) : []
+    return form.sub_category && !list.some(s => s.name === form.sub_category)
+      ? [...list, { id: `current-${form.sub_category}`, name: form.sub_category }]
+      : list
+  }, [selectedCat, form.sub_category, lookups])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const changeCategory = (e) => {
+    const name = e.target.value
+    setForm(f => {
+      const cat = lookups.categories.find(c => c.name === name)
+      const stillValid = cat && lookups.sub_categories.some(s => s.category_id === cat.id && s.name === f.sub_category)
+      return { ...f, category: name, sub_category: stillValid ? f.sub_category : '' }
+    })
+  }
+
+  const changeSubCategory = (e) => {
+    const v = e.target.value
+    if (!selectedCat && v.includes('|')) {
+      const [cid, ...rest] = v.split('|')
+      const cat = lookups.categories.find(c => String(c.id) === cid)
+      setForm(f => ({ ...f, category: cat ? cat.name : f.category, sub_category: rest.join('|') }))
+    } else {
+      setForm(f => ({ ...f, sub_category: v }))
+    }
+  }
 
   // locations and departments are limited to the selected property
   const locationOptions = withCurrent(forProperty(lookups.locations, form.property_id), form.location)
@@ -126,16 +150,26 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
             </select>
           </Field>
           <Field label="Category">
-            <select value={form.category} onChange={set('category')} className="input">
+            <select value={form.category} onChange={changeCategory} className="input">
               <option value="">—</option>
               {lookups.categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </select>
           </Field>
           <Field label="Sub-Category">
-            <select value={form.sub_category} onChange={set('sub_category')} className="input">
+            <select value={form.sub_category} onChange={changeSubCategory} className="input">
               <option value="">—</option>
-              {subOptions.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+              {selectedCat
+                ? subOptions.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
+                : lookups.categories.map(c => {
+                    const subs = lookups.sub_categories.filter(s => s.category_id === c.id)
+                    return subs.length === 0 ? null : (
+                      <optgroup key={c.id} label={c.name}>
+                        {subs.map(s => <option key={s.id} value={`${c.id}|${s.name}`}>{s.name}</option>)}
+                      </optgroup>
+                    )
+                  })}
             </select>
+            {!selectedCat && <span className="block text-xs text-muted mt-1">Pick one and its category fills in.</span>}
           </Field>
           <Field label="Brand"><input value={form.brand} onChange={set('brand')} className="input" /></Field>
           <Field label="Model"><input value={form.model} onChange={set('model')} className="input" /></Field>
