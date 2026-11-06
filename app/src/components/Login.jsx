@@ -56,7 +56,9 @@ function Heading({ children }) {
 
 export default function Login() {
   const { signIn } = useAuthContext()
-  const [view, setView] = useState('signin') // 'signin' | 'help' - the blade sweeps between them
+  const [view, setView] = useState('signin') // 'signin' | 'help' - the blade slides between them
+  const [ready, setReady] = useState(false)   // false until the first switch, so the load animation plays
+  const go = (v) => { setError(''); setReady(true); setView(v) }
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -95,7 +97,7 @@ export default function Login() {
         <rect width="100%" height="100%" fill="url(#login-dots)" />
       </svg>
 
-      <div className="auth-card relative w-full max-w-[920px] md:h-[540px] rounded-3xl overflow-hidden bg-paper border border-theme-line shadow-xl" data-view={view}>
+      <div className="auth-card relative w-full max-w-[920px] md:h-[540px] rounded-3xl overflow-hidden bg-paper border border-theme-line shadow-xl" data-view={view} data-ready={ready ? 'true' : undefined}>
 
         {/* phones: a simple brand band instead of the blade */}
         <div className="md:hidden bg-theme-accent text-white px-8 py-7">
@@ -149,7 +151,7 @@ export default function Login() {
               </fieldset>
 
               <div className="flex justify-end mt-3 mb-6">
-                <button type="button" onClick={() => { setError(''); setView('help') }}
+                <button type="button" onClick={() => go('help')}
                   className="text-xs text-ink underline decoration-gold decoration-2 underline-offset-4 hover:text-theme-accent">
                   Forgot password?
                 </button>
@@ -189,7 +191,7 @@ export default function Login() {
                 </li>
               ))}
             </ol>
-            <button type="button" onClick={() => setView('signin')}
+            <button type="button" onClick={() => go('signin')}
               className="mt-8 text-sm text-ink underline decoration-gold decoration-2 underline-offset-4 hover:text-theme-accent">
               ← Back to sign in
             </button>
