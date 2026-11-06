@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { timeOf } from '../lib/tableUtils'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
@@ -44,7 +45,7 @@ export default function DisposalLog({ profile }) {
 
   const filteredRows = scopedRows.filter(r =>
     !query || matchesQuery(query, [
-      r.disposal_date, r.asset_code, r.asset_name, r.qty, r.unit_cost, r.amount,
+      r.disposal_date, timeOf(r.created_at), r.asset_code, r.asset_name, r.qty, r.unit_cost, r.amount,
       r.disposal_reason, r.remarks, r.logged_by_name,
     ])
   )
@@ -142,7 +143,7 @@ export default function DisposalLog({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Reason', 'Remarks', 'Logged By'].map(h => (
+              {['Date', 'Time', 'Asset', 'Qty', 'Unit Cost', 'Amount', 'Reason', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -151,6 +152,7 @@ export default function DisposalLog({ profile }) {
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.disposal_date}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted" title="Time this entry was logged">{timeOf(r.created_at)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.qty}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.unit_cost)}</td>
@@ -160,12 +162,12 @@ export default function DisposalLog({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.logged_by_name}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-muted">No disposals logged yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No disposals logged yet.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={3}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalQty)}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Total amount ÷ total qty">{peso2(avgUnitCost)} <span className="text-xs font-normal text-muted">avg</span></td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso2(totalAmount)}</td>

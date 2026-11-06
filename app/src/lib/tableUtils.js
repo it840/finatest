@@ -22,3 +22,10 @@ export function matchesQuery(query, values) {
       return typeof v !== 'object' && !Number.isNaN(n) && n.toLocaleString(undefined, { maximumFractionDigits: 2 }).toLowerCase().includes(q)
     })
 }
+
+// Clock time an entry was logged, in the viewer's local time (for example "3:42 PM")
+export function timeOf(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}

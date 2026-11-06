@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { timeOf } from '../lib/tableUtils'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
@@ -36,7 +37,7 @@ export default function MovementLog() {
 
   const filteredRows = scopedRows.filter(r =>
     (!query || matchesQuery(query, [
-      r.movement_date, r.asset_code, r.asset_name, r.qty, r.movement_type, r.from_location,
+      r.movement_date, timeOf(r.created_at), r.asset_code, r.asset_name, r.qty, r.movement_type, r.from_location,
       r.to_location, r.reason, r.remarks, r.authorized_by_name,
     ])) &&
     (!locationFilter || r.to_location === locationFilter || r.from_location === locationFilter) &&
@@ -78,7 +79,7 @@ export default function MovementLog() {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Qty', 'Type', 'From', 'To', 'Reason', 'Remarks', 'Logged By'].map(h => (
+              {['Date', 'Time', 'Asset', 'Qty', 'Type', 'From', 'To', 'Reason', 'Remarks', 'Logged By'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -87,6 +88,7 @@ export default function MovementLog() {
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.movement_date}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted" title="Time this entry was logged">{timeOf(r.created_at)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap font-medium">{r.qty == null ? '—' : Number(r.qty).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.movement_type}</td>
@@ -97,12 +99,12 @@ export default function MovementLog() {
                 <td className="px-3 py-2 whitespace-nowrap">{r.authorized_by_name || '—'}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-muted">No movements match.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'movement' : 'movements'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={3}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'movement' : 'movements'}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title={`${entriesWithQty} of ${filteredRows.length} entries have a recorded quantity`}>{num(totalQty)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>
               </tr>

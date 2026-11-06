@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { timeOf } from '../lib/tableUtils'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
@@ -62,7 +63,7 @@ export default function PhysicalInventory({ profile }) {
 
   const filteredRows = scopedRows.filter(r =>
     (!query || matchesQuery(query, [
-      r.inventory_date, r.asset_code, r.asset_name, r.registered_qty, r.actual_qty, prevByRow[r.id], r.actual_location,
+      r.inventory_date, timeOf(r.created_at), r.asset_code, r.asset_name, r.registered_qty, r.actual_qty, prevByRow[r.id], r.actual_location,
       r.inventory_status, r.condition, r.discrepancy, r.department, r.assigned_to, r.remarks,
     ])) &&
     (!locationFilter || r.actual_location === locationFilter) &&
@@ -179,7 +180,7 @@ export default function PhysicalInventory({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset', 'Registered Qty', 'Actual Qty', 'Previous Location', 'Actual Location', 'Status', 'Condition', 'Discrepancy'].map(h => (
+              {['Date', 'Time', 'Asset', 'Registered Qty', 'Actual Qty', 'Previous Location', 'Actual Location', 'Status', 'Condition', 'Discrepancy'].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -188,6 +189,7 @@ export default function PhysicalInventory({ profile }) {
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.inventory_date}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted" title="Time this entry was logged">{timeOf(r.created_at)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code} — {r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.registered_qty}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.actual_qty}</td>
@@ -198,12 +200,12 @@ export default function PhysicalInventory({ profile }) {
                 <td className={`px-3 py-2 whitespace-nowrap ${r.discrepancy !== 'No Discrepancy' ? 'text-danger' : 'text-success'}`}>{r.discrepancy}</td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-muted">No counts match.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'count' : 'counts'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={3}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'count' : 'counts'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalRegistered)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalActual)}</td>
                 <td className="px-3 py-2" colSpan={4}></td>
