@@ -57,28 +57,18 @@ function BrandPanel() {
 }
 
 export default function Login() {
-  const { signIn, signUp } = useAuthContext()
-  const [mode, setMode] = useState('signin')
+  const { signIn } = useAuthContext()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
 
   const submit = async (e) => {
     e.preventDefault()
-    setError(''); setInfo(''); setBusy(true)
+    setError(''); setBusy(true)
     try {
-      if (mode === 'signin') {
-        const { error } = await signIn(email, password)
-        if (error) throw error
-      } else {
-        const { error } = await signUp(email, password, fullName)
-        if (error) throw error
-        setInfo('Account created. If email confirmation is required, check your inbox, then sign in.')
-        setMode('signin')
-      }
+      const { error } = await signIn(email, password)
+      if (error) throw error
     } catch (err) {
       setError(err.message || 'Something went wrong.')
     } finally {
@@ -116,23 +106,15 @@ export default function Login() {
             <div className="mb-8">
               <div className="w-8 h-[3px] bg-theme-accent rounded-full mb-4" />
               <div className="font-display text-3xl text-ink">
-                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+                Welcome back
               </div>
               <div className="text-sm text-muted mt-1.5">
-                {mode === 'signin' ? 'Sign in to the Asset Registry System.' : 'Set up access to the Asset Registry System.'}
+                Sign in to the Asset Registry System.
               </div>
             </div>
 
             <form onSubmit={submit} className="space-y-5">
               <fieldset disabled={busy} className="space-y-5 contents">
-                {mode === 'signup' && (
-                  <div>
-                    <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">FULL NAME</label>
-                    <input value={fullName} onChange={e => setFullName(e.target.value)} required
-                      className="w-full border-0 border-b border-hairline bg-transparent px-0 py-2 text-sm
-                                 focus:outline-none focus:border-theme-accent transition-colors disabled:opacity-50" />
-                  </div>
-                )}
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1.5 tracking-wide">EMAIL</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
@@ -148,7 +130,6 @@ export default function Login() {
               </fieldset>
 
               {error && <div className="text-sm text-danger">{error}</div>}
-              {info && <div className="text-sm text-success">{info}</div>}
 
               <div className="pt-1">
                 <button disabled={busy} type="submit"
@@ -162,7 +143,7 @@ export default function Login() {
                              focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
                   style={busy ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}>
                   {busy ? <Spinner /> : null}
-                  <span>{busy ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account'}</span>
+                  <span>{busy ? 'Signing in…' : 'Sign in'}</span>
                   {!busy && <ArrowIcon />}
                 </button>
                 {busy && (
@@ -171,24 +152,8 @@ export default function Login() {
                   </div>
                 )}
               </div>
-
-              <button type="button" disabled={busy}
-                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}
-                className="w-full text-center text-sm text-muted hover:text-ink disabled:opacity-50">
-                {mode === 'signin' ? (
-                  <>Need an account? <span className="text-ink font-medium underline">Sign up</span></>
-                ) : (
-                  <>Already have an account? <span className="text-ink font-medium underline">Sign in</span></>
-                )}
-              </button>
             </form>
 
-            {mode === 'signup' && (
-              <p className="text-xs text-muted mt-6 border-t border-hairline pt-4 leading-relaxed">
-                The first person to sign up becomes the admin. Everyone after that starts as staff —
-                an admin can change roles later in Settings.
-              </p>
-            )}
           </div>
         </div>
 
