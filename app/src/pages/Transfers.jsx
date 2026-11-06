@@ -4,6 +4,7 @@ import { useProperty } from '../lib/PropertyContext'
 import { matchesQuery } from '../lib/tableUtils'
 import { forProperty } from '../lib/propertyScope'
 import { parseAssetCode } from '../lib/qr'
+import { buildQrUrl, printAssetQr } from '../lib/assetQr'
 import QrScanner from '../components/QrScanner'
 import Pagination from '../components/Pagination'
 
@@ -26,8 +27,30 @@ function Field({ label, children }) {
   )
 }
 
+// Full-screen picture; click anywhere outside the picture (or press Esc) to close
+function Lightbox({ src, caption, isQr, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={onClose}>
+      <button onClick={onClose} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>
+      <img src={src} alt={caption || ''} onClick={e => e.stopPropagation()}
+        className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${isQr ? 'bg-white p-4' : ''}`} />
+      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
+        {caption && <span>{caption}</span>}
+        <a href={src} target="_blank" rel="noreferrer" className="underline hover:text-white">Open in a new tab</a>
+      </div>
+    </div>
+  )
+}
+
 // Details shown so the person can compare the screen with the physical item
 function AssetCard({ asset, verified }) {
+  const [big, setBig] = useState(false)
+  useEffect(() => {
+    if (!big) return
+    const onKey = (e) => { if (e.key === 'Escape') setBig(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [big])
   const rows = [
     ['Brand', asset.brand], ['Model', asset.model], ['Serial #', asset.serial_number],
     ['Category', asset.category], ['Quantity', asset.qty], ['Location', asset.location],
@@ -35,8 +58,9 @@ function AssetCard({ asset, verified }) {
   return (
     <div className={`border rounded-lg p-3 flex gap-3 ${verified ? 'border-[#97C459] bg-[#F4FAEC]' : 'border-hairline bg-surface'}`}>
       {asset.photo_url
-        ? <img src={asset.photo_url} alt="" className="h-20 w-20 rounded border border-hairline object-cover flex-shrink-0" />
+        ? <button type="button" onClick={() => setBig(true)} title="Click to enlarge" className="flex-shrink-0 cursor-zoom-in"><img src={asset.photo_url} alt="" className="h-20 w-20 rounded border border-hairline object-cover hover:opacity-90" /></button>
         : <div className="h-20 w-20 rounded border border-dashed border-hairline flex items-center justify-center text-[10px] text-muted flex-shrink-0">No photo</div>}
+      {big && <Lightbox src={asset.photo_url} caption={`${asset.asset_code} — ${asset.asset_name}`} onClose={() => setBig(false)} />}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <div className="font-medium truncate">{asset.asset_name} <span className="text-muted font-normal">· {asset.asset_code}</span></div>
@@ -282,11 +306,18 @@ const METHOD_TEXT = { qr: 'verified by QR scan', manual: 'verified by typed ID' 
 
 // Full details of one asset plus every transfer it has ever had
 export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
+  const [big, setBig] = useState(null) // { src, caption, isQr }
+  const qrUrl = buildQrUrl(asset)
+  // Esc closes an enlarged picture first, then the window
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (big) setBig(null)
+      else onClose()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [big, onClose])
 
   const received = history.filter(t => t.status === 'Received').length
   const inTransit = history.filter(t => t.status === 'In Transit').length
@@ -311,9 +342,24 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
         </div>
 
         <div className="px-6 py-5 flex gap-5">
-          {asset.photo_url
-            ? <img src={asset.photo_url} alt="" className="h-28 w-28 rounded-lg border border-hairline object-cover flex-shrink-0" />
-            : <div className="h-28 w-28 rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted flex-shrink-0">No photo</div>}
+          <div className="w-36 flex-shrink-0 space-y-3">
+            {asset.photo_url ? (
+              <button onClick={() => setBig({ src: asset.photo_url, caption: `${asset.asset_code} — ${asset.asset_name}` })}
+                title="Click to enlarge" className="block w-full relative cursor-zoom-in group">
+                <img src={asset.photo_url} alt={asset.asset_name} className="h-28 w-36 rounded-lg border border-hairline object-cover group-hover:opacity-90 transition-opacity" />
+                <span className="absolute bottom-1.5 right-1.5 text-[10px] bg-ink/70 text-white rounded px-1.5 py-0.5">Click to enlarge</span>
+              </button>
+            ) : (
+              <div className="h-28 w-36 rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted">No photo</div>
+            )}
+            <div className="border border-hairline rounded-lg p-2 bg-paper text-center">
+              <button onClick={() => setBig({ src: qrUrl, caption: `QR code · ${asset.asset_code}`, isQr: true })} title="Click to enlarge" className="block mx-auto cursor-zoom-in">
+                <img src={qrUrl} alt={`QR code for ${asset.asset_code}`} className="h-28 w-28" />
+              </button>
+              <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
+            </div>
+            <button onClick={() => printAssetQr(asset)} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Code</button>
+          </div>
           <div className="grid grid-cols-3 gap-x-5 gap-y-2.5 flex-1 min-w-0">
             {details.map(([k, v]) => (
               <div key={k} className="min-w-0">
@@ -379,6 +425,7 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
           <button onClick={onClose} className="px-4 py-2 text-sm border border-hairline rounded hover:bg-hairline/20">Close</button>
         </div>
       </div>
+      {big && <Lightbox src={big.src} caption={big.caption} isQr={big.isQr} onClose={() => setBig(null)} />}
     </div>
   )
 }

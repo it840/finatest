@@ -6,37 +6,10 @@ import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
+import { buildQrUrl } from '../lib/assetQr'
 
 function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
-
-function buildQrUrl(a) {
-  const lines = [
-    'IDENTIFICATION',
-    `Asset ID: ${a.asset_code || ''}`,
-    `Asset Name: ${a.asset_name || ''}`,
-    `Category: ${a.category || '—'}`,
-    `Sub-Category: ${a.sub_category || '—'}`,
-    '',
-    'ASSET DETAILS',
-    `Brand: ${a.brand || '—'}`,
-    `Model: ${a.model || '—'}`,
-    `Serial Number: ${a.serial_number || '—'}`,
-    '',
-    'LOCATION & ASSIGNMENT',
-    `Property: ${a.property_name || '—'}`,
-    `Location: ${a.location || '—'}`,
-    `Actual Location: ${a.actual_location || '—'}`,
-    `Department: ${a.department || '—'}`,
-    `Assigned To: ${a.assigned_to || '—'}`,
-    '',
-    'STATUS',
-    `Status: ${a.status || '—'}`,
-    `Condition: ${a.condition || '—'}`,
-    ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
-  ].join('\n')
-  return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(lines)}`
-}
 
 const STATUS_DOT = {
   Active: 'bg-success', 'In Use': 'bg-success', Available: 'bg-success',
