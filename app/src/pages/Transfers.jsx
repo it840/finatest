@@ -272,6 +272,117 @@ function CancelModal({ transfer: t, onClose, onDone }) {
   )
 }
 
+
+function fmt(ts) { return ts ? new Date(ts).toLocaleString() : '' }
+function daysIn(t) {
+  const end = t.received_at || t.cancelled_at || new Date()
+  return Math.max((new Date(end) - new Date(t.sent_at)) / 86400000, 0)
+}
+const METHOD_TEXT = { qr: 'verified by QR scan', manual: 'verified by typed ID' }
+
+// Full details of one asset plus every transfer it has ever had
+export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const received = history.filter(t => t.status === 'Received').length
+  const inTransit = history.filter(t => t.status === 'In Transit').length
+  const cancelled = history.filter(t => t.status === 'Cancelled').length
+  const details = [
+    ['Property', asset.property_name], ['Status', asset.status], ['Condition', asset.condition],
+    ['Category', asset.category], ['Sub-Category', asset.sub_category], ['Brand', asset.brand],
+    ['Model', asset.model], ['Serial #', asset.serial_number], ['Quantity on hand', asset.registered_qty],
+    ['Home location', asset.location], ['Actual location', asset.actual_location], ['Assigned to', asset.assigned_to],
+    ['Department', asset.department],
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4" onClick={onClose}>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between px-6 py-5 border-b border-hairline">
+          <div>
+            <div className="font-display text-xl">{asset.asset_name} <span className="text-muted text-base">— {asset.asset_code}</span></div>
+            <div className="text-xs text-muted mt-0.5">Asset details and full transfer history</div>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-ink text-xl leading-none">×</button>
+        </div>
+
+        <div className="px-6 py-5 flex gap-5">
+          {asset.photo_url
+            ? <img src={asset.photo_url} alt="" className="h-28 w-28 rounded-lg border border-hairline object-cover flex-shrink-0" />
+            : <div className="h-28 w-28 rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted flex-shrink-0">No photo</div>}
+          <div className="grid grid-cols-3 gap-x-5 gap-y-2.5 flex-1 min-w-0">
+            {details.map(([k, v]) => (
+              <div key={k} className="min-w-0">
+                <div className="text-xs text-muted">{k}</div>
+                <div className="text-sm truncate">{v === null || v === undefined || v === '' ? '—' : String(v)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-6 pb-2 flex items-center justify-between">
+          <h3 className="font-display text-base">Transfer history</h3>
+          <span className="text-xs text-muted">{history.length} {history.length === 1 ? 'transfer' : 'transfers'} · {received} received · {inTransit} in transit · {cancelled} cancelled</span>
+        </div>
+
+        <div className="px-6 pb-6">
+          {history.length === 0 && <div className="text-sm text-muted border border-hairline rounded p-4 text-center">This asset has never been transferred.</div>}
+          <div className="space-y-3">
+            {history.map(t => (
+              <div key={t.id} className={`border rounded-lg p-4 ${t.id === highlightId ? 'border-theme-accent bg-theme-bg' : 'border-hairline'}`}>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="font-medium">{t.transfer_code} <span className="text-muted font-normal">· {Number(t.qty).toLocaleString(undefined, { maximumFractionDigits: 2 })} {Number(t.qty) === 1 ? 'piece' : 'pieces'}</span></div>
+                  <StatusPill status={t.status} />
+                </div>
+                <div className="text-sm mt-1">
+                  {t.from_property_name}{t.from_location ? ` (${t.from_location})` : ''} <span className="text-muted">→</span> {t.to_property_name}{t.to_location ? ` (${t.to_location})` : ''}
+                </div>
+
+                <ol className="mt-3 space-y-2 text-sm border-l border-hairline ml-1 pl-4">
+                  <li className="relative">
+                    <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-theme-accent" />
+                    <div><span className="font-medium">Sent</span> · {fmt(t.sent_at)}{t.sent_by_name ? ` · by ${t.sent_by_name}` : ''}</div>
+                    <div className="text-xs text-muted">{t.send_verified_method ? `Asset ${METHOD_TEXT[t.send_verified_method]}${t.send_verified_at ? ` at ${fmt(t.send_verified_at)}` : ''}` : 'Not verified'}{t.send_remarks ? ` · Note: ${t.send_remarks}` : ''}</div>
+                  </li>
+                  {t.status === 'Received' && (
+                    <li className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[#3D7A5B]" />
+                      <div><span className="font-medium">Received</span> · {fmt(t.received_at)}{t.received_by_name ? ` · by ${t.received_by_name}` : ''}</div>
+                      <div className="text-xs text-muted">{t.receive_verified_method ? `Asset ${METHOD_TEXT[t.receive_verified_method]}${t.receive_verified_at ? ` at ${fmt(t.receive_verified_at)}` : ''}` : 'Not verified'}{t.receive_remarks ? ` · Note: ${t.receive_remarks}` : ''}</div>
+                    </li>
+                  )}
+                  {t.status === 'Cancelled' && (
+                    <li className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-muted" />
+                      <div><span className="font-medium">Cancelled</span> · {fmt(t.cancelled_at)}{t.cancelled_by_name ? ` · by ${t.cancelled_by_name}` : ''}</div>
+                      {t.cancel_reason && <div className="text-xs text-muted">Reason: {t.cancel_reason}</div>}
+                    </li>
+                  )}
+                  {t.status === 'In Transit' && (
+                    <li className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full border border-theme-accent bg-surface" />
+                      <div className="text-muted">Waiting to be received at {t.to_property_name}</div>
+                    </li>
+                  )}
+                </ol>
+                <div className="text-xs text-muted mt-2">{t.status === 'In Transit' ? 'Waiting' : 'Took'} {daysIn(t).toFixed(1)} days</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end px-6 pb-6">
+          <button onClick={onClose} className="px-4 py-2 text-sm border border-hairline rounded hover:bg-hairline/20">Close</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const VERIFY_LABEL = { qr: 'QR', manual: 'ID typed' }
 
 export default function Transfers({ profile }) {
@@ -290,12 +401,13 @@ export default function Transfers({ profile }) {
   const [sending, setSending] = useState(false)
   const [receiving, setReceiving] = useState(null)
   const [cancelling, setCancelling] = useState(null)
+  const [viewing, setViewing] = useState(null) // { assetId, highlightId }
 
   const load = async () => {
     setLoading(true)
     const [t, a, l, d] = await Promise.all([
       supabase.from('asset_transfers_computed').select('*').order('sent_at', { ascending: false }),
-      supabase.from('assets_computed').select('id, asset_code, asset_name, brand, model, serial_number, category, photo_url, registered_qty, location, actual_location, condition, status, property_id'),
+      supabase.from('assets_computed').select('id, asset_code, asset_name, brand, model, serial_number, category, sub_category, photo_url, registered_qty, disposal_qty, location, actual_location, condition, status, property_id, property_name, assigned_to, department, purchase_cost, current_asset_value'),
       supabase.from('locations').select('*').order('name'),
       supabase.from('departments').select('*').order('name'),
     ])
@@ -323,6 +435,15 @@ export default function Transfers({ profile }) {
       new Date(t.sent_at).toISOString().slice(0, 10),
     ])))
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
+
+  const viewingAsset = viewing
+    ? (assets.find(a => a.id === viewing.assetId) || (() => {
+        const t = rows.find(r => r.asset_id === viewing.assetId)
+        return t ? { id: t.asset_id, asset_code: t.asset_code, asset_name: t.asset_name, brand: t.brand, model: t.model, serial_number: t.serial_number,
+                     category: t.category, photo_url: t.photo_url, property_name: t.to_property_name } : null
+      })())
+    : null
+  const viewingHistory = viewing ? rows.filter(r => r.asset_id === viewing.assetId) : []
 
   const canReceive = (t) => canWrite && t.status === 'In Transit' && (all || t.to_property_id === currentPropertyId)
   const done = () => { setSending(false); setReceiving(null); setCancelling(null); load() }
@@ -373,9 +494,15 @@ export default function Transfers({ profile }) {
           <tbody>
             {pageRows.map(t => (
               <tr key={t.id} className="border-t border-hairline hover:bg-hairline/20">
-                <td className="px-3 py-2 whitespace-nowrap font-medium">{t.transfer_code}</td>
+                <td className="px-3 py-2 whitespace-nowrap font-medium">
+                  <button onClick={() => setViewing({ assetId: t.asset_id, highlightId: t.id })} title="View this asset's full transfer history" className="text-theme-accent hover:underline font-medium">{t.transfer_code}</button>
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap">{new Date(t.sent_at).toLocaleString()}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{t.asset_code} — {t.asset_name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  <button onClick={() => setViewing({ assetId: t.asset_id, highlightId: t.id })} title="View full details and transfer history" className="text-left hover:underline">
+                    <span className="text-theme-accent font-medium">{t.asset_code}</span> — {t.asset_name}
+                  </button>
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap">{Number(t.qty).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{t.from_property_name}<span className="block text-xs text-muted">{t.from_location}</span></td>
                 <td className="px-3 py-2 whitespace-nowrap">{t.to_property_name}<span className="block text-xs text-muted">{t.to_location}</span></td>
@@ -402,6 +529,7 @@ export default function Transfers({ profile }) {
 
       <Pagination page={page} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} totalCount={filtered.length} />
 
+      {viewing && viewingAsset && <AssetHistoryModal asset={viewingAsset} history={viewingHistory} highlightId={viewing.highlightId} onClose={() => setViewing(null)} />}
       {sending && <SendModal assets={assets} properties={properties} currentPropertyId={currentPropertyId} onClose={() => setSending(false)} onDone={done} />}
       {receiving && <ReceiveModal transfer={receiving} locations={locations} departments={departments} onClose={() => setReceiving(null)} onDone={done} />}
       {cancelling && <CancelModal transfer={cancelling} onClose={() => setCancelling(null)} onDone={done} />}
