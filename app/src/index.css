@@ -54,3 +54,49 @@ table { border-collapse: collapse; }
   background: linear-gradient(90deg, transparent, #B8902E 40%, #B8902E 60%, transparent);
   animation: loading-sweep 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
+/* ---------- Login: the sliding blade ---------- */
+.auth-blade {
+  position: absolute; top: 0; bottom: 0; width: 62%; left: 54%;
+  transition: left 0.95s cubic-bezier(0.77, 0, 0.18, 1);
+  z-index: 1; pointer-events: none;
+}
+.auth-card[data-view="help"] .auth-blade { left: -16%; }
+.auth-blade-shape {
+  position: absolute; inset: 0;
+  transform: skewX(12deg);
+  background: linear-gradient(160deg, #3A3733 0%, #2B2926 100%);
+}
+
+/* form panes and blade copy fade out fast, then fade in after the blade has crossed */
+.auth-pane, .auth-copy {
+  opacity: 0; pointer-events: none; transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.auth-card[data-view="signin"] .auth-pane--signin,
+.auth-card[data-view="signin"] .auth-copy--signin,
+.auth-card[data-view="help"] .auth-pane--help,
+.auth-card[data-view="help"] .auth-copy--help {
+  opacity: 1; transform: none; pointer-events: auto;
+  transition: opacity 0.45s ease 0.55s, transform 0.45s ease 0.55s;
+}
+.auth-pane { display: flex; align-items: center; justify-content: center; padding: 40px 32px; }
+.auth-copy { flex-direction: column; justify-content: center; }
+
+@media (min-width: 768px) {
+  .auth-pane { position: absolute; top: 0; bottom: 0; z-index: 2; padding: 0 48px; }
+  .auth-pane--signin { left: 0; width: 47%; }
+  .auth-pane--help { right: 0; width: 41%; padding-left: 24px; }
+  .auth-copy { position: absolute; top: 0; bottom: 0; z-index: 2; }
+  .auth-copy--signin { left: 66%; width: 30%; }
+  .auth-copy--help { left: 7%; width: 32%; }
+}
+/* phones: show only the active pane, no sweep */
+@media (max-width: 767px) {
+  .auth-pane { display: none; opacity: 1; transform: none; transition: none; }
+  .auth-card[data-view="signin"] .auth-pane--signin,
+  .auth-card[data-view="help"] .auth-pane--help { display: flex; transition: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-blade, .auth-pane, .auth-copy { transition: none !important; }
+}
