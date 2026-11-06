@@ -56,10 +56,12 @@ table { border-collapse: collapse; }
 }
 
 /* ---------- Login: the sliding blade ---------- */
+/* The blade glides across the card carrying its own text. It passes OVER the old form (covering it)
+   and the new form slides in as the blade leaves. */
 .auth-blade {
   position: absolute; top: 0; bottom: 0; width: 62%; left: 54%;
-  transition: left 0.95s cubic-bezier(0.77, 0, 0.18, 1);
-  z-index: 1; pointer-events: none;
+  transition: left 1.1s cubic-bezier(0.5, 0.05, 0.3, 1);
+  z-index: 3; pointer-events: none;
 }
 .auth-card[data-view="help"] .auth-blade { left: -16%; }
 .auth-blade-shape {
@@ -68,28 +70,39 @@ table { border-collapse: collapse; }
   background: linear-gradient(160deg, #3A3733 0%, #2B2926 100%);
 }
 
-/* form panes and blade copy fade out fast, then fade in after the blade has crossed */
-.auth-pane, .auth-copy {
-  opacity: 0; pointer-events: none; transform: translateY(10px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+/* blade text rides on the blade: positions are relative to the blade (62% of the card) */
+.auth-copy {
+  position: absolute; top: 0; bottom: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.45s ease 0.15s, transform 0.8s cubic-bezier(0.5, 0.05, 0.3, 1);
 }
-.auth-card[data-view="signin"] .auth-pane--signin,
+.auth-copy--signin { left: 19%; width: 48%; transform: translateX(-34px); }
+.auth-copy--help   { left: 37%; width: 52%; transform: translateX(34px); }
 .auth-card[data-view="signin"] .auth-copy--signin,
-.auth-card[data-view="help"] .auth-pane--help,
 .auth-card[data-view="help"] .auth-copy--help {
-  opacity: 1; transform: none; pointer-events: auto;
-  transition: opacity 0.45s ease 0.55s, transform 0.45s ease 0.55s;
+  opacity: 1; transform: none;
+  transition: opacity 0.55s ease 0.55s, transform 0.8s cubic-bezier(0.22, 0.8, 0.3, 1) 0.5s;
 }
-.auth-pane { display: flex; align-items: center; justify-content: center; padding: 40px 32px; }
-.auth-copy { flex-direction: column; justify-content: center; }
+
+/* forms slide away in the direction the blade pushes them, and slide in from the other side */
+.auth-pane {
+  display: flex; align-items: center; justify-content: center; padding: 40px 32px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.45s ease 0.15s, transform 0.8s cubic-bezier(0.5, 0.05, 0.3, 1);
+}
+.auth-pane--signin { transform: translateX(-56px); }
+.auth-pane--help   { transform: translateX(56px); }
+.auth-card[data-view="signin"] .auth-pane--signin,
+.auth-card[data-view="help"] .auth-pane--help {
+  opacity: 1; transform: none; pointer-events: auto;
+  transition: opacity 0.6s ease 0.5s, transform 0.85s cubic-bezier(0.22, 0.8, 0.3, 1) 0.45s;
+}
 
 @media (min-width: 768px) {
   .auth-pane { position: absolute; top: 0; bottom: 0; z-index: 2; padding: 0 48px; }
   .auth-pane--signin { left: 0; width: 47%; }
   .auth-pane--help { right: 0; width: 41%; padding-left: 24px; }
-  .auth-copy { position: absolute; top: 0; bottom: 0; z-index: 2; }
-  .auth-copy--signin { left: 66%; width: 30%; }
-  .auth-copy--help { left: 7%; width: 32%; }
 }
 /* phones: show only the active pane, no sweep */
 @media (max-width: 767px) {

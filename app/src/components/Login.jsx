@@ -105,27 +105,26 @@ export default function Login() {
           </div>
         </div>
 
-        {/* the blade: a slanted graphite panel that sweeps from one side to the other */}
+        {/* the blade: a slanted graphite panel that glides across the card, carrying its text with it */}
         <div className="auth-blade hidden md:block" aria-hidden="true">
           <div className="auth-blade-shape" />
-        </div>
 
-        {/* blade copy - one block per state, each sitting on the side the blade covers */}
-        <div className="auth-copy auth-copy--signin hidden md:flex" aria-hidden={view !== 'signin'}>
-          <Logos className="mb-8" />
-          <div className="text-[11px] tracking-[0.28em] text-gold font-medium mb-3">ASSET REGISTRY</div>
-          <h2 className="font-display text-[44px] leading-[1.05] text-paper">Welcome<br /><em className="text-gold">back.</em></h2>
-          <p className="text-sm text-[#CFCCC4] leading-relaxed mt-4 max-w-[240px]">
-            Your assets, counts and transfers are exactly where you left them.
-          </p>
-        </div>
-        <div className="auth-copy auth-copy--help hidden md:flex" aria-hidden={view !== 'help'}>
-          <Logos className="mb-8" />
-          <div className="text-[11px] tracking-[0.28em] text-gold font-medium mb-3">NEED A HAND?</div>
-          <h2 className="font-display text-[44px] leading-[1.05] text-paper">Forgot<br /><em className="text-gold">password?</em></h2>
-          <p className="text-sm text-[#CFCCC4] leading-relaxed mt-4 max-w-[230px]">
-            It happens. Your administrator can reset it in a minute.
-          </p>
+          <div className="auth-copy auth-copy--signin">
+            <Logos className="mb-8" />
+            <div className="text-[11px] tracking-[0.28em] text-gold font-medium mb-3">ASSET REGISTRY</div>
+            <h2 className="font-display text-[44px] leading-[1.05] text-paper">Welcome<br /><em className="text-gold">back.</em></h2>
+            <p className="text-sm text-[#CFCCC4] leading-relaxed mt-4 max-w-[240px]">
+              Your assets, counts and transfers are exactly where you left them.
+            </p>
+          </div>
+          <div className="auth-copy auth-copy--help">
+            <Logos className="mb-8" />
+            <div className="text-[11px] tracking-[0.28em] text-gold font-medium mb-3">NEED A HAND?</div>
+            <h2 className="font-display text-[44px] leading-[1.05] text-paper">Forgot<br /><em className="text-gold">password?</em></h2>
+            <p className="text-sm text-[#CFCCC4] leading-relaxed mt-4 max-w-[230px]">
+              It happens. Your administrator can reset it in a minute.
+            </p>
+          </div>
         </div>
 
         {/* sign-in form */}
