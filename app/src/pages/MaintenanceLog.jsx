@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
-import { matchesQuery, num, peso2 } from '../lib/tableUtils'
+import { matchesQuery, num, peso2, timeOf } from '../lib/tableUtils'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
@@ -152,7 +152,7 @@ export default function MaintenanceLog({ profile }) {
 
   const filteredRows = scopedRows.filter(r =>
     (!query || matchesQuery(query, [
-      r.scheduled_date, r.asset_code, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
+      r.scheduled_date, timeOf(r.created_at), r.asset_code, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
       r.registered_location, r.actual_location, r.department, r.assigned_to, r.asset_status, r.condition,
       r.last_maintenance, r.maintenance_frequency_days, r.maintenance_due, r.pms_status, r.maintenance_type,
       r.technician, r.findings, r.maintenance_cost, r.remarks, r.logged_by_name,
@@ -290,7 +290,7 @@ export default function MaintenanceLog({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Asset ID', 'Asset Name', 'Category', 'Sub-Category', 'Brand', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Technician', 'Findings', 'Cost', 'Remarks', 'Logged By', ''].map(h => (
+              {['Date', 'Time', 'Asset ID', 'Asset Name', 'Category', 'Sub-Category', 'Brand', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Technician', 'Findings', 'Cost', 'Remarks', 'Logged By', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -299,6 +299,7 @@ export default function MaintenanceLog({ profile }) {
             {pageRows.map(r => (
               <tr key={r.id} className="border-t border-hairline hover:bg-hairline/20">
                 <td className="px-3 py-2 whitespace-nowrap">{r.scheduled_date}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-muted" title="Time this entry was logged">{timeOf(r.created_at)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_code}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
@@ -339,12 +340,12 @@ export default function MaintenanceLog({ profile }) {
                 </td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={25} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={26} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={21}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed{plannedCost > 0 ? ` · ${peso2(plannedCost)} planned` : ''}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={22}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed{plannedCost > 0 ? ` · ${peso2(plannedCost)} planned` : ''}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Cost of completed visits only">{peso2(totalCost)}</td>
                 <td className="px-3 py-2" colSpan={3}></td>
               </tr>
