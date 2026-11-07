@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useProperty } from '../lib/PropertyContext'
 import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2, timeOf } from '../lib/tableUtils'
+import { takeNavFilter } from '../lib/navFilter'
 
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
 
@@ -127,6 +128,8 @@ export default function MaintenanceLog({ profile }) {
   const [completing, setCompleting] = useState(null)
   const [cancelling, setCancelling] = useState(null)
   const [notice, setNotice] = useState('')
+  // opened from the Dashboard with a filter (e.g. PMS Overdue)
+  useEffect(() => { const f = takeNavFilter('maintenance'); if (f?.status) setStatusFilter(f.status) }, [])
 
   const load = async () => {
     setLoading(true)
