@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import PropertySwitcher from './PropertySwitcher'
+import SignOutDialog from './SignOutDialog'
 import { useSidebarBadges } from '../lib/useSidebarBadges'
 import { DashboardIcon, AssetsIcon, PhysicalIcon, MovementIcon, ReportsIcon, LogHistoryIcon, SettingsIcon, PurchaseIcon, DisposalIcon, MaintenanceIcon, TransferIcon } from './NavIcons'
 
@@ -197,25 +198,10 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
       </main>
 
       {confirmingSignOut && (
-        <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-surface rounded-lg shadow-xl w-full max-w-sm p-6">
-            <h2 className="font-display text-lg mb-2">Sign out?</h2>
-            <p className="text-sm text-muted mb-6">
-              You'll need to sign in again to access the Asset Registry System.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setConfirmingSignOut(false)} className="px-4 py-2 text-sm text-muted hover:text-ink">
-                Cancel
-              </button>
-              <button
-                onClick={() => { setConfirmingSignOut(false); onSignOut() }}
-                className="px-4 py-2 text-sm bg-danger text-paper rounded hover:bg-danger/90"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
+        <SignOutDialog
+          onCancel={() => setConfirmingSignOut(false)}
+          onConfirm={() => { setConfirmingSignOut(false); onSignOut() }}
+        />
       )}
     </div>
   )

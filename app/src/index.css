@@ -129,3 +129,12 @@ table { border-collapse: collapse; }
 @media (prefers-reduced-motion: reduce) {
   .auth-blade, .auth-pane, .auth-copy { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Sign-out window: reuses the login card; this adds the exit sweep to the RIGHT ---------- */
+@keyframes blade-exit { from { left: 54%; } to { left: 112%; } }
+.auth-card[data-leaving] .auth-blade { animation: blade-exit 0.8s cubic-bezier(0.5, 0, 0.9, 0.55) both !important; }
+.auth-card[data-leaving] .auth-pane--signin { animation: pane-leave 0.5s ease-in both !important; }
+.auth-card[data-leaving] .auth-copy--signin { transition-delay: 0s !important; opacity: 0; }
+@keyframes signout-fade { from { opacity: 0; } to { opacity: 1; } }
+.signout-backdrop { animation: signout-fade 0.25s ease both; }
+@media (prefers-reduced-motion: reduce) { .signout-backdrop { animation: none; } }
