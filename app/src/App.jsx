@@ -17,12 +17,15 @@ import Settings from './pages/Settings'
 export default function App() {
   const { session, profile, loading, signOut, refreshProfile } = useAuthContext()
   const [page, setPage] = useState('dashboard')
+  const [holdLogin, setHoldLogin] = useState(false) // true while the login's sign-in sweep is playing
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-muted text-sm bg-paper">Loading…</div>
   }
 
-  if (!session) return <Login />
+  if (!session || holdLogin) {
+    return <Login onSigningIn={() => setHoldLogin(true)} onSignedIn={() => setHoldLogin(false)} onFailed={() => setHoldLogin(false)} />
+  }
 
   if (session && !profile) {
     return <div className="min-h-screen flex items-center justify-center text-muted text-sm bg-paper">Setting up your account…</div>

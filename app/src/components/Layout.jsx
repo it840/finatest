@@ -125,7 +125,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
                       onClick={() => setPage(k)}
                       title={show ? `${n.label} — ${b.count} ${b.hint}` : n.label}
                       aria-current={active ? 'page' : undefined}
-                      className={`relative w-full flex items-center gap-3 rounded-lg py-2.5 my-0.5 text-[15px] transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'} ${
+                      className={`relative w-full flex items-center gap-3 rounded-lg py-2.5 my-0.5 text-[15px] text-left transition-colors ${collapsed ? 'justify-center px-0' : 'px-3'} ${
                         active ? 'bg-theme-active text-theme-text font-medium' : 'text-theme-text hover:bg-theme-hover'
                       }`}
                     >
@@ -192,7 +192,7 @@ export default function Layout({ page, setPage, profile, onSignOut, children }) 
       </aside>
 
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-8">
+        <div className="app-enter max-w-6xl mx-auto px-8 py-8">
           {children}
         </div>
       </main>

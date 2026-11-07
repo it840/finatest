@@ -11,3 +11,5 @@ export function AuthProvider({ children }) {
 export function useAuthContext() {
   return useContext(Ctx)
 }
+
+export { Ctx as AuthContext }

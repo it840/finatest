@@ -134,7 +134,14 @@ table { border-collapse: collapse; }
 @keyframes blade-exit { from { left: 54%; } to { left: 112%; } }
 .auth-card[data-leaving] .auth-blade { animation: blade-exit 0.8s cubic-bezier(0.5, 0, 0.9, 0.55) both !important; }
 .auth-card[data-leaving] .auth-pane--signin { animation: pane-leave 0.5s ease-in both !important; }
-.auth-card[data-leaving] .auth-copy--signin { transition-delay: 0s !important; opacity: 0; }
+.auth-card[data-leaving] .auth-copy--signin { opacity: 0; transition: opacity 0.3s ease 0.35s !important; }
 @keyframes signout-fade { from { opacity: 0; } to { opacity: 1; } }
 .signout-backdrop { animation: signout-fade 0.25s ease both; }
 @media (prefers-reduced-motion: reduce) { .signout-backdrop { animation: none; } }
+
+/* ---------- Sign-in success: arrow shoots right; the app's content slides in from the left ---------- */
+@keyframes arrow-go { 0% { transform: none; opacity: 1; } 100% { transform: translateX(16px); opacity: 0; } }
+.arrow-go { display: inline-flex; animation: arrow-go 0.6s cubic-bezier(0.5, 0, 0.9, 0.55) 0.1s both; }
+@keyframes app-enter { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+.app-enter { animation: app-enter 0.6s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .arrow-go, .app-enter { animation: none; } }

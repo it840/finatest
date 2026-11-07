@@ -54,7 +54,7 @@ function Heading({ children }) {
   )
 }
 
-export default function Login() {
+export default function Login({ onSigningIn = () => {}, onSignedIn = () => {}, onFailed = () => {} }) {
   const { signIn } = useAuthContext()
   const [view, setView] = useState('signin') // 'signin' | 'help' - the blade slides between them
   const [ready, setReady] = useState(false)   // false until the first switch, so the load animation plays
@@ -64,17 +64,22 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [leaving, setLeaving] = useState(false) // signed in: the blade sweeps out to the right
 
   const submit = async (e) => {
     e.preventDefault()
+    if (busy || leaving) return
     setError(''); setBusy(true)
+    onSigningIn()                       // ask the app to keep this screen up for the sweep
     try {
       const { error } = await signIn(email, password)
       if (error) throw error
+      setLeaving(true)                  // password accepted: sweep to the right...
+      setTimeout(onSignedIn, 850)       // ...then hand over to the app
     } catch (err) {
       setError(err.message || 'Something went wrong.')
-    } finally {
       setBusy(false)
+      onFailed()
     }
   }
 
@@ -97,7 +102,7 @@ export default function Login() {
         <rect width="100%" height="100%" fill="url(#login-dots)" />
       </svg>
 
-      <div className="auth-card relative w-full max-w-[920px] md:h-[540px] rounded-3xl overflow-hidden bg-paper border border-theme-line shadow-xl" data-view={view} data-ready={ready ? 'true' : undefined}>
+      <div className="auth-card relative w-full max-w-[920px] md:h-[540px] rounded-3xl overflow-hidden bg-paper border border-theme-line shadow-xl" data-view={view} data-ready={ready ? 'true' : undefined} data-leaving={leaving ? 'true' : undefined}>
 
         {/* phones: a simple brand band instead of the blade */}
         <div className="md:hidden bg-theme-accent text-white px-8 py-7">
@@ -166,9 +171,9 @@ export default function Login() {
                            active:translate-y-0 active:scale-[0.98]
                            disabled:opacity-90 disabled:cursor-not-allowed disabled:hover:translate-y-0
                            focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
-                {busy ? <Spinner /> : null}
-                <span>{busy ? 'Signing in…' : 'Sign in'}</span>
-                {!busy && <ArrowIcon />}
+                {busy && !leaving ? <Spinner /> : null}
+                <span>{leaving ? 'Welcome back' : busy ? 'Signing in…' : 'Sign in'}</span>
+                {leaving ? <span className="arrow-go"><ArrowIcon /></span> : !busy && <ArrowIcon />}
               </button>
             </form>
             <p className="text-xs text-muted mt-5">Accounts are created by your administrator.</p>
