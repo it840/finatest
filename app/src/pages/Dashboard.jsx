@@ -101,7 +101,8 @@ export default function Dashboard({ setPage, profile }) {
   const scopedPms = currentPropertyId === 'all' ? pmsLog : pmsLog.filter(r => r.property_id === currentPropertyId)
   const pmsOverdue = scopedPms.filter(r => r.pms_status === 'OVERDUE').length
   const pmsScheduled = scopedPms.filter(r => ['SCHEDULED', 'DUE', 'IN PROGRESS'].includes(r.pms_status)).length
-  const pmsTotalCost = scopedPms.reduce((s, r) => s + Number(r.maintenance_cost || 0), 0)
+  const pmsTotalCost = scopedPms.filter(r => r.pms_status === 'COMPLETED').reduce((s, r) => s + Number(r.maintenance_cost || 0), 0)
+  const pmsPlannedCost = scopedPms.filter(r => ['SCHEDULED', 'DUE', 'OVERDUE', 'IN PROGRESS'].includes(r.pms_status)).reduce((s, r) => s + Number(r.maintenance_cost || 0), 0)
   const today = todayISO()
 
   const disposedCount = scoped.filter(r => Number(r.disposal_qty) > 0).length
@@ -205,7 +206,7 @@ export default function Dashboard({ setPage, profile }) {
       <div className="grid grid-cols-4 gap-4">
         <Stat iconKey="maintenance" label="PMS Scheduled / In Progress" value={pmsScheduled} tone={pmsScheduled ? TONE.gold : undefined} />
         <Stat iconKey="maintenance" label="PMS Overdue" value={pmsOverdue} tone={pmsOverdue ? TONE.danger : undefined} />
-        <Stat iconKey="maintenance" label="PMS Total Cost" value={peso(pmsTotalCost)} />
+        <Stat iconKey="maintenance" label="PMS Cost (completed)" value={peso(pmsTotalCost)} sub={pmsPlannedCost > 0 ? `${peso(pmsPlannedCost)} planned` : undefined} />
       </div>
 
       <Panel title="Assets Added — Last 8 Weeks">
