@@ -7,6 +7,7 @@ import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
 import { buildQrUrl } from '../lib/assetQr'
+import { takeNavFilter } from '../lib/navFilter'
 
 function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
 function peso(n) { return n === null || n === undefined ? '—' : '₱' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) }
@@ -256,6 +257,8 @@ export default function Assets({ profile }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  // opened from the Dashboard for one asset: show just that asset
+  useEffect(() => { const f = takeNavFilter('assets'); if (f?.query) setQuery(f.query) }, [])
   const [categoryFilter, setCategoryFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')

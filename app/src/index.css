@@ -145,3 +145,29 @@ table { border-collapse: collapse; }
 @keyframes app-enter { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
 .app-enter { animation: app-enter 0.6s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
 @media (prefers-reduced-motion: reduce) { .arrow-go, .app-enter { animation: none; } }
+
+/* ---------- Printing / Save as PDF (Dashboard "Print / PDF") ---------- */
+.print-only { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body { background: #fff !important; }
+  aside, .no-print, .top-loading-bar { display: none !important; }
+  .h-screen { height: auto !important; overflow: visible !important; display: block !important; }
+  main { overflow: visible !important; height: auto !important; }
+  .print-only { display: block !important; }
+  .app-enter { animation: none !important; max-width: none !important; padding: 0 !important; }
+  .dashboard-print section { break-inside: auto !important; }
+  .dashboard-print .rounded-lg { break-inside: avoid; }
+  .dashboard-print section > h2 { break-after: avoid; }
+  .dashboard-print section .grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .dashboard-print section .grid > * { padding: 10px 12px !important; }
+  .dashboard-print { gap: 0; }
+  .dashboard-print > * + * { margin-top: 14px !important; }
+  .bg-paper, main { background: #fff !important; }
+  /* side-by-side panel rows stack on paper so no panel is cut across two pages */
+  .dashboard-print > .grid { display: block !important; }
+  .dashboard-print > .grid > * + * { margin-top: 12px !important; }
+  .dashboard-print > .grid > *, .dashboard-print > .rounded-lg { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .dashboard-print button { cursor: default; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
