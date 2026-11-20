@@ -34,15 +34,15 @@ export function buildQrUrl(a) {
 }
 
 // The printed label carries the SAME full details. Full details make a dense code, so the label prints it
-// large (40 mm) at a high resolution - tested to scan on 150, 200 and 300 dpi printers.
+// large (50 mm) as a sharp vector image - tested to scan on 100, 150, 200 and 300 dpi printers.
 export function buildLabelQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
 }
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
 // Brushed-metal asset tag: QR on the left; Property, Asset ID (large), Asset Number, Asset Name on the right.
-// Printed at real size (110 x 48 mm) so it can go on a label sheet or be cut out.
+// Printed at real size (120 x 58 mm) so it can go on a label sheet or be cut out.
 export function labelHtml(asset, { autoPrint = true } = {}) {
   const qr = buildLabelQrUrl(asset)
   const name = asset.asset_name || ''
@@ -55,7 +55,7 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; padding: 14mm; font-family: Inter, Arial, sans-serif; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 6mm; }
   .label {
-    position: relative; width: 110mm; height: 48mm; border-radius: 4mm;
+    position: relative; width: 120mm; height: 58mm; border-radius: 4.5mm;
     display: flex; align-items: center; gap: 5mm; padding: 0 9mm 0 7.5mm;
     border: 0.3mm solid #c4c8cc;
     background: #ffffff;
@@ -64,7 +64,7 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qr { flex: 0 0 auto; width: 40mm; height: 40mm; background: #fff; padding: 0; }
+  .qr { flex: 0 0 auto; width: 50mm; height: 50mm; background: #fff; padding: 0; }
   .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; color: #1c1e21; }
   .prop { font-size: 3mm; font-weight: 600; color: #34373b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -88,7 +88,7 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
       <div class="note">Scan to look up. Do not remove.</div>
     </div>
   </div>
-  <div class="hint">Actual size 110 × 48 mm.</div>
+  <div class="hint">Actual size 120 × 58 mm.</div>
   ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
