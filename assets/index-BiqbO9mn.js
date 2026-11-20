@@ -98,16 +98,14 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
   .label {
     position: relative; width: 90mm; height: 36mm; border-radius: 3.6mm;
     display: flex; align-items: center; gap: 4mm; padding: 0 8mm 0 7mm;
-    border: 0.3mm solid #a3a8ad;
-    background:
-      repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 0.25mm, rgba(0,0,0,.035) 0.25mm 0.5mm),
-      linear-gradient(180deg, #f6f7f8 0%, #e2e5e8 38%, #cfd3d7 52%, #dde0e3 70%, #f1f2f4 100%);
-    box-shadow: inset 0 0 0 0.45mm rgba(255,255,255,.65), inset 0 -0.6mm 1mm rgba(0,0,0,.08), 0 0.6mm 1.4mm rgba(0,0,0,.22);
+    border: 0.3mm solid #c4c8cc;
+    background: #ffffff;
+    box-shadow: 0 0.4mm 1.2mm rgba(0,0,0,.14);
   }
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #c5c9cd 55%, #8e9297 100%); border: 0.2mm solid #868a8f; }
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qr { flex: 0 0 auto; width: 28mm; height: 28mm; background: #fff; padding: 1.4mm; border-radius: 1.2mm; }
+  .qr { flex: 0 0 auto; width: 28mm; height: 28mm; background: #fff; padding: 0.6mm; }
   .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; color: #1c1e21; }
   .prop { font-size: 2.6mm; font-weight: 600; color: #34373b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -131,7 +129,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
       <div class="note">Scan to look up. Do not remove.</div>
     </div>
   </div>
-  <div class="hint">Actual size 90 × 36 mm. Turn on “Background graphics” in the print options if the metal finish doesn’t show.</div>
+  <div class="hint">Actual size 90 × 36 mm.</div>
   ${t?`<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
