@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 
 const ASSET_IMPORT_COLUMNS = [
-  'asset_code', 'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
+  'asset_code', 'asset_name', 'asset_number', 'category', 'sub_category', 'brand', 'model', 'serial_number',
   'location', 'department', 'assigned_to', 'status', 'condition', 'acquisition_date',
   'acquisition_type', 'purchase_cost', 'supplier', 'warranty_start', 'warranty_expiry',
   'last_maintenance', 'maintenance_frequency_days', 'useful_life_years', 'disposal_date',
@@ -88,7 +88,7 @@ function ImportBlock() {
 
   const downloadTemplate = (format) => {
     const sample = {
-      asset_code: '', asset_name: 'Sample Chair', category: '🪑 Furniture', sub_category: 'Office Chair',
+      asset_code: '', asset_name: 'Sample Chair', asset_number: 'VBR-0001', category: '🪑 Furniture', sub_category: 'Office Chair',
       brand: '', model: '', serial_number: '', location: 'Warehouse', department: 'Procurement',
       assigned_to: '', status: 'Active', condition: 'Good', acquisition_date: '2026-01-01',
       acquisition_type: 'Purchase', purchase_cost: 5000, supplier: '', warranty_start: '',

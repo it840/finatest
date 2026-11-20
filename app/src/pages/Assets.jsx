@@ -108,6 +108,7 @@ export function AssetDetailModal({ asset, onClose }) {
               </span>
             </div>
             <DetailRow label="Category" value={asset.category} />
+            <DetailRow label="Asset Number" value={asset.asset_number} />
             <DetailRow label="Brand" value={asset.brand} />
             <DetailRow label="Model" value={asset.model} />
             <DetailRow label="Serial Number" value={asset.serial_number} />
@@ -293,7 +294,7 @@ export default function Assets({ profile }) {
 
   const filtered = scoped.filter(r =>
     (!query || matchesQuery(query, [
-      r.asset_code, r.property_name, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
+      r.asset_code, r.property_name, r.asset_name, r.asset_number, r.category, r.sub_category, r.brand, r.model, r.serial_number,
       r.registered_qty, r.disposal_qty, prevLocByAsset[r.id], r.location, r.actual_location, r.department,
       r.assigned_to, r.status, r.disposal_reason, r.disposal_date, r.condition, r.current_asset_value,
     ])) &&
@@ -351,7 +352,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Property', 'ID', 'Photo', 'Asset Name', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'QR', ''].map(h => (
+              {['Property', 'ID', 'Photo', 'Asset Name', 'Asset Number', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -371,6 +372,7 @@ export default function Assets({ profile }) {
                   </button>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.asset_number || <span className="text-muted">—</span>}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.brand}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.serial_number}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
@@ -398,13 +400,13 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={19} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={20} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
           {filtered.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={8}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={9}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>

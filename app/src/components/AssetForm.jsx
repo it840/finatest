@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { forProperty, withCurrent } from '../lib/propertyScope'
 
 export const WRITABLE_FIELDS = [
-  'asset_name', 'category', 'sub_category', 'brand', 'model', 'serial_number',
+  'asset_name', 'asset_number', 'category', 'sub_category', 'brand', 'model', 'serial_number',
   'location', 'actual_location', 'department', 'assigned_to', 'status', 'condition',
   'acquisition_date', 'acquisition_type', 'purchase_cost', 'supplier',
   'warranty_start', 'warranty_expiry', 'last_maintenance', 'maintenance_frequency_days',
@@ -12,7 +12,7 @@ export const WRITABLE_FIELDS = [
 ]
 
 export const EMPTY_ASSET = {
-  asset_name: '', category: '', sub_category: '', brand: '', model: '', serial_number: '',
+  asset_name: '', asset_number: '', category: '', sub_category: '', brand: '', model: '', serial_number: '',
   location: '', actual_location: '', department: '', assigned_to: '', status: 'Active', condition: '',
   acquisition_date: '', acquisition_type: '', purchase_cost: '', supplier: '',
   warranty_start: '', warranty_expiry: '', last_maintenance: '', maintenance_frequency_days: '',
@@ -126,13 +126,19 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
       .forEach(k => { payload[k] = payload[k] === '' ? null : Number(payload[k]) })
     ;['acquisition_date', 'warranty_start', 'warranty_expiry', 'last_maintenance', 'disposal_date']
       .forEach(k => { payload[k] = payload[k] === '' ? null : payload[k] })
+    payload.asset_number = (payload.asset_number || '').trim() || null
 
     const { error } = initial?.id
       ? await supabase.from('assets').update(payload).eq('id', initial.id)
       : await supabase.from('assets').insert(payload)
 
     setSaving(false)
-    if (error) { setError(error.message); return }
+    if (error) {
+      setError(error.code === '23505' && /asset_number/.test(error.message || '')
+        ? `Asset Number "${payload.asset_number}" is already used by another asset in this property.`
+        : error.message)
+      return
+    }
     onSave()
   }
 
@@ -143,6 +149,7 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
 
         <div className="grid grid-cols-3 gap-4">
           <Field label="Asset Name"><input required value={form.asset_name} onChange={set('asset_name')} className="input" /></Field>
+          <Field label="Asset Number"><input value={form.asset_number || ''} onChange={set('asset_number')} placeholder="Tag or property number" className="input" /></Field>
           <Field label="Property">
             <select required value={form.property_id ?? ''} onChange={changeProperty} className="input">
               <option value="">—</option>
