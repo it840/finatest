@@ -1,34 +1,36 @@
 // The QR code on every asset: a text summary that includes an "Asset ID:" line (read by the transfer scanner).
-// Emoji (category icons) are expensive inside a QR code, so they are left out of the scan text
-const plain = (t) => String(t ?? '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, '').replace(/\s+/g, ' ').trim()
-
-// What a scan shows. Every written detail that is filled in is included; empty ones (and the long photo link)
-// are skipped so the code stays small - bigger squares mean faster, more reliable scans. The "Asset ID:" line is what the transfer scanner reads.
+// What a scan shows: the detailed layout with section headings (restored), plus the Acquisition Date.
 export function qrText(a) {
-  const line = (label, value) => { const v = plain(value); return v ? `${label}: ${v}` : null }
-  const category = [plain(a.category), plain(a.sub_category)].filter(Boolean).join(' / ')
-  const brandModel = [plain(a.brand), plain(a.model)].filter(Boolean).join(' ')
-  const home = plain(a.location), actual = plain(a.actual_location)
-  const where = home && actual && home !== actual ? `${actual} (home: ${home})` : actual || home
-  const state = [plain(a.status), plain(a.condition)].filter(Boolean).join(', ')
   return [
-    line('Asset ID', a.asset_code),
-    line('Asset No.', a.asset_number),
-    line('Name', a.asset_name),
-    line('Category', category),
-    line('Brand/Model', brandModel),
-    line('Serial No.', a.serial_number),
-    line('Acquired', a.acquisition_date),
-    line('Property', a.property_name),
-    line('Location', where),
-    line('Department', a.department),
-    line('Assigned To', a.assigned_to),
-    line('Status', state),
-  ].filter(Boolean).join('\n')
+    'IDENTIFICATION',
+    `Asset ID: ${a.asset_code || ''}`,
+    `Asset Number: ${a.asset_number || '—'}`,
+    `Asset Name: ${a.asset_name || ''}`,
+    `Category: ${a.category || '—'}`,
+    `Sub-Category: ${a.sub_category || '—'}`,
+    '',
+    'ASSET DETAILS',
+    `Brand: ${a.brand || '—'}`,
+    `Model: ${a.model || '—'}`,
+    `Serial Number: ${a.serial_number || '—'}`,
+    `Acquisition Date: ${a.acquisition_date || '—'}`,
+    '',
+    'LOCATION & ASSIGNMENT',
+    `Property: ${a.property_name || '—'}`,
+    `Location: ${a.location || '—'}`,
+    `Actual Location: ${a.actual_location || '—'}`,
+    `Department: ${a.department || '—'}`,
+    `Assigned To: ${a.assigned_to || '—'}`,
+    '',
+    'STATUS',
+    `Status: ${a.status || '—'}`,
+    `Condition: ${a.condition || '—'}`,
+    ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
+  ].join('\n')
 }
 
 export function buildQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&qzone=2&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrText(a))}`
 }
 
 // The printed label carries the SAME full details. Full details make a dense code, so the label prints it
