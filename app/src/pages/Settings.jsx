@@ -415,6 +415,17 @@ function PropertiesPanel() {
     reload()
   }
 
+  const [editingPrefix, setEditingPrefix] = useState(null) // { id, value }
+  const savePrefix = async () => {
+    const v = (editingPrefix.value || '').trim().toUpperCase()
+    if (!/^[A-Z0-9]{1,8}$/.test(v)) { setError('A prefix is 1–8 letters or numbers, e.g. VBR.'); return }
+    setError('')
+    const { error } = await supabase.from('properties').update({ asset_prefix: v }).eq('id', editingPrefix.id)
+    if (error) { setError(error.message); return }
+    setEditingPrefix(null)
+    reload()
+  }
+
   const remove = async (p) => {
     if (!confirm(`Delete "${p.name}"? Assets assigned to it will become unassigned, not deleted.`)) return
     await supabase.from('properties').delete().eq('id', p.id)
@@ -446,7 +457,24 @@ function PropertiesPanel() {
               )}
               <span className="text-sm">{p.name}</span>
             </div>
-            <button onClick={() => remove(p)} className="text-xs text-danger underline">Delete</button>
+            <div className="flex items-center gap-4">
+              {editingPrefix?.id === p.id ? (
+                <span className="flex items-center gap-2">
+                  <input autoFocus value={editingPrefix.value} maxLength={8}
+                    onChange={e => setEditingPrefix({ id: p.id, value: e.target.value.toUpperCase() })}
+                    onKeyDown={e => { if (e.key === 'Enter') savePrefix(); if (e.key === 'Escape') setEditingPrefix(null) }}
+                    className="input w-24 py-1 text-xs uppercase" aria-label="Asset number prefix" />
+                  <button onClick={savePrefix} className="text-xs text-theme-accent underline">Save</button>
+                  <button onClick={() => setEditingPrefix(null)} className="text-xs text-muted underline">Cancel</button>
+                </span>
+              ) : p.asset_prefix ? (
+                <button onClick={() => setEditingPrefix({ id: p.id, value: p.asset_prefix })} title="Change the prefix used for new asset numbers"
+                  className="text-xs text-muted hover:text-ink">
+                  Asset no. <span className="font-medium text-ink">{p.asset_prefix}-0001</span> <span className="underline">Edit</span>
+                </button>
+              ) : null}
+              <button onClick={() => remove(p)} className="text-xs text-danger underline">Delete</button>
+            </div>
           </li>
         ))}
         {properties.length === 0 && <li className="text-sm text-muted text-center py-6">No properties yet.</li>}

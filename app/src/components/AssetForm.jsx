@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { forProperty, withCurrent } from '../lib/propertyScope'
 
@@ -49,6 +49,16 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
   }, [selectedCat, form.sub_category, lookups])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  // preview the number a new asset will get (the database assigns it on save)
+  const [nextNumber, setNextNumber] = useState('')
+  useEffect(() => {
+    if (initial?.id || !form.property_id) { setNextNumber(''); return }
+    let cancelled = false
+    supabase.rpc('next_asset_number', { p_property_id: Number(form.property_id) })
+      .then(({ data, error }) => { if (!cancelled) setNextNumber(error ? '' : data || '') })
+    return () => { cancelled = true }
+  }, [form.property_id, initial?.id])
 
   const changeCategory = (e) => {
     const name = e.target.value
@@ -149,7 +159,13 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
 
         <div className="grid grid-cols-3 gap-4">
           <Field label="Asset Name"><input required value={form.asset_name} onChange={set('asset_name')} className="input" /></Field>
-          <Field label="Asset Number"><input value={form.asset_number || ''} onChange={set('asset_number')} placeholder="Tag or property number" className="input" /></Field>
+          <Field label="Asset Number">
+            <input value={form.asset_number || ''} onChange={set('asset_number')}
+              placeholder={initial?.id ? 'Tag or property number' : 'Assigned automatically'} className="input" />
+            {!initial?.id && !form.asset_number && nextNumber && (
+              <span className="block text-xs text-muted mt-1">Will be <b>{nextNumber}</b> — leave blank, or type your own</span>
+            )}
+          </Field>
           <Field label="Property">
             <select required value={form.property_id ?? ''} onChange={changeProperty} className="input">
               <option value="">—</option>
