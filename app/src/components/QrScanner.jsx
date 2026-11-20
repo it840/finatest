@@ -30,8 +30,34 @@ export default function QrScanner({ onScan }) {
         await video.play()
         setReady(true)
 
+        // Built-in QR reader (Chrome/Android, newer Safari) is hardware-accelerated and much faster than jsQR
+        let detector = null
+        try {
+          if ('BarcodeDetector' in window && (await window.BarcodeDetector.getSupportedFormats()).includes('qr_code')) {
+            detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+          }
+        } catch { detector = null }
+        const found = (text) => {
+          const now = Date.now()
+          if (text !== last.text || now - last.at > 2500) {
+            last = { text, at: now }
+            onScanRef.current(text)
+          }
+        }
+        let busy = false
         const tick = () => {
           if (stopped) return
+          if (detector) {
+            if (!busy && video.readyState >= 2) {
+              busy = true
+              detector.detect(video)
+                .then(codes => { if (codes && codes[0] && codes[0].rawValue) found(codes[0].rawValue) })
+                .catch(() => { detector = null })   // fall back to jsQR if the built-in reader fails
+                .finally(() => { busy = false })
+            }
+            raf = requestAnimationFrame(tick)
+            return
+          }
           const canvas = canvasRef.current
           if (canvas && video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
             const scale = Math.min(1, 640 / video.videoWidth)
@@ -41,13 +67,7 @@ export default function QrScanner({ onScan }) {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
             const hit = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' })
-            if (hit && hit.data) {
-              const now = Date.now()
-              if (hit.data !== last.text || now - last.at > 2500) {
-                last = { text: hit.data, at: now }
-                onScanRef.current(hit.data)
-              }
-            }
+            if (hit && hit.data) found(hit.data)
           }
           raf = requestAnimationFrame(tick)
         }
