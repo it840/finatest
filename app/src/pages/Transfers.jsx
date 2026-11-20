@@ -358,7 +358,7 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
               </button>
               <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
             </div>
-            <button onClick={() => printAssetQr(asset)} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Code</button>
+            <button onClick={() => printAssetQr(asset)} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Label</button>
           </div>
           <div className="grid grid-cols-3 gap-x-5 gap-y-2.5 flex-1 min-w-0">
             {details.map(([k, v]) => (
@@ -454,7 +454,7 @@ export default function Transfers({ profile }) {
     setLoading(true)
     const [t, a, l, d] = await Promise.all([
       supabase.from('asset_transfers_computed').select('*').order('sent_at', { ascending: false }),
-      supabase.from('assets_computed').select('id, asset_code, asset_name, brand, model, serial_number, category, sub_category, photo_url, registered_qty, disposal_qty, location, actual_location, condition, status, property_id, property_name, assigned_to, department, purchase_cost, current_asset_value'),
+      supabase.from('assets_computed').select('id, asset_code, asset_name, asset_number, brand, model, serial_number, category, sub_category, photo_url, registered_qty, disposal_qty, location, actual_location, condition, status, property_id, property_name, assigned_to, department, purchase_cost, current_asset_value'),
       supabase.from('locations').select('*').order('name'),
       supabase.from('departments').select('*').order('name'),
     ])

@@ -6,7 +6,7 @@ import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
-import { buildQrUrl } from '../lib/assetQr'
+import { buildQrUrl, printAssetQr } from '../lib/assetQr'
 import { takeNavFilter } from '../lib/navFilter'
 
 function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
@@ -55,18 +55,7 @@ export function AssetDetailModal({ asset, onClose }) {
       .then(({ data }) => { setHistory(data || []); setLoading(false) })
   }, [asset.id])
 
-  const printQr = () => {
-    const w = window.open('', '_blank', 'width=420,height=520')
-    if (!w) return
-    w.document.write(`
-      <html><head><title>${asset.asset_code}</title></head>
-      <body style="text-align:center;font-family:sans-serif;padding:24px;">
-        <img src="${qrUrl}" style="width:300px;height:300px;" onload="window.print()" />
-        <div style="margin-top:12px;font-size:14px;letter-spacing:1px;">${asset.asset_code}</div>
-      </body></html>
-    `)
-    w.document.close()
-  }
+  const printQr = () => printAssetQr(asset)
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4">
@@ -95,7 +84,7 @@ export function AssetDetailModal({ asset, onClose }) {
             </button>
             <div className="text-xs tracking-wide text-muted">{asset.asset_code}</div>
             <button onClick={printQr} className="w-full px-3 py-2 text-xs border border-hairline rounded hover:bg-hairline/20">
-              Print QR Code
+              Print QR Label
             </button>
           </div>
 
@@ -176,7 +165,7 @@ export function AssetDetailModal({ asset, onClose }) {
           <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
             <span>{big.caption}</span>
             <a href={big.src} target="_blank" rel="noreferrer" className="underline hover:text-white">Open in a new tab</a>
-            {big.isQr && <button onClick={printQr} className="underline hover:text-white">Print QR Code</button>}
+            {big.isQr && <button onClick={printQr} className="underline hover:text-white">Print QR Label</button>}
           </div>
         </div>
       )}
