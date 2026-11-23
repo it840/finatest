@@ -1,41 +1,21 @@
-// What a scan shows: the full asset details as plain text (no website link), with the Acquisition Date.
+// What a scan shows: Asset ID, Asset No. and name as plain text (no website link).
+// Kept short on purpose so the QR pattern is simple, with big squares (about 25-33 squares across).
+// The first line is the Asset ID, which the Asset Transfer scanner reads. All other details are in the app.
 export function qrText(a) {
-  return [
-    'IDENTIFICATION',
-    `Asset ID: ${a.asset_code || ''}`,
-    `Asset Number: ${a.asset_number || '—'}`,
-    `Asset Name: ${a.asset_name || ''}`,
-    `Category: ${a.category || '—'}`,
-    `Sub-Category: ${a.sub_category || '—'}`,
-    '',
-    'ASSET DETAILS',
-    `Brand: ${a.brand || '—'}`,
-    `Model: ${a.model || '—'}`,
-    `Serial Number: ${a.serial_number || '—'}`,
-    `Acquisition Date: ${a.acquisition_date || '—'}`,
-    '',
-    'LOCATION & ASSIGNMENT',
-    `Property: ${a.property_name || '—'}`,
-    `Location: ${a.location || '—'}`,
-    `Actual Location: ${a.actual_location || '—'}`,
-    `Department: ${a.department || '—'}`,
-    `Assigned To: ${a.assigned_to || '—'}`,
-    '',
-    'STATUS',
-    `Status: ${a.status || '—'}`,
-    `Condition: ${a.condition || '—'}`,
-    ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
-  ].join('\n')
+  return [a.asset_code, a.asset_number, a.asset_name]
+    .map(v => String(v ?? '').trim())
+    .filter(Boolean)
+    .join('\n')
 }
 
 export function buildQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&ecc=M&qzone=2&data=${encodeURIComponent(qrText(a))}`
 }
 
 // The printed label carries the SAME full details. Full details make a dense code, so the label prints it
 // large (68 mm) as a sharp vector image - tested to scan on 100, 150, 200 and 300 dpi printers.
 export function buildLabelQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=M&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
 }
 
 export function propertyLogoUrl(properties, propertyId) {
