@@ -220,6 +220,7 @@ function UsersPanel({ currentUserId }) {
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-3 py-2">Name</th>
+              <th className="text-left px-3 py-2">Email</th>
               <th className="text-left px-3 py-2">Department</th>
               <th className="text-left px-3 py-2">Property</th>
               <th className="text-left px-3 py-2">Role</th>
@@ -230,6 +231,9 @@ function UsersPanel({ currentUserId }) {
             {users.map(u => (
               <tr key={u.id} className="border-t border-hairline">
                 <td className="px-3 py-2">{u.full_name}</td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {u.email ? <a href={`mailto:${u.email}`} className="text-theme-accent hover:underline">{u.email}</a> : <span className="text-muted">—</span>}
+                </td>
                 <td className="px-3 py-2">{u.department}</td>
                 <td className="px-3 py-2 text-muted">
                   {properties.find(p => p.id === u.property_id)?.name || '—'}
