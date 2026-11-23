@@ -1,21 +1,41 @@
-// What a scan shows: Asset ID, Asset No. and name as plain text (no website link).
-// Kept short on purpose so the QR has big, simple squares like the reference design (about 29 x 29).
-// The first line is the Asset ID, which the Asset Transfer scanner reads.
+// What a scan shows: the full asset details as plain text (no website link), with the Acquisition Date.
 export function qrText(a) {
-  return [a.asset_code, a.asset_number, a.asset_name]
-    .map(v => String(v ?? '').trim())
-    .filter(Boolean)
-    .join('\n')
+  return [
+    'IDENTIFICATION',
+    `Asset ID: ${a.asset_code || ''}`,
+    `Asset Number: ${a.asset_number || '—'}`,
+    `Asset Name: ${a.asset_name || ''}`,
+    `Category: ${a.category || '—'}`,
+    `Sub-Category: ${a.sub_category || '—'}`,
+    '',
+    'ASSET DETAILS',
+    `Brand: ${a.brand || '—'}`,
+    `Model: ${a.model || '—'}`,
+    `Serial Number: ${a.serial_number || '—'}`,
+    `Acquisition Date: ${a.acquisition_date || '—'}`,
+    '',
+    'LOCATION & ASSIGNMENT',
+    `Property: ${a.property_name || '—'}`,
+    `Location: ${a.location || '—'}`,
+    `Actual Location: ${a.actual_location || '—'}`,
+    `Department: ${a.department || '—'}`,
+    `Assigned To: ${a.assigned_to || '—'}`,
+    '',
+    'STATUS',
+    `Status: ${a.status || '—'}`,
+    `Condition: ${a.condition || '—'}`,
+    ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
+  ].join('\n')
 }
 
 export function buildQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&ecc=M&qzone=2&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(qrText(a))}`
 }
 
 // The printed label carries the SAME full details. Full details make a dense code, so the label prints it
 // large (68 mm) as a sharp vector image - tested to scan on 100, 150, 200 and 300 dpi printers.
 export function buildLabelQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=M&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
 }
 
 export function propertyLogoUrl(properties, propertyId) {
@@ -50,8 +70,8 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qrbox { flex: 0 0 auto; width: 64mm; display: flex; flex-direction: column; align-items: center; }
-  .frame { width: 64mm; height: 64mm; border: 2.4mm solid #111; border-radius: 3.6mm; background: #fff; padding: 3.4mm; }
+  .qrbox { flex: 0 0 auto; width: 66mm; display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 66mm; height: 66mm; border: 2.2mm solid #111; border-radius: 3.6mm; background: #fff; padding: 2.2mm; }
   .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
   .prop { max-width: 100%; font-size: 4.6mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
