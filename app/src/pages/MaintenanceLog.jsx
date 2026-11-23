@@ -134,7 +134,7 @@ export default function MaintenanceLog({ profile }) {
   const load = async () => {
     setLoading(true)
     const [ml, a, t, s] = await Promise.all([
-      supabase.from('maintenance_log_computed').select('*').order('scheduled_date', { ascending: false }),
+      supabase.from('maintenance_log_computed').select('*').order('scheduled_date', { ascending: false }).order('id', { ascending: false }),
       supabase.from('assets_computed').select('id, asset_code, asset_name, category, sub_category, brand, model, serial_number, location, actual_location, department, assigned_to, status, condition, last_maintenance, maintenance_due, property_id'),
       supabase.from('maintenance_types').select('*').order('name'),
       supabase.from('pms_statuses').select('*').order('name'),

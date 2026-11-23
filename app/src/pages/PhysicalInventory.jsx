@@ -28,7 +28,7 @@ export default function PhysicalInventory({ profile }) {
   const load = async () => {
     setLoading(true)
     const [pi, a, s, c, l] = await Promise.all([
-      supabase.from('physical_inventory_computed').select('*').order('inventory_date', { ascending: false }),
+      supabase.from('physical_inventory_computed').select('*').order('inventory_date', { ascending: false }).order('id', { ascending: false }),
       supabase.from('assets').select('id, asset_code, asset_name, location, actual_location, department, assigned_to, registered_qty, property_id'),
       supabase.from('statuses').select('*').order('name'),
       supabase.from('conditions').select('*').order('name'),

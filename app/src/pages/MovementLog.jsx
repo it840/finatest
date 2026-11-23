@@ -21,7 +21,7 @@ export default function MovementLog() {
   const load = async () => {
     setLoading(true)
     const [ml, t, l] = await Promise.all([
-      supabase.from('movement_log_computed').select('*').order('movement_date', { ascending: false }),
+      supabase.from('movement_log_computed').select('*').order('movement_date', { ascending: false }).order('id', { ascending: false }),
       supabase.from('movement_types').select('*').order('name'),
       supabase.from('locations').select('*').order('name'),
     ])

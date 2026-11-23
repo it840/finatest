@@ -26,7 +26,7 @@ export default function DisposalLog({ profile }) {
   const load = async () => {
     setLoading(true)
     const [dl, a, r] = await Promise.all([
-      supabase.from('disposal_log_computed').select('*').order('disposal_date', { ascending: false }),
+      supabase.from('disposal_log_computed').select('*').order('disposal_date', { ascending: false }).order('id', { ascending: false }),
       supabase.from('assets').select('id, asset_code, asset_name, registered_qty, disposal_qty, purchase_cost, property_id'),
       supabase.from('disposal_reasons').select('*').order('name'),
     ])

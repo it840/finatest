@@ -24,7 +24,7 @@ export default function PurchaseLog({ profile }) {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase.from('purchase_log_computed').select('*').order('purchase_date', { ascending: false })
+    const { data } = await supabase.from('purchase_log_computed').select('*').order('id', { ascending: false })   // order of adding, newest first (follows the Asset Number sequence)
     setRows(data || [])
     setLoading(false)
   }
