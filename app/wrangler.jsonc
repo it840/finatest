@@ -1,0 +1,10 @@
+// Cloudflare Workers settings (used when the GitHub repository is connected in the Cloudflare dashboard).
+// The Worker name in the dashboard must be exactly "asset-registry".
+{
+  "name": "asset-registry",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
