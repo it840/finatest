@@ -143,7 +143,9 @@ table { border-collapse: collapse; }
 @keyframes arrow-go { 0% { transform: none; opacity: 1; } 100% { transform: translateX(16px); opacity: 0; } }
 .arrow-go { display: inline-flex; animation: arrow-go 0.6s cubic-bezier(0.5, 0, 0.9, 0.55) 0.1s both; }
 @keyframes app-enter { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
-.app-enter { animation: app-enter 0.6s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+/* 'backwards' (not 'both'): once the slide-in ends the animation lets go of the page, so pop-up windows
+   inside it cover the full screen again instead of being trapped in the page area */
+.app-enter { animation: app-enter 0.6s cubic-bezier(0.22, 0.8, 0.3, 1) backwards; }
 @media (prefers-reduced-motion: reduce) { .arrow-go, .app-enter { animation: none; } }
 
 /* ---------- Printing / Save as PDF (Dashboard "Print / PDF") ---------- */
