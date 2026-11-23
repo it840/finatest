@@ -73,14 +73,14 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
   .qr { flex: 0 0 auto; width: 50mm; height: 50mm; background: #fff; padding: 0; }
   .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; color: #1c1e21; }
-  .prop { font-size: 3mm; font-weight: 600; color: #34373b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
+  .prop { max-width: 100%; font-size: 3mm; font-weight: 600; color: #34373b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 10.5mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 0.6mm; white-space: nowrap; }
-  .logo { margin-top: 1.2mm; height: 17mm; display: flex; align-items: center; }
+  .logo { margin-top: 1.2mm; height: 17mm; display: flex; align-items: center; justify-content: center; }
   .logo img { max-height: 17mm; max-width: 46mm; object-fit: contain; display: block; }
-  .num { font-size: 3mm; font-weight: 600; color: #3a3d42; margin-top: 0.3mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .num { max-width: 100%; font-size: 3mm; font-weight: 600; color: #3a3d42; margin-top: 0.3mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .num b { font-weight: 700; color: #1c1e21; letter-spacing: 0.08mm; }
-  .name { font-size: 3.8mm; font-weight: 700; margin-top: 0.9mm; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+  .name { max-width: 100%; font-size: 3.8mm; font-weight: 700; margin-top: 0.9mm; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
   .note { font-size: 2.5mm; color: #555a60; margin-top: 0.5mm; white-space: nowrap; }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
   @media print { .hint { display: none; } body { padding: 0; } }
