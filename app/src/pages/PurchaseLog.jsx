@@ -20,6 +20,7 @@ export default function PurchaseLog({ profile }) {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(30)
   const [query, setQuery] = useState('')
+  const [notice, setNotice] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -66,6 +67,11 @@ export default function PurchaseLog({ profile }) {
       </p>
       <p className="text-sm text-muted mb-6">{filteredRows.length} of {scopedRows.length} purchases shown</p>
 
+      {notice && (
+        <div className="mb-3 text-sm rounded border border-[#97C459] bg-[#F4FAEC] text-[#27500A] px-3 py-2 flex justify-between gap-3">
+          <span>{notice}</span><button onClick={() => setNotice('')} className="hover:underline">Dismiss</button>
+        </div>
+      )}
       <input placeholder="Search date, asset, qty, cost, amount, supplier, type, remarks, logged by…" value={query} onChange={e => setQuery(e.target.value)} className="input mb-4 max-w-xl" />
 
       <div className="overflow-x-auto border border-hairline rounded scrollbar-thin">
@@ -116,7 +122,7 @@ export default function PurchaseLog({ profile }) {
           properties={properties}
           defaultPropertyId={currentPropertyId}
           onCancel={() => setShowAssetForm(false)}
-          onSave={() => { setShowAssetForm(false); load() }}
+          onSave={(msg) => { setShowAssetForm(false); setNotice(msg || ''); load() }}
         />
       )}
     </div>

@@ -36,6 +36,11 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  // bulk recording (new assets only): several separate units from one form
+  const [units, setUnits] = useState(1)
+  const [serialsText, setSerialsText] = useState('')
+  const bulk = !initial?.id && Number(units) > 1
+  const serialList = serialsText.split('\n').map(t => t.trim()).filter(Boolean)
   // match a category by name, ignoring emoji/punctuation (older or imported assets may be saved without the emoji)
   const norm = (t) => (t || '').replace(/[^\p{L}\p{N}\s/&]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase()
   const selectedCat = form.category
@@ -114,7 +119,11 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
 
   const submit = async (e) => {
     e.preventDefault()
-    setSaving(true); setError('')
+    setError('')
+    const n = Number(units)
+    if (!initial?.id && (!Number.isInteger(n) || n < 1 || n > 100)) { setError('Number of units must be a whole number from 1 to 100.'); return }
+    if (bulk && serialList.length > n) { setError(`You entered ${serialList.length} serial numbers for ${n} units. Remove the extra lines or raise the number of units.`); return }
+    setSaving(true)
 
     let photoUrl = form.photo_url ?? null
     if (photoFile) {
@@ -138,6 +147,23 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
       .forEach(k => { payload[k] = payload[k] === '' ? null : payload[k] })
     payload.asset_number = (payload.asset_number || '').trim() || null
 
+    if (bulk) {
+      // one separate asset per unit; each gets its own Asset ID, Asset Number, QR label and Purchase Log entry
+      const rows = Array.from({ length: n }, (_, i) => ({
+        ...payload,
+        asset_number: null,                                  // numbered automatically, one each
+        serial_number: serialList[i] || null,                // serials in order; units without one stay blank
+      }))
+      const { data, error } = await supabase.from('assets').insert(rows).select('asset_code, asset_number')
+      setSaving(false)
+      if (error) { setError(error.message); return }
+      const list = (data || []).slice().sort((a, b) => a.asset_code.localeCompare(b.asset_code))
+      const first = list[0], last = list[list.length - 1]
+      onSave(first ? `Created ${list.length} assets: ${first.asset_code} to ${last.asset_code}` +
+        (first.asset_number ? ` (${first.asset_number} to ${last.asset_number})` : '') + '.' : undefined)
+      return
+    }
+
     const { error } = initial?.id
       ? await supabase.from('assets').update(payload).eq('id', initial.id)
       : await supabase.from('assets').insert(payload)
@@ -160,9 +186,9 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
         <div className="grid grid-cols-3 gap-4">
           <Field label="Asset Name"><input required value={form.asset_name} onChange={set('asset_name')} className="input" /></Field>
           <Field label="Asset Number">
-            <input value={form.asset_number || ''} onChange={set('asset_number')}
-              placeholder={initial?.id ? 'Tag or property number' : 'Assigned automatically'} className="input" />
-            {!initial?.id && !form.asset_number && nextNumber && (
+            <input value={bulk ? '' : (form.asset_number || '')} onChange={set('asset_number')} disabled={bulk}
+              placeholder={initial?.id ? 'Tag or property number' : bulk ? 'One per unit, automatically' : 'Assigned automatically'} className="input disabled:bg-hairline/30" />
+            {!initial?.id && !bulk && !form.asset_number && nextNumber && (
               <span className="block text-xs text-muted mt-1">Will be <b>{nextNumber}</b> — leave blank, or type your own</span>
             )}
           </Field>
@@ -196,7 +222,8 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
           </Field>
           <Field label="Brand"><input value={form.brand} onChange={set('brand')} className="input" /></Field>
           <Field label="Model"><input value={form.model} onChange={set('model')} className="input" /></Field>
-          <Field label="Serial Number"><input value={form.serial_number} onChange={set('serial_number')} className="input" /></Field>
+          <Field label="Serial Number"><input value={bulk ? '' : form.serial_number} onChange={set('serial_number')} disabled={bulk}
+            placeholder={bulk ? 'Use the list under Bulk recording' : ''} className="input disabled:bg-hairline/30" /></Field>
 
           <div className="col-span-3">
             <span className="block text-xs text-muted mb-1">Photo</span>
@@ -287,6 +314,37 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
             </>
           )}
 
+          {!initial?.id && (
+            <div className="col-span-3 rounded-lg border border-hairline bg-theme-bg p-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div className="text-sm font-medium">Bulk recording</div>
+                  <div className="text-xs text-muted mt-0.5 max-w-md">
+                    Add several separate units of this item at once. Each unit becomes its own asset with its own Asset ID,
+                    Asset Number and QR label. (For a group you track as one, leave this at 1 and use Registered Qty.)
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  Number of units
+                  <input type="number" min="1" max="100" step="1" value={units} onChange={e => setUnits(e.target.value)} className="input w-24" aria-label="Number of units" />
+                </label>
+              </div>
+              {bulk && (
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="block text-xs text-muted mb-1">Serial numbers — one per line, in order (optional)</span>
+                    <textarea value={serialsText} onChange={e => setSerialsText(e.target.value)} rows={4} className="input font-mono text-xs"
+                      placeholder={'SN-0001\nSN-0002\nSN-0003'} aria-label="Serial numbers" />
+                  </label>
+                  <div className={`text-xs mt-1 ${serialList.length > Number(units) ? 'text-danger' : 'text-muted'}`}>
+                    {serialList.length} of {units} serial numbers entered{serialList.length < Number(units) ? ' — the rest will be left blank' : ''}.
+                    Each unit gets Registered Qty {form.registered_qty || 1} and the same details, cost and photo.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="col-span-3">
             <Field label="Remarks"><textarea value={form.remarks} onChange={set('remarks')} className="input" rows={2} /></Field>
           </div>
@@ -297,7 +355,7 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
         <div className="flex justify-end gap-3 pt-2 border-t border-hairline">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
           <button disabled={saving} type="submit" className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">
-            {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : 'Save Asset'}
+            {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : bulk ? `Save ${units} assets` : 'Save Asset'}
           </button>
         </div>
       </form>
