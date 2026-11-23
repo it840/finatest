@@ -32,10 +32,49 @@ export function buildQrUrl(a) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(qrText(a))}`
 }
 
-// The printed label carries the SAME full details. Full details make a dense code, so the label prints it
-// large (68 mm) as a sharp vector image - tested to scan on 100, 150, 200 and 300 dpi printers.
-export function buildLabelQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
+// Short QR text for small labels: Asset ID, Asset No. and name (big squares, prints cleanly on 203 dpi thermal printers)
+export function qrSimpleText(a) {
+  return [a.asset_code, a.asset_number, a.asset_name].map(v => String(v ?? '').trim()).filter(Boolean).join('\n')
+}
+
+export function buildLabelQrUrl(a, content = 'full') {
+  const simple = content === 'simple'
+  const text = simple ? qrSimpleText(a) : qrText(a)
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=${simple ? 'M' : 'L'}&margin=0&format=svg&data=${encodeURIComponent(text)}`
+}
+
+// How many squares across a QR code needs for this text (byte mode), so the print window can warn when
+// the squares would be too small for the printer.
+const CAP = {
+  L: [17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953],
+  M: [14,26,42,62,84,106,122,152,180,213,251,287,331,362,412,450,504,560,624,666,711,779,857,911,997,1059,1125,1190,1264,1370,1452,1538,1628,1722,1809,1911,1989,2099,2213,2331],
+}
+export function qrModules(asset, content = 'full') {
+  const text = content === 'simple' ? qrSimpleText(asset) : qrText(asset)
+  const bytes = new TextEncoder().encode(text).length
+  const caps = CAP[content === 'simple' ? 'M' : 'L']
+  const v = caps.findIndex(c => c >= bytes) + 1 || 40
+  return 17 + 4 * v
+}
+
+// Label sizes. Thermal labels print at exactly the label size (no page shrinking).
+export const LABEL_SIZES = [
+  { key: '40x30', w: 40, h: 30 }, { key: '50x30', w: 50, h: 30 }, { key: '50x40', w: 50, h: 40 },
+  { key: '60x40', w: 60, h: 40 }, { key: '70x40', w: 70, h: 40 }, { key: '75x40', w: 75, h: 40 },
+  { key: '75x50', w: 75, h: 50 }, { key: '80x40', w: 80, h: 40 }, { key: '80x50', w: 80, h: 50 },
+  { key: '80x60', w: 80, h: 60 },
+  { key: 'a4', w: 170, h: 96, a4: true },
+]
+
+// Size and position of every part of the label, in mm, worked out from the label size
+export function labelGeometry(w, h) {
+  const m = Math.max(1.5, Math.min(4, h * 0.05))                // edge margin (thermal printers can't print the very edge)
+  const frame = Math.min(h - 2 * m, w * 0.55)                    // framed QR: as big as the height allows
+  const border = Math.max(0.7, frame * 0.03)
+  const pad = Math.max(0.7, frame * 0.025)
+  const qr = frame - 2 * border - 2 * pad                        // the code itself
+  const textW = w - frame - 3 * m
+  return { m, frame, border, pad, qr, textW }
 }
 
 export function propertyLogoUrl(properties, propertyId) {
@@ -47,50 +86,54 @@ export function propertyLogoUrl(properties, propertyId) {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
-// Label: the earlier layout (QR on the left; property, logo, Asset No., name and note on the right, 170 x 96 mm)
-// with the framed QR design - a bold rounded frame around the QR, which holds the full asset details as text.
-export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
-  const qr = buildLabelQrUrl(asset)
+// Label: framed QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
+// size = { w, h } in mm (a4: true prints a 170 x 96 mm label on an A4 sheet for office printers).
+// content = 'full' (all details as text) or 'simple' (Asset ID, Asset No., name).
+export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 170, h: 96, a4: true }, content = 'full' } = {}) {
+  const qr = buildLabelQrUrl(asset, content)
   const name = asset.asset_name || ''
+  const { w, h } = size
+  const a4 = !!size.a4
+  const g = labelGeometry(w, h)
+  const f = (n) => `${(Math.round(n * 100) / 100)}mm`
+  const small = h < 35
+  const fs = {
+    prop: Math.min(h * 0.062, g.textW * 0.085), logo: h * (small ? 0.24 : 0.28), id: Math.min(h * 0.19, g.textW / 4.4),
+    num: Math.min(h * 0.068, g.textW * 0.08), name: Math.min(h * 0.088, g.textW * 0.1), note: Math.min(h * 0.045, g.textW * 0.06),
+  }
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 12mm; }
+  @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(w)} ${f(h)}; margin: 0;`} }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { margin: 0; padding: 14mm; font-family: Inter, Arial, sans-serif; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 6mm; }
-  .label {
-    position: relative; width: 170mm; height: 96mm; border-radius: 5.5mm;
-    display: flex; align-items: center; gap: 5mm; padding: 0 9mm 0 7.5mm;
-    border: 0.3mm solid #c4c8cc;
-    background: #ffffff;
-    box-shadow: 0 0.4mm 1.2mm rgba(0,0,0,.14);
-  }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body { font-family: Inter, Arial, sans-serif; ${a4 ? 'padding: 14mm; display: flex; flex-direction: column; align-items: center; gap: 6mm;' : ''} }
+  .label { position: relative; width: ${f(w)}; height: ${f(h)}; overflow: hidden; background: #fff;
+    display: flex; align-items: center; gap: ${f(g.m)}; padding: 0 ${f(g.m)};
+    ${a4 ? 'border: 0.3mm solid #c4c8cc; border-radius: 5mm; padding: 0 9mm 0 7.5mm;' : ''} }
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qrbox { flex: 0 0 auto; width: 86mm; display: flex; flex-direction: column; align-items: center; }
-  .frame { width: 86mm; height: 86mm; border: 2.6mm solid #111; border-radius: 4.2mm; background: #fff; padding: 2.2mm; }
+  .frame { flex: 0 0 auto; width: ${f(g.frame)}; height: ${f(g.frame)}; border: ${f(g.border)} solid #000; border-radius: ${f(g.frame * 0.05)};
+    background: #fff; padding: ${f(g.pad)}; }
   .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
-  .prop { max-width: 100%; font-size: 5mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 13.5mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 1.2mm; white-space: nowrap; }
-  .logo { margin-top: 2.4mm; height: 28mm; display: flex; align-items: center; justify-content: center; }
-  .logo img { max-height: 28mm; max-width: 58mm; object-fit: contain; display: block; }
-  .num { max-width: 100%; font-size: 5mm; font-weight: 600; color: #3a3d42; margin-top: 1.6mm; line-height: 1.2; overflow-wrap: anywhere; }
-  .num b { font-weight: 700; color: #1c1e21; letter-spacing: 0.08mm; }
-  .name { max-width: 100%; font-size: 7mm; font-weight: 700; margin-top: 1.4mm; line-height: 1.18; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: 4mm; color: #555a60; margin-top: 1.6mm; line-height: 1.25; }
+  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #000; }
+  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 600; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .logo { margin-top: ${f(h * 0.02)}; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
+  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; }
+  .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; margin-top: ${f(h * 0.01)}; white-space: nowrap; }
+  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 600; margin-top: ${f(h * 0.015)}; line-height: 1.2; overflow-wrap: anywhere; }
+  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 700; margin-top: ${f(h * 0.012)}; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+  .note { max-width: 100%; font-size: ${f(fs.note)}; margin-top: ${f(h * 0.015)}; line-height: 1.2; color: #222; ${small ? 'display: none;' : ''} }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
-  @media print { .hint { display: none; } body { padding: 0; } }
+  @media print { .hint { display: none; } body { padding: 0 !important; } }
 </style></head>
 <body>
   <div class="label">
-    <span class="rivet l"></span><span class="rivet r"></span>
-    <div class="qrbox">
-      <div class="frame"><img id="qr" src="${qr}" alt="QR code"></div>
-    </div>
+    ${a4 ? '<span class="rivet l"></span><span class="rivet r"></span>' : ''}
+    <div class="frame"><img id="qr" src="${qr}" alt="QR code"></div>
     <div class="txt">
       <div class="prop">Property of ${esc(asset.property_name || 'Asset Registry System')}</div>
       ${logo
@@ -101,7 +144,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
       <div class="note">Scan to look up. Do not remove.</div>
     </div>
   </div>
-  <div class="hint">Actual size 170 × 96 mm.</div>
+  ${a4 ? `<div class="hint">Actual size ${w} × ${h} mm on A4.</div>` : ''}
   ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
@@ -109,16 +152,16 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
       var ready = function () { (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go) };
       var one = function () { if (--left <= 0) ready() };
       imgs.forEach(function (i) { if (i.complete) one(); else { i.onload = one; i.onerror = one; } });
-      setTimeout(go, 4000);   // print anyway if the QR image or fonts are slow
+      setTimeout(go, 4000);
     })();
   </script>` : ''}
 </body></html>`
 }
 
 // Opens the label in a new window and prints it
-export function printAssetQr(asset, logo = null) {
-  const w = window.open('', '_blank', 'width=560,height=420')
+export function printAssetQr(asset, logo = null, opts = {}) {
+  const w = window.open('', '_blank', 'width=640,height=480')
   if (!w) return
-  w.document.write(labelHtml(asset, { logo }))
+  w.document.write(labelHtml(asset, { logo, ...opts }))
   w.document.close()
 }

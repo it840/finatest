@@ -6,7 +6,8 @@ import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
-import { buildQrUrl, printAssetQr, propertyLogoUrl } from '../lib/assetQr'
+import { buildQrUrl, propertyLogoUrl } from '../lib/assetQr'
+import PrintLabelDialog from '../components/PrintLabelDialog'
 import { takeNavFilter } from '../lib/navFilter'
 
 function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
@@ -56,7 +57,8 @@ export function AssetDetailModal({ asset, onClose }) {
   }, [asset.id])
 
   const { properties } = useProperty()
-  const printQr = () => printAssetQr(asset, propertyLogoUrl(properties, asset.property_id))
+  const [printing, setPrinting] = useState(false)   // the Print QR Label window (label size + QR content)
+  const printQr = () => { setBig(null); setPrinting(true) }
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4">
@@ -160,6 +162,7 @@ export function AssetDetailModal({ asset, onClose }) {
         </div>
       </div>
 
+      {printing && <PrintLabelDialog asset={asset} logo={propertyLogoUrl(properties, asset.property_id)} onClose={() => setPrinting(false)} />}
       {big && (
         <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={() => setBig(null)}>
           <button onClick={() => setBig(null)} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>

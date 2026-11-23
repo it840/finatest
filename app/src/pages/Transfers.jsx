@@ -4,7 +4,8 @@ import { useProperty } from '../lib/PropertyContext'
 import { matchesQuery } from '../lib/tableUtils'
 import { forProperty } from '../lib/propertyScope'
 import { parseAssetCode } from '../lib/qr'
-import { buildQrUrl, printAssetQr, propertyLogoUrl } from '../lib/assetQr'
+import { buildQrUrl, propertyLogoUrl } from '../lib/assetQr'
+import PrintLabelDialog from '../components/PrintLabelDialog'
 import QrScanner from '../components/QrScanner'
 import Pagination from '../components/Pagination'
 
@@ -308,6 +309,7 @@ const METHOD_TEXT = { qr: 'verified by QR scan', manual: 'verified by typed ID' 
 export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
   const { properties } = useProperty()
   const [big, setBig] = useState(null) // { src, caption, isQr }
+  const [printing, setPrinting] = useState(false)
   const qrUrl = buildQrUrl(asset)
   // Esc closes an enlarged picture first, then the window
   useEffect(() => {
@@ -359,7 +361,7 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
               </button>
               <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
             </div>
-            <button onClick={() => printAssetQr(asset, propertyLogoUrl(properties, asset.property_id))} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Label</button>
+            <button onClick={() => setPrinting(true)} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Label</button>
           </div>
           <div className="grid grid-cols-3 gap-x-5 gap-y-2.5 flex-1 min-w-0">
             {details.map(([k, v]) => (
@@ -426,6 +428,7 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
           <button onClick={onClose} className="px-4 py-2 text-sm border border-hairline rounded hover:bg-hairline/20">Close</button>
         </div>
       </div>
+      {printing && <PrintLabelDialog asset={asset} logo={propertyLogoUrl(properties, asset.property_id)} onClose={() => setPrinting(false)} />}
       {big && <Lightbox src={big.src} caption={big.caption} isQr={big.isQr} onClose={() => setBig(null)} />}
     </div>
   )
