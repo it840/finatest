@@ -249,7 +249,8 @@ export default function Assets({ profile }) {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   // opened from the Dashboard for one asset: show just that asset
-  useEffect(() => { const f = takeNavFilter('assets'); if (f?.query) setQuery(f.query) }, [])
+  const openOnLoad = React.useRef(null)
+  useEffect(() => { const f = takeNavFilter('assets'); if (f?.query) setQuery(f.query); if (f?.open) openOnLoad.current = f.open }, [])
   const [categoryFilter, setCategoryFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -275,6 +276,11 @@ export default function Assets({ profile }) {
     ;(m.data || []).forEach(x => { if (x.asset_id != null && !(x.asset_id in prev)) prev[x.asset_id] = x.from_location })
     setPrevLocByAsset(prev)
     setRows(a.data || [])
+    if (openOnLoad.current) {   // opened from a scanned QR code: show that asset straight away
+      const hit = (a.data || []).find(r => (r.asset_code || '').toLowerCase() === openOnLoad.current.toLowerCase())
+      openOnLoad.current = null
+      if (hit) setViewingAsset(hit)
+    }
     setLoading(false)
   }
 
