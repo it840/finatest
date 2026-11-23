@@ -48,15 +48,15 @@ export function propertyLogoUrl(properties, propertyId) {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
-// Brushed-metal asset tag: QR on the left; Property, Asset ID (large), Asset Number, Asset Name on the right.
-// Printed at real size (150 x 76 mm) so it can go on a label sheet or be cut out.
+// Label: the earlier layout (QR on the left; property, logo, Asset No., name and note on the right, 150 x 76 mm)
+// with the framed QR design - a bold rounded frame around the QR, which holds the full asset details as text.
 export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   const qr = buildLabelQrUrl(asset)
   const name = asset.asset_name || ''
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 12mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -71,8 +71,9 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qr { flex: 0 0 auto; width: 68mm; height: 68mm; background: #fff; padding: 0; }
-  .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .qrbox { flex: 0 0 auto; width: 64mm; display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 64mm; height: 64mm; border: 2.4mm solid #111; border-radius: 3.6mm; background: #fff; padding: 3.4mm; }
+  .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
   .prop { max-width: 100%; font-size: 4.6mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 13mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 1mm; white-space: nowrap; }
@@ -88,7 +89,9 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
 <body>
   <div class="label">
     <span class="rivet l"></span><span class="rivet r"></span>
-    <div class="qr"><img id="qr" src="${qr}" alt="QR code"></div>
+    <div class="qrbox">
+      <div class="frame"><img id="qr" src="${qr}" alt="QR code"></div>
+    </div>
     <div class="txt">
       <div class="prop">Property of ${esc(asset.property_name || 'Asset Registry System')}</div>
       ${logo

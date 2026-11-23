@@ -92,7 +92,7 @@ SN-0003`,"aria-label":`Serial numbers`})]}),(0,w.jsxs)(`div`,{className:`text-xs
 `)}function WU(e){return`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(UU(e))}`}function GU(e){return`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(UU(e))}`}function KU(e,t){let n=(e||[]).find(e=>e.id===t)?.logo_url;return n?/^https?:\/\//.test(n)?n:new URL(`./${n.replace(/^\//,``)}`,window.location.href).href:null}var qU=e=>String(e??``).replace(/[&<>"]/g,e=>({"&":`&amp;`,"<":`&lt;`,">":`&gt;`,'"':`&quot;`})[e]);function JU(e,{autoPrint:t=!0,logo:n=null}={}){let r=GU(e),i=e.asset_name||``;return`<!doctype html>
 <html><head><meta charset="utf-8"><title>${qU(e.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 12mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -107,8 +107,9 @@ SN-0003`,"aria-label":`Serial numbers`})]}),(0,w.jsxs)(`div`,{className:`text-xs
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qr { flex: 0 0 auto; width: 68mm; height: 68mm; background: #fff; padding: 0; }
-  .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .qrbox { flex: 0 0 auto; width: 64mm; display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 64mm; height: 64mm; border: 2.4mm solid #111; border-radius: 3.6mm; background: #fff; padding: 3.4mm; }
+  .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
   .prop { max-width: 100%; font-size: 4.6mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 13mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 1mm; white-space: nowrap; }
@@ -124,7 +125,9 @@ SN-0003`,"aria-label":`Serial numbers`})]}),(0,w.jsxs)(`div`,{className:`text-xs
 <body>
   <div class="label">
     <span class="rivet l"></span><span class="rivet r"></span>
-    <div class="qr"><img id="qr" src="${r}" alt="QR code"></div>
+    <div class="qrbox">
+      <div class="frame"><img id="qr" src="${r}" alt="QR code"></div>
+    </div>
     <div class="txt">
       <div class="prop">Property of ${qU(e.property_name||`Asset Registry System`)}</div>
       ${n?`<div class="logo"><img id="logo" src="${qU(n)}" alt="${qU(e.property_name||``)}"></div>`:`<div class="id">${qU(e.asset_code)}</div>`}
