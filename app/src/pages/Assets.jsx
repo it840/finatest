@@ -294,7 +294,7 @@ export default function Assets({ profile }) {
     (!query || matchesQuery(query, [
       r.asset_code, r.property_name, r.asset_name, r.asset_number, r.acquisition_date, r.category, r.sub_category, r.brand, r.model, r.serial_number,
       r.registered_qty, r.disposal_qty, prevLocByAsset[r.id], r.location, r.actual_location, r.department,
-      r.assigned_to, r.status, r.disposal_reason, r.disposal_date, r.condition, r.current_asset_value,
+      r.assigned_to, r.status, r.disposal_reason, r.disposal_date, r.condition, r.purchase_cost, r.effective_useful_life_years, r.current_asset_value,
     ])) &&
     (!categoryFilter || r.category === categoryFilter) &&
     (!locationFilter || r.location === locationFilter || r.actual_location === locationFilter) &&
@@ -350,7 +350,7 @@ export default function Assets({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Property', 'ID', 'Photo', 'Asset Name', 'Asset Number', 'Acquisition Date', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Current Value', 'QR', ''].map(h => (
+              {['Property', 'ID', 'Photo', 'Asset Name', 'Asset Number', 'Acquisition Date', 'Brand', 'Serial #', 'Category', 'Sub-Category', 'Reg. Qty', 'Disposed Qty', 'Previous Location', 'Actual Location', 'Assigned To', 'Status', 'Condition', 'Disposal Reason', 'Purchase Cost', 'Useful Life Used', 'Current Value', 'QR', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -384,6 +384,15 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.condition}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title={r.disposal_date ? `Last disposal: ${r.disposal_date}` : undefined}>{r.disposal_reason || ''}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Price of one piece">{r.purchase_cost == null ? <span className="text-muted">—</span> : peso2(r.purchase_cost)}</td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {r.effective_useful_life_years == null ? <span className="text-muted">—</span> : (
+                    <span title={r.useful_life_source === 'category' ? 'Standard useful life for its category (Settings > Lookups)' : "This asset's own useful life"}>
+                      {Number(r.effective_useful_life_years)} {Number(r.effective_useful_life_years) === 1 ? 'yr' : 'yrs'}
+                      {r.useful_life_source === 'category' && <span className="text-xs text-muted"> · category</span>}
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   {rowValue(r) == null
                     ? <button onClick={() => setPieceAsset(r)} className="text-muted hover:underline" title="Value per piece">—</button>
@@ -399,7 +408,7 @@ export default function Assets({ profile }) {
               </tr>
             ))}
             {pageRows.length === 0 && (
-              <tr><td colSpan={21} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
+              <tr><td colSpan={23} className="px-3 py-6 text-center text-muted">No assets match.</td></tr>
             )}
           </tbody>
           {filtered.length > 0 && (
@@ -408,7 +417,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={10}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
-                <td className="px-3 py-2" colSpan={6}></td>
+                <td className="px-3 py-2" colSpan={8}></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Value of one piece × pieces on hand, added up">{peso2(totalValue)}</td>
                 <td className="px-3 py-2" colSpan={2}></td>
               </tr>
