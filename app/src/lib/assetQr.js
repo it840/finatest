@@ -47,7 +47,7 @@ export function propertyLogoUrl(properties, propertyId) {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
-// Label: the earlier layout (QR on the left; property, logo, Asset No., name and note on the right, 150 x 76 mm)
+// Label: the earlier layout (QR on the left; property, logo, Asset No., name and note on the right, 170 x 96 mm)
 // with the framed QR design - a bold rounded frame around the QR, which holds the full asset details as text.
 export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   const qr = buildLabelQrUrl(asset)
@@ -61,7 +61,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; padding: 14mm; font-family: Inter, Arial, sans-serif; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 6mm; }
   .label {
-    position: relative; width: 150mm; height: 76mm; border-radius: 5mm;
+    position: relative; width: 170mm; height: 96mm; border-radius: 5.5mm;
     display: flex; align-items: center; gap: 5mm; padding: 0 9mm 0 7.5mm;
     border: 0.3mm solid #c4c8cc;
     background: #ffffff;
@@ -70,18 +70,18 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qrbox { flex: 0 0 auto; width: 66mm; display: flex; flex-direction: column; align-items: center; }
-  .frame { width: 66mm; height: 66mm; border: 2.2mm solid #111; border-radius: 3.6mm; background: #fff; padding: 2.2mm; }
+  .qrbox { flex: 0 0 auto; width: 86mm; display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 86mm; height: 86mm; border: 2.6mm solid #111; border-radius: 4.2mm; background: #fff; padding: 2.2mm; }
   .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
-  .prop { max-width: 100%; font-size: 4.6mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 13mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 1mm; white-space: nowrap; }
-  .logo { margin-top: 2mm; height: 24mm; display: flex; align-items: center; justify-content: center; }
-  .logo img { max-height: 24mm; max-width: 56mm; object-fit: contain; display: block; }
-  .num { max-width: 100%; font-size: 5mm; font-weight: 600; color: #3a3d42; margin-top: 1.2mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prop { max-width: 100%; font-size: 5mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 13.5mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 1.2mm; white-space: nowrap; }
+  .logo { margin-top: 2.4mm; height: 28mm; display: flex; align-items: center; justify-content: center; }
+  .logo img { max-height: 28mm; max-width: 58mm; object-fit: contain; display: block; }
+  .num { max-width: 100%; font-size: 5mm; font-weight: 600; color: #3a3d42; margin-top: 1.6mm; line-height: 1.2; overflow-wrap: anywhere; }
   .num b { font-weight: 700; color: #1c1e21; letter-spacing: 0.08mm; }
-  .name { max-width: 100%; font-size: 6.2mm; font-weight: 700; margin-top: 1.2mm; line-height: 1.18; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: 3.6mm; color: #555a60; margin-top: 1.4mm; line-height: 1.25; }
+  .name { max-width: 100%; font-size: 7mm; font-weight: 700; margin-top: 1.4mm; line-height: 1.18; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+  .note { max-width: 100%; font-size: 4mm; color: #555a60; margin-top: 1.6mm; line-height: 1.25; }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
   @media print { .hint { display: none; } body { padding: 0; } }
 </style></head>
@@ -101,7 +101,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
       <div class="note">Scan to look up. Do not remove.</div>
     </div>
   </div>
-  <div class="hint">Actual size 150 × 76 mm.</div>
+  <div class="hint">Actual size 170 × 96 mm.</div>
   ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
