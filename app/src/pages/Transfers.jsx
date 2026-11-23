@@ -33,7 +33,7 @@ function Lightbox({ src, caption, isQr, onClose }) {
     <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={onClose}>
       <button onClick={onClose} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>
       <img src={src} alt={caption || ''} onClick={e => e.stopPropagation()}
-        className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${isQr ? 'bg-white p-4 w-[min(80vh,90vw)] h-auto' : ''}`} />
+        className={`max-w-full max-h-[85vh] object-contain cursor-default ${isQr ? 'bg-white p-4 w-[min(80vh,90vw)] h-auto border-[12px] border-[#111] rounded-3xl' : 'rounded-lg'}`} />
       <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
         {caption && <span>{caption}</span>}
         <a href={src} target="_blank" rel="noreferrer" className="underline hover:text-white">Open in a new tab</a>
@@ -353,8 +353,8 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
             ) : (
               <div className="h-36 w-full rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted">No photo</div>
             )}
-            <div className="border border-hairline rounded-lg p-2 bg-paper text-center">
-              <button onClick={() => setBig({ src: qrUrl, caption: `QR code · ${asset.asset_code}`, isQr: true })} title="Click to enlarge" className="block mx-auto cursor-zoom-in">
+            <div className="text-center">
+              <button onClick={() => setBig({ src: qrUrl, caption: `QR code · ${asset.asset_code}`, isQr: true })} title="Click to enlarge" className="block mx-auto cursor-zoom-in rounded-xl border-[5px] border-[#111] bg-white p-1.5">
                 <img src={qrUrl} alt={`QR code for ${asset.asset_code}`} className="h-52 w-52 bg-white" />
               </button>
               <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
