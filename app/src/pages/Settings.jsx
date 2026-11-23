@@ -303,9 +303,27 @@ function LookupPanel({ table, label }) {
     load()
   }
 
+  // Categories: standard useful life (years) used for depreciation when an asset has none of its own
+  const isCategories = table === 'categories'
+  const [lifeDraft, setLifeDraft] = useState({})
+  const saveLife = async (item) => {
+    const raw = lifeDraft[item.id]
+    if (raw === undefined) return
+    const v = raw === '' ? null : Number(raw)
+    if (v !== null && (!(v > 0) || v > 100)) { setError('Useful life must be between 0 and 100 years.'); return }
+    setError('')
+    const { error } = await supabase.from('categories').update({ default_useful_life_years: v }).eq('id', item.id)
+    if (error) { setError(error.message); return }
+    setLifeDraft(d => { const n = { ...d }; delete n[item.id]; return n })
+    load()
+  }
+
   return (
     <div className="border border-hairline bg-surface rounded p-4">
       <h3 className="font-medium text-sm mb-3">{label}</h3>
+      {isCategories && (
+        <p className="text-xs text-muted -mt-2 mb-3">Useful life (years) is the standard used to work out current value for assets that don’t have their own.</p>
+      )}
       <form onSubmit={add} className="flex gap-2 mb-3">
         {scoped && (
           <select value={propId} onChange={e => setPropId(e.target.value)} className="input w-auto" title="Which property this belongs to">
@@ -327,7 +345,19 @@ function LookupPanel({ table, label }) {
                   <span className="text-xs text-muted"> — {properties.find(p => p.id === i.property_id)?.name || 'All properties'}</span>
                 )}
               </span>
-              <button onClick={() => remove(i.id)} className="text-xs text-danger underline">Remove</button>
+              <span className="flex items-center gap-3">
+                {isCategories && (
+                  <label className="flex items-center gap-1 text-xs text-muted" title="Standard useful life for this category">
+                    <input type="number" min="0.5" max="100" step="0.5" aria-label={`Useful life for ${i.name}`}
+                      value={lifeDraft[i.id] ?? (i.default_useful_life_years ?? '')}
+                      onChange={e => setLifeDraft(d => ({ ...d, [i.id]: e.target.value }))}
+                      onBlur={() => saveLife(i)} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      className="input w-16 py-0.5 px-1.5 text-xs text-right" />
+                    yrs
+                  </label>
+                )}
+                <button onClick={() => remove(i.id)} className="text-xs text-danger underline">Remove</button>
+              </span>
             </li>
           ))}
         </ul>

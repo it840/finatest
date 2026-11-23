@@ -110,6 +110,8 @@ export function AssetDetailModal({ asset, onClose }) {
             <DetailRow label="Purchase Cost" value={peso(asset.purchase_cost)} />
             <DetailRow label="Warranty Expiry" value={asset.warranty_expiry} />
             <DetailRow label="Current Value" value={peso(asset.current_asset_value)} />
+            <DetailRow label="Useful Life Used" value={asset.effective_useful_life_years == null ? '—'
+              : `${Number(asset.effective_useful_life_years)} years${asset.useful_life_source === 'category' ? ' (category standard)' : ''}`} />
           </div>
         </div>
 
@@ -385,7 +387,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">
                   {rowValue(r) == null
                     ? <button onClick={() => setPieceAsset(r)} className="text-muted hover:underline" title="Value per piece">—</button>
-                    : <button onClick={() => setPieceAsset(r)} className="text-theme-accent font-medium hover:underline" title="Click for the value of each piece">{peso2(rowValue(r))}</button>}
+                    : <button onClick={() => setPieceAsset(r)} className="text-theme-accent font-medium hover:underline" title={`Click for the value of each piece · depreciated over ${Number(r.effective_useful_life_years)} years (${r.useful_life_source === 'asset' ? "this asset's useful life" : "standard for its category"})`}>{peso2(rowValue(r))}</button>}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <button onClick={() => setViewingAsset(r)} className="text-theme-accent underline">View</button>
