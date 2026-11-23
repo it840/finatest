@@ -106,12 +106,8 @@ SN-0003`,"aria-label":`Serial numbers`})]}),(0,w.jsxs)(`div`,{className:`text-xs
   .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
   .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .qrbox { flex: 0 0 auto; width: 56mm; display: flex; flex-direction: column; align-items: center; }
-  .bubble { position: relative; background: #111; color: #fff; border-radius: 2.6mm; padding: 1.8mm 5mm 2mm;
-            font-weight: 800; font-size: 7mm; letter-spacing: 0.35mm; line-height: 1; margin-bottom: 3.6mm; }
-  .bubble::after { content: ""; position: absolute; right: 6mm; bottom: -2.9mm; border-left: 2.9mm solid transparent;
-                   border-right: 2.9mm solid transparent; border-top: 3mm solid #111; }
-  .frame { width: 56mm; height: 56mm; border: 2.2mm solid #111; border-radius: 3.2mm; background: #fff; padding: 3mm; }
+  .qrbox { flex: 0 0 auto; width: 64mm; display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 64mm; height: 64mm; border: 2.4mm solid #111; border-radius: 3.6mm; background: #fff; padding: 3.4mm; }
   .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #1c1e21; }
   .prop { max-width: 100%; font-size: 4.6mm; font-weight: 600; color: #34373b; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -129,7 +125,6 @@ SN-0003`,"aria-label":`Serial numbers`})]}),(0,w.jsxs)(`div`,{className:`text-xs
   <div class="label">
     <span class="rivet l"></span><span class="rivet r"></span>
     <div class="qrbox">
-      <div class="bubble">SCAN ME</div>
       <div class="frame"><img id="qr" src="${r}" alt="QR code"></div>
     </div>
     <div class="txt">
