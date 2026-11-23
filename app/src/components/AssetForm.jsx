@@ -41,6 +41,7 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
   const [serialsText, setSerialsText] = useState('')
   const bulk = !initial?.id && Number(units) > 1
   const serialList = serialsText.split('\n').map(t => t.trim()).filter(Boolean)
+  const serialBase = (form.serial_number || '').trim()
   // match a category by name, ignoring emoji/punctuation (older or imported assets may be saved without the emoji)
   const norm = (t) => (t || '').replace(/[^\p{L}\p{N}\s/&]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase()
   const selectedCat = form.category
@@ -152,7 +153,8 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
       const rows = Array.from({ length: n }, (_, i) => ({
         ...payload,
         asset_number: null,                                  // numbered automatically, one each
-        serial_number: serialList[i] || null,                // serials in order; units without one stay blank
+        // listed serials first (in order); otherwise the typed serial numbered per unit: BASE-01, BASE-02, ...
+        serial_number: serialList[i] || (serialBase ? `${serialBase}-${String(i + 1).padStart(String(n).length < 2 ? 2 : String(n).length, '0')}` : null),
       }))
       const { data, error } = await supabase.from('assets').insert(rows).select('asset_code, asset_number')
       setSaving(false)
@@ -222,8 +224,12 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
           </Field>
           <Field label="Brand"><input value={form.brand} onChange={set('brand')} className="input" /></Field>
           <Field label="Model"><input value={form.model} onChange={set('model')} className="input" /></Field>
-          <Field label="Serial Number"><input value={bulk ? '' : form.serial_number} onChange={set('serial_number')} disabled={bulk}
-            placeholder={bulk ? 'Use the list under Bulk recording' : ''} className="input disabled:bg-hairline/30" /></Field>
+          <Field label={bulk ? 'Serial Number (start)' : 'Serial Number'}>
+            <input value={form.serial_number} onChange={set('serial_number')} placeholder={bulk ? 'e.g. WC-2026' : ''} className="input" />
+            {bulk && form.serial_number?.trim() && (
+              <span className="block text-xs text-muted mt-1">Units get {form.serial_number.trim()}-01, {form.serial_number.trim()}-02, …</span>
+            )}
+          </Field>
 
           <div className="col-span-3">
             <span className="block text-xs text-muted mb-1">Photo</span>
@@ -337,7 +343,10 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
                       placeholder={'SN-0001\nSN-0002\nSN-0003'} aria-label="Serial numbers" />
                   </label>
                   <div className={`text-xs mt-1 ${serialList.length > Number(units) ? 'text-danger' : 'text-muted'}`}>
-                    {serialList.length} of {units} serial numbers entered{serialList.length < Number(units) ? ' — the rest will be left blank' : ''}.
+                    {serialList.length} of {units} serial numbers entered
+                    {serialList.length < Number(units)
+                      ? (serialBase ? ` — the rest continue as ${serialBase}-${String(serialList.length + 1).padStart(2, '0')}, …` : ' — the rest will be left blank (or type a starting serial above)')
+                      : ''}.
                     Each unit gets Registered Qty {form.registered_qty || 1} and the same details, cost and photo.
                   </div>
                 </div>

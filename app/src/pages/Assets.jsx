@@ -373,7 +373,7 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap">{r.asset_number || <span className="text-muted">—</span>}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.acquisition_date || <span className="text-muted">—</span>}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.brand}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{r.serial_number}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.serial_number || <span className="text-muted">—</span>}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.category}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.sub_category}</td>
                 <td className={`px-3 py-2 whitespace-nowrap font-medium ${Number(r.registered_qty) <= 0 ? 'text-danger' : ''}`} title="Quantity still on hand">{qty(r.registered_qty)}</td>
