@@ -1,0 +1,11 @@
+// Cloudflare Workers settings for publishing the ready-built site in this top folder
+// (use this when the Cloudflare "Root directory" is left empty; leave the build command empty).
+// The Worker name in the dashboard must be exactly "assetinventorysystem".
+{
+  "name": "assetinventorysystem",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application"
+  }
+}

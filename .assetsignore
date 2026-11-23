@@ -1,0 +1,9 @@
+.git
+.github
+app
+supabase
+README.md
+wrangler.jsonc
+.assetsignore
+.nojekyll
+.gitignore
