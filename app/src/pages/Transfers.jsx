@@ -4,7 +4,7 @@ import { useProperty } from '../lib/PropertyContext'
 import { matchesQuery } from '../lib/tableUtils'
 import { forProperty } from '../lib/propertyScope'
 import { parseAssetCode } from '../lib/qr'
-import { buildQrUrl, printAssetQr } from '../lib/assetQr'
+import { buildQrUrl, printAssetQr, propertyLogoUrl } from '../lib/assetQr'
 import QrScanner from '../components/QrScanner'
 import Pagination from '../components/Pagination'
 
@@ -306,6 +306,7 @@ const METHOD_TEXT = { qr: 'verified by QR scan', manual: 'verified by typed ID' 
 
 // Full details of one asset plus every transfer it has ever had
 export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
+  const { properties } = useProperty()
   const [big, setBig] = useState(null) // { src, caption, isQr }
   const qrUrl = buildQrUrl(asset)
   // Esc closes an enlarged picture first, then the window
@@ -358,7 +359,7 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
               </button>
               <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
             </div>
-            <button onClick={() => printAssetQr(asset)} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Label</button>
+            <button onClick={() => printAssetQr(asset, propertyLogoUrl(properties, asset.property_id))} className="w-full px-2 py-1.5 text-xs border border-hairline rounded hover:bg-hairline/20">Print QR Label</button>
           </div>
           <div className="grid grid-cols-3 gap-x-5 gap-y-2.5 flex-1 min-w-0">
             {details.map(([k, v]) => (

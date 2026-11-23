@@ -6,7 +6,7 @@ import Pagination from '../components/Pagination'
 import { matchesQuery, num, peso2 } from '../lib/tableUtils'
 import AssetForm from '../components/AssetForm'
 import { forProperty } from '../lib/propertyScope'
-import { buildQrUrl, printAssetQr } from '../lib/assetQr'
+import { buildQrUrl, printAssetQr, propertyLogoUrl } from '../lib/assetQr'
 import { takeNavFilter } from '../lib/navFilter'
 
 function qty(n) { return n === null || n === undefined ? '—' : Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
@@ -55,7 +55,8 @@ export function AssetDetailModal({ asset, onClose }) {
       .then(({ data }) => { setHistory(data || []); setLoading(false) })
   }, [asset.id])
 
-  const printQr = () => printAssetQr(asset)
+  const { properties } = useProperty()
+  const printQr = () => printAssetQr(asset, propertyLogoUrl(properties, asset.property_id))
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-start justify-center overflow-y-auto py-10 z-50 px-4">

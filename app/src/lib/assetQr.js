@@ -39,11 +39,18 @@ export function buildLabelQrUrl(a) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=L&margin=0&format=svg&data=${encodeURIComponent(qrText(a))}`
 }
 
+export function propertyLogoUrl(properties, propertyId) {
+  const raw = (properties || []).find(p => p.id === propertyId)?.logo_url
+  if (!raw) return null
+  if (/^https?:\/\//.test(raw)) return raw
+  return new URL(`${import.meta.env.BASE_URL}${raw.replace(/^\//, '')}`, window.location.href).href
+}
+
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
 // Brushed-metal asset tag: QR on the left; Property, Asset ID (large), Asset Number, Asset Name on the right.
 // Printed at real size (120 x 58 mm) so it can go on a label sheet or be cut out.
-export function labelHtml(asset, { autoPrint = true } = {}) {
+export function labelHtml(asset, { autoPrint = true, logo = null } = {}) {
   const qr = buildLabelQrUrl(asset)
   const name = asset.asset_name || ''
   return `<!doctype html>
@@ -69,6 +76,8 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; color: #1c1e21; }
   .prop { font-size: 3mm; font-weight: 600; color: #34373b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .id { font-family: Oswald, "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 700; font-size: 10.5mm; line-height: 1.02; letter-spacing: 0.1mm; margin-top: 0.6mm; white-space: nowrap; }
+  .logo { margin-top: 1.2mm; height: 17mm; display: flex; align-items: center; }
+  .logo img { max-height: 17mm; max-width: 46mm; object-fit: contain; display: block; }
   .num { font-size: 3mm; font-weight: 600; color: #3a3d42; margin-top: 0.3mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .num b { font-weight: 700; color: #1c1e21; letter-spacing: 0.08mm; }
   .name { font-size: 3.8mm; font-weight: 700; margin-top: 0.9mm; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
@@ -82,7 +91,9 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
     <div class="qr"><img id="qr" src="${qr}" alt="QR code"></div>
     <div class="txt">
       <div class="prop">Property of ${esc(asset.property_name || 'Asset Registry System')}</div>
-      <div class="id">${esc(asset.asset_code)}</div>
+      ${logo
+        ? `<div class="logo"><img id="logo" src="${esc(logo)}" alt="${esc(asset.property_name || '')}"></div>`
+        : `<div class="id">${esc(asset.asset_code)}</div>`}
       ${asset.asset_number ? `<div class="num">Asset No. <b>${esc(asset.asset_number)}</b></div>` : ''}
       <div class="name" title="${esc(name)}">${esc(name)}</div>
       <div class="note">Scan to look up. Do not remove.</div>
@@ -92,9 +103,10 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
   ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
-      var img = document.getElementById('qr');
+      var imgs = [document.getElementById('qr'), document.getElementById('logo')].filter(Boolean), left = imgs.length;
       var ready = function () { (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go) };
-      if (img.complete) ready(); else { img.onload = ready; img.onerror = ready; }
+      var one = function () { if (--left <= 0) ready() };
+      imgs.forEach(function (i) { if (i.complete) one(); else { i.onload = one; i.onerror = one; } });
       setTimeout(go, 4000);   // print anyway if the QR image or fonts are slow
     })();
   </script>` : ''}
@@ -102,9 +114,9 @@ export function labelHtml(asset, { autoPrint = true } = {}) {
 }
 
 // Opens the label in a new window and prints it
-export function printAssetQr(asset) {
+export function printAssetQr(asset, logo = null) {
   const w = window.open('', '_blank', 'width=560,height=420')
   if (!w) return
-  w.document.write(labelHtml(asset))
+  w.document.write(labelHtml(asset, { logo }))
   w.document.close()
 }
