@@ -270,7 +270,7 @@ export default function Assets({ profile }) {
   const load = async () => {
     setLoading(true)
     const [a, m] = await Promise.all([
-      supabase.from('assets_computed').select('*').order('id'),   // order of adding: Asset-001 / VBR-0001 first
+      supabase.from('assets_computed').select('*').order('id'),   // order of adding: Asset-001 first
       supabase.from('movement_log').select('asset_id, from_location, id').order('movement_date', { ascending: false }).order('id', { ascending: false }),
     ])
     // Previous Location = where the asset was before its latest movement

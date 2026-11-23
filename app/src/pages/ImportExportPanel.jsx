@@ -88,7 +88,7 @@ function ImportBlock() {
 
   const downloadTemplate = (format) => {
     const sample = {
-      asset_code: '', asset_name: 'Sample Chair', asset_number: 'VBR-0001', category: '🪑 Furniture', sub_category: 'Office Chair',
+      asset_code: '', asset_name: 'Sample Chair', asset_number: 'VBR-SC-001', category: '🪑 Furniture', sub_category: 'Office Chair',
       brand: '', model: '', serial_number: '', location: 'Warehouse', department: 'Procurement',
       assigned_to: '', status: 'Active', condition: 'Good', acquisition_date: '2026-01-01',
       acquisition_type: 'Purchase', purchase_cost: 5000, supplier: '', warranty_start: '',

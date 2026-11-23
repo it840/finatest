@@ -58,13 +58,23 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
 
   // preview the number a new asset will get (the database assigns it on save)
   const [nextNumber, setNextNumber] = useState('')
+  // numbers count per item (VBR-WC-001, VBR-WC-002 ...), so the preview needs the property and the item name
   useEffect(() => {
-    if (initial?.id || !form.property_id) { setNextNumber(''); return }
+    if (initial?.id || !form.property_id || !form.asset_name?.trim()) { setNextNumber(''); return }
     let cancelled = false
-    supabase.rpc('next_asset_number', { p_property_id: Number(form.property_id) })
-      .then(({ data, error }) => { if (!cancelled) setNextNumber(error ? '' : data || '') })
-    return () => { cancelled = true }
-  }, [form.property_id, initial?.id])
+    const t = setTimeout(() => {
+      supabase.rpc('next_asset_number', { p_property_id: Number(form.property_id), p_asset_name: form.asset_name })
+        .then(({ data, error }) => { if (!cancelled) setNextNumber(error ? '' : data || '') })
+    }, 300)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [form.property_id, form.asset_name, initial?.id])
+  // last number of a bulk save: same item code, counting on from the first (VBR-WC-001 -> VBR-WC-010)
+  const lastNumber = (first, count) => {
+    const m = /^(.*-)(\d+)$/.exec(first || '')
+    if (!m) return ''
+    const n = Number(m[2]) + count - 1
+    return m[1] + String(n).padStart(m[2].length, '0')
+  }
 
   const changeCategory = (e) => {
     const name = e.target.value
@@ -190,6 +200,9 @@ export default function AssetForm({ initial, lookups, properties, defaultPropert
           <Field label="Asset Number">
             <input value={bulk ? '' : (form.asset_number || '')} onChange={set('asset_number')} disabled={bulk}
               placeholder={initial?.id ? 'Tag or property number' : bulk ? 'One per unit, automatically' : 'Assigned automatically'} className="input disabled:bg-hairline/30" />
+            {!initial?.id && bulk && nextNumber && (
+              <span className="block text-xs text-muted mt-1">Will be <b>{nextNumber}</b> to <b>{lastNumber(nextNumber, Number(units))}</b></span>
+            )}
             {!initial?.id && !bulk && !form.asset_number && nextNumber && (
               <span className="block text-xs text-muted mt-1">Will be <b>{nextNumber}</b> — leave blank, or type your own</span>
             )}

@@ -504,7 +504,7 @@ function PropertiesPanel() {
               ) : p.asset_prefix ? (
                 <button onClick={() => setEditingPrefix({ id: p.id, value: p.asset_prefix })} title="Change the prefix used for new asset numbers"
                   className="text-xs text-muted hover:text-ink">
-                  Asset no. <span className="font-medium text-ink">{p.asset_prefix}-0001</span> <span className="underline">Edit</span>
+                  Asset no. <span className="font-medium text-ink">{p.asset_prefix}-WC-001</span> <span className="underline">Edit</span>
                 </button>
               ) : null}
               <button onClick={() => remove(p)} className="text-xs text-danger underline">Delete</button>
