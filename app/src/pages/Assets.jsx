@@ -71,16 +71,16 @@ export function AssetDetailModal({ asset, onClose }) {
         </div>
 
         <div className="px-6 py-5 grid grid-cols-[auto_1fr] gap-6">
-          <div className="w-44 flex flex-col items-center gap-3">
+          <div className="w-[17rem] flex flex-col items-center gap-3">
             {asset.photo_url && (
               <button onClick={() => setBig({ src: asset.photo_url, caption: `${asset.asset_code} — ${asset.asset_name}` })} title="Click to enlarge" className="block w-full cursor-zoom-in group relative">
-                <img src={asset.photo_url} alt={asset.asset_name} className="w-full h-32 object-cover rounded-lg border border-hairline group-hover:opacity-90 transition-opacity" />
+                <img src={asset.photo_url} alt={asset.asset_name} className="w-full h-40 object-cover rounded-lg border border-hairline group-hover:opacity-90 transition-opacity" />
                 <span className="absolute bottom-1.5 right-1.5 text-[10px] bg-ink/70 text-white rounded px-1.5 py-0.5">Click to enlarge</span>
               </button>
             )}
             <button onClick={() => setBig({ src: qrUrl, caption: `QR code · ${asset.asset_code} — ${asset.asset_name}`, isQr: true })}
               title="Click to enlarge the QR code" className="block border border-hairline rounded-lg p-3 bg-paper cursor-zoom-in group relative">
-              <img src={qrUrl} alt="QR code" className="w-36 h-36 group-hover:opacity-90 transition-opacity" />
+              <img src={qrUrl} alt="QR code" className="w-60 h-60 bg-white group-hover:opacity-90 transition-opacity" />
               <span className="absolute bottom-1.5 right-1.5 text-[10px] bg-ink/70 text-white rounded px-1.5 py-0.5">Click to enlarge</span>
             </button>
             <div className="text-xs tracking-wide text-muted">{asset.asset_code}</div>
@@ -162,7 +162,7 @@ export function AssetDetailModal({ asset, onClose }) {
         <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={() => setBig(null)}>
           <button onClick={() => setBig(null)} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>
           <img src={big.src} alt={big.caption} onClick={e => e.stopPropagation()}
-            className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${big.isQr ? 'bg-white p-4' : ''}`} />
+            className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${big.isQr ? 'bg-white p-4 w-[min(80vh,90vw)] h-auto' : ''}`} />
           <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
             <span>{big.caption}</span>
             <a href={big.src} target="_blank" rel="noreferrer" className="underline hover:text-white">Open in a new tab</a>

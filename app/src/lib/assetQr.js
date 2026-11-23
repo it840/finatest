@@ -30,7 +30,7 @@ export function qrText(a) {
 }
 
 export function buildQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(qrText(a))}`
 }
 
 // The printed label carries the SAME full details. Full details make a dense code, so the label prints it

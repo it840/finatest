@@ -33,7 +33,7 @@ function Lightbox({ src, caption, isQr, onClose }) {
     <div className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-6 cursor-zoom-out" onClick={onClose}>
       <button onClick={onClose} aria-label="Close picture" className="absolute top-4 right-5 text-white/90 hover:text-white text-3xl leading-none">×</button>
       <img src={src} alt={caption || ''} onClick={e => e.stopPropagation()}
-        className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${isQr ? 'bg-white p-4' : ''}`} />
+        className={`max-w-full max-h-[85vh] object-contain rounded-lg cursor-default ${isQr ? 'bg-white p-4 w-[min(80vh,90vw)] h-auto' : ''}`} />
       <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-sm text-white/90" onClick={e => e.stopPropagation()}>
         {caption && <span>{caption}</span>}
         <a href={src} target="_blank" rel="noreferrer" className="underline hover:text-white">Open in a new tab</a>
@@ -343,19 +343,19 @@ export function AssetHistoryModal({ asset, history, highlightId, onClose }) {
         </div>
 
         <div className="px-6 py-5 flex gap-5">
-          <div className="w-36 flex-shrink-0 space-y-3">
+          <div className="w-[14.5rem] flex-shrink-0 space-y-3">
             {asset.photo_url ? (
               <button onClick={() => setBig({ src: asset.photo_url, caption: `${asset.asset_code} — ${asset.asset_name}` })}
                 title="Click to enlarge" className="block w-full relative cursor-zoom-in group">
-                <img src={asset.photo_url} alt={asset.asset_name} className="h-28 w-36 rounded-lg border border-hairline object-cover group-hover:opacity-90 transition-opacity" />
+                <img src={asset.photo_url} alt={asset.asset_name} className="h-36 w-full rounded-lg border border-hairline object-cover group-hover:opacity-90 transition-opacity" />
                 <span className="absolute bottom-1.5 right-1.5 text-[10px] bg-ink/70 text-white rounded px-1.5 py-0.5">Click to enlarge</span>
               </button>
             ) : (
-              <div className="h-28 w-36 rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted">No photo</div>
+              <div className="h-36 w-full rounded-lg border border-dashed border-hairline flex items-center justify-center text-xs text-muted">No photo</div>
             )}
             <div className="border border-hairline rounded-lg p-2 bg-paper text-center">
               <button onClick={() => setBig({ src: qrUrl, caption: `QR code · ${asset.asset_code}`, isQr: true })} title="Click to enlarge" className="block mx-auto cursor-zoom-in">
-                <img src={qrUrl} alt={`QR code for ${asset.asset_code}`} className="h-28 w-28" />
+                <img src={qrUrl} alt={`QR code for ${asset.asset_code}`} className="h-52 w-52 bg-white" />
               </button>
               <div className="text-xs text-muted mt-1">{asset.asset_code}</div>
             </div>
