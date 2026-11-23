@@ -309,6 +309,8 @@ export default function Assets({ profile }) {
   // each row's Current Value = value of one piece x pieces on hand
   const rowValue = (r) => (r.current_asset_value == null ? null : Number(r.current_asset_value) * Number(r.registered_qty || 0))
   const totalValue = filtered.reduce((sum, r) => sum + (rowValue(r) || 0), 0)
+  // purchase cost of every piece bought (on hand + disposed), matching the Dashboard's Total Purchase Value
+  const totalPurchase = filtered.reduce((sum, r) => sum + Number(r.purchase_cost || 0) * (Number(r.registered_qty || 0) + Number(r.disposal_qty || 0)), 0)
 
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
 
@@ -417,7 +419,9 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap" colSpan={10}>Total · {filtered.length} {filtered.length === 1 ? 'asset' : 'assets'}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{num(totalReg)}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
-                <td className="px-3 py-2" colSpan={8}></td>
+                <td className="px-3 py-2" colSpan={6}></td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Price of one piece × pieces bought (on hand + disposed), added up">{peso2(totalPurchase)}</td>
+                <td className="px-3 py-2"></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Value of one piece × pieces on hand, added up">{peso2(totalValue)}</td>
                 <td className="px-3 py-2" colSpan={2}></td>
               </tr>
