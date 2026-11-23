@@ -310,6 +310,11 @@ export default function Assets({ profile }) {
   const rowValue = (r) => (r.current_asset_value == null ? null : Number(r.current_asset_value) * Number(r.registered_qty || 0))
   const totalValue = filtered.reduce((sum, r) => sum + (rowValue(r) || 0), 0)
   // purchase cost of every piece bought (on hand + disposed), matching the Dashboard's Total Purchase Value
+  // useful life: total years of the assets shown (each asset once), plus the average
+  const lifeRows = filtered.filter(r => r.effective_useful_life_years != null)
+  const totalLife = lifeRows.reduce((sum, r) => sum + Number(r.effective_useful_life_years), 0)
+  const avgLife = lifeRows.length ? Math.round((totalLife / lifeRows.length) * 10) / 10 : null
+  const fmtYears = (n) => `${Number.isInteger(n) ? n : n.toFixed(1)} ${n === 1 ? 'yr' : 'yrs'}`
   const totalPurchase = filtered.reduce((sum, r) => sum + Number(r.purchase_cost || 0) * (Number(r.registered_qty || 0) + Number(r.disposal_qty || 0)), 0)
 
   const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize)
@@ -421,7 +426,14 @@ export default function Assets({ profile }) {
                 <td className="px-3 py-2 whitespace-nowrap text-muted">{num(totalDisposed)}</td>
                 <td className="px-3 py-2" colSpan={6}></td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Price of one piece × pieces bought (on hand + disposed), added up">{peso2(totalPurchase)}</td>
-                <td className="px-3 py-2"></td>
+                <td className="px-3 py-2 whitespace-nowrap" title={avgLife == null ? undefined : `Useful lives of the ${lifeRows.length} assets shown, added up · average ${fmtYears(avgLife)} per asset`}>
+                  {avgLife == null ? <span className="text-muted">—</span> : (
+                    <>
+                      {fmtYears(totalLife)}
+                      <span className="block text-xs font-normal text-muted">avg {fmtYears(avgLife)}</span>
+                    </>
+                  )}
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Value of one piece × pieces on hand, added up">{peso2(totalValue)}</td>
                 <td className="px-3 py-2" colSpan={2}></td>
               </tr>
