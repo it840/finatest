@@ -1,6 +1,6 @@
 // Label image for download (PNG / PDF) and the black-only logo used on printed labels.
 import QRCode from 'qrcode'
-import { labelGeometry, labelFonts, qrText, qrSimpleText } from './assetQr'
+import { labelLayout, qrText, qrSimpleText } from './assetQr'
 
 const loadImage = (src) => new Promise((resolve, reject) => {
   const img = new Image()
@@ -91,27 +91,29 @@ function wrap(ctx, text, maxW, maxLines) {
   })
 }
 
-// Draws the label at its real size (one pixel per printer dot at 203 dpi), same layout as the printed label:
-// plain QR on the left; on the right, centred in the column, property line, logo, Asset No., name and note,
-// spread evenly from top to bottom. Pure black and white so a thermal printer prints it crisply.
+// Draws the finished label (one pixel per printer dot at 203 dpi) following the design measured in the Clabel
+// app (see LABEL_TEMPLATE): QR at its measured place and size; text centred on the text column at the measured
+// heights, in the measured point sizes (bold where the design is bold). Long lines shrink a little; a long name
+// may use two lines (the note moves down). If text would overlap, it is reduced until nothing overlaps.
+// The preview, Print and both downloads all use this one image, so they match exactly.
 export async function renderLabelCanvas(asset, { logo = null, size, content = 'full', pxPerMm = 8, mono = true, textScale = 1 }) {
   const { w, h } = size
-  const g = labelGeometry(w, h)
-  const fs = labelFonts(w, h, g, textScale)
+  const L = labelLayout(w, h)
   const k = pxPerMm
   const c = document.createElement('canvas')
   c.width = Math.round(w * k); c.height = Math.round(h * k)
   const ctx = c.getContext('2d')
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height)
+  const FAM = 'Roboto, Arial, sans-serif'
+  try { await Promise.all(['400', '700'].map(wt => document.fonts.load(`${wt} 20px Roboto`))) } catch { /* fallback fonts */ }
+  const font = (bold, mm, fam = FAM) => `${bold ? 700 : 400} ${mm * k}px ${fam}`
+  const width = (text, bold, mm, fam) => { ctx.font = font(bold, mm, fam); return ctx.measureText(text).width / k }
 
-  try { await Promise.all(['600', '700', '800'].map(wt => document.fonts.load(`${wt} 20px Inter`))) } catch { /* use fallback fonts */ }
-  const font = (wt, mm, fam = 'Inter, Arial, sans-serif') => `${wt} ${mm * k}px ${fam}`
-
-  // QR (plain, no frame), vertically centred
+  // QR at its measured place and size
   const simple = content === 'simple'
   const qr = QRCode.create(simple ? qrSimpleText(asset) : qrText(asset), { errorCorrectionLevel: simple ? 'M' : 'L' })
   const n = qr.modules.size
-  const qx = g.m * k, qy = ((h - g.qr) / 2) * k, Q = g.qr * k
+  const qx = L.qx * k, qy = L.qy * k, Q = L.qr * k
   ctx.fillStyle = '#000'
   for (let r = 0; r < n; r++) {
     for (let col = 0; col < n; col++) {
@@ -122,66 +124,89 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
     }
   }
 
-  // text column, built for a given text scale; the largest version that fits is used
-  const tx = (g.m + g.qr + g.gap) * k, tw = g.textW * k, cx = tx + tw / 2
   let logoImg = null
   if (logo) { try { logoImg = await loadImage(logo) } catch { logoImg = null } }
-  if (logoImg) ctx.imageSmoothingEnabled = false
-  const build = (sc, nameLines, withNote) => {
-    const F = { prop: fs.prop * sc, logo: fs.logo * sc, id: fs.id * sc, num: fs.num * sc, name: fs.name * sc, note: fs.note * sc }
-    const out = []
-    ctx.font = font(700, F.prop)
-    out.push({ kind: 'lines', lines: wrap(ctx, `Property of ${asset.property_name || 'Asset Registry System'}`, tw, 2), font: font(700, F.prop), lh: F.prop * 1.15 * k })
-    if (logoImg) {
-      const maxW = tw * 0.9, maxH = F.logo * k
-      const r = Math.min(maxW / logoImg.naturalWidth, maxH / logoImg.naturalHeight)
-      out.push({ kind: 'img', img: logoImg, w: logoImg.naturalWidth * r, h: logoImg.naturalHeight * r, box: maxH })
-    } else {
-      let idSize = F.id
-      const idFont = (sz) => font(700, sz, 'Oswald, "Arial Narrow", Impact, sans-serif')
-      ctx.font = idFont(idSize)
-      while (ctx.measureText(asset.asset_code || '').width > tw && idSize > F.id * 0.4) { idSize *= 0.95; ctx.font = idFont(idSize) }
-      out.push({ kind: 'lines', lines: [asset.asset_code || ''], font: idFont(idSize), lh: idSize * 1.05 * k })
-    }
-    if (asset.asset_number) {
-      ctx.font = font(700, F.num)
-      out.push({ kind: 'lines', lines: wrap(ctx, `Asset No. ${asset.asset_number}`, tw, 2), font: font(700, F.num), lh: F.num * 1.2 * k })
-    }
-    ctx.font = font(800, F.name)
-    out.push({ kind: 'lines', lines: wrap(ctx, asset.asset_name || '', tw, nameLines), font: font(800, F.name), lh: F.name * 1.12 * k })
-    if (withNote) {
-      ctx.font = font(600, F.note)
-      out.push({ kind: 'lines', lines: wrap(ctx, 'Scan to look up. Do not remove.', tw, 2), font: font(600, F.note), lh: F.note * 1.2 * k })
-    }
-    return out
-  }
-  const heightOf = (b) => (b.kind === 'img' ? b.box : b.lines.length * b.lh)
-  const total = (bl) => bl.reduce((sum, b) => sum + heightOf(b), 0)
-  const room = c.height - 2 * g.mv * k
-  let blocks = null
-  for (const [nameLines, withNote] of [[3, !fs.small], [3, false], [2, false]]) {
-    const bl = build(1, nameLines, withNote)
-    if (total(bl) <= room) { blocks = bl; break }
-  }
-  for (let sc = 0.95; !blocks && sc >= 0.6; sc -= 0.05) {
-    const bl = build(sc, 2, false)
-    if (total(bl) <= room || sc - 0.05 < 0.6) blocks = bl
+
+  // one line that fits the column: shrink a little if needed (down to minF), then trim with … as a last resort
+  const oneLine = (text, base, bold, minF = 0.6) => {
+    let sz = base
+    while (width(text, bold, sz) > L.maxW && sz > base * minF) sz *= 0.97
+    let t = text
+    if (width(t, bold, sz) > L.maxW) { while (t.length > 1 && width(t + '…', bold, sz) > L.maxW) t = t.slice(0, -1); t += '…' }
+    return { lines: [t], size: sz, bold, lh: sz * 1.15 }
   }
 
-  // spread the lines evenly from top to bottom (like the label on the roll)
-  const spare = Math.max(0, room - total(blocks))
-  const step = blocks.length > 1 ? spare / (blocks.length - 1) : 0
-  let y = g.mv * k + (blocks.length > 1 ? 0 : spare / 2)
-  ctx.fillStyle = '#000'; ctx.textBaseline = 'middle'
-  for (const b of blocks) {
-    if (b.kind === 'img') {
-      ctx.drawImage(b.img, cx - b.w / 2, y + (b.box - b.h) / 2, b.w, b.h)   // logo centred in the column
+  const build = (sc, withNote) => {
+    const items = []
+    const prop = oneLine(`Property of ${asset.property_name || 'Asset Registry System'}`, L.prop.size * sc, L.prop.bold)
+    items.push({ ...prop, y: L.prop.y })
+    if (logoImg) {
+      const box = L.logo.size * Math.min(1, sc)
+      const r = Math.min(L.logo.maxW / logoImg.naturalWidth, box / logoImg.naturalHeight)
+      items.push({ img: logoImg, w: logoImg.naturalWidth * r, h: logoImg.naturalHeight * r, y: L.logo.y, lh: logoImg.naturalHeight * r })
     } else {
-      ctx.font = b.font; ctx.textAlign = 'center'                          // centred, lined up with the logo
-      let ly = y
-      for (const line of b.lines) { ctx.fillText(line, cx, ly + b.lh / 2); ly += b.lh }
+      // no logo: the Asset ID in large letters where the logo would be
+      const fam = 'Oswald, "Arial Narrow", Impact, sans-serif'
+      let sz = L.logo.size * 0.5 * sc
+      while (width(asset.asset_code || '', true, sz, fam) > L.maxW && sz > 1) sz *= 0.95
+      items.push({ lines: [asset.asset_code || ''], size: sz, bold: true, fam, lh: sz * 1.1, y: L.logo.y })
     }
-    y += heightOf(b) + step
+    if (asset.asset_number) items.push({ ...oneLine(`Asset No. ${asset.asset_number}`, L.num.size * sc, L.num.bold), y: L.num.y })
+    // name: one line if it fits at 75% or more, otherwise two lines
+    const nb = L.name.size * sc
+    let name = oneLine(asset.asset_name || '', nb, L.name.bold, 0.75)
+    if (name.lines[0].endsWith('…')) {
+      let sz = nb * 0.85, lines
+      for (;;) {
+        ctx.font = font(L.name.bold, sz); lines = wrap(ctx, asset.asset_name || '', L.maxW * k, 2)
+        if (sz <= nb * 0.55 || !lines.some(l => l.endsWith('…'))) break
+        sz *= 0.95
+      }
+      name = { lines, size: sz, bold: L.name.bold, lh: sz * 1.15 }
+    }
+    const nameTop = L.name.y - name.lh / 2
+    items.push({ ...name, y: nameTop + (name.lines.length * name.lh) / 2 })
+    if (withNote) {
+      const note = oneLine('Scan to look up. Do not remove.', L.note.size * sc, L.note.bold)
+      const nameBottom = nameTop + name.lines.length * name.lh
+      items.push({ ...note, y: Math.max(L.note.y, nameBottom + 0.3 + note.lh / 2) })
+    }
+    return items
+  }
+  const span = (it) => {
+    const hgt = it.img ? it.h : it.lines.length * it.lh
+    return [it.y - hgt / 2, it.y + hgt / 2]
+  }
+  const fits = (items) => {
+    for (let i = 0; i < items.length; i++) {
+      const [t, b] = span(items[i])
+      if (t < 0.4 || b > h - 0.4) return false
+      if (i > 0 && t < span(items[i - 1])[1] + 0.15) return false
+    }
+    return true
+  }
+  // the chosen text size if everything fits; otherwise drop the note, then reduce the text a little at a time
+  let items = null, reduced = false
+  for (let sc = textScale; sc >= 0.5 && !items; sc = Math.round((sc - 0.05) * 100) / 100) {
+    for (const withNote of [true, false]) {
+      const it = build(sc, withNote)
+      if (fits(it)) { items = it; reduced = sc < textScale || !withNote; break }
+    }
+  }
+  if (!items) { items = build(0.5, false); reduced = true }
+
+  // draw, centred on the text column
+  ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  for (const it of items) {
+    if (it.img) {
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(it.img, (L.cx - it.w / 2) * k, (it.y - it.h / 2) * k, it.w * k, it.h * k)
+      ctx.imageSmoothingEnabled = true
+      continue
+    }
+    ctx.font = font(it.bold, it.size, it.fam)
+    let y = it.y - (it.lines.length * it.lh) / 2 + it.lh / 2
+    for (const line of it.lines) { ctx.fillText(line, L.cx * k, y * k); y += it.lh }
   }
 
   if (mono) {
@@ -192,6 +217,7 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
     }
     ctx.putImageData(d, 0, 0)
   }
+  c.reduced = reduced
   return c
 }
 
@@ -207,8 +233,8 @@ function saveBlob(blob, name) {
 
 // Downloads the label as a PNG image (203 dpi, pure black and white, one pixel per printer dot) or a PDF
 // whose page is exactly the label size
-export async function downloadLabel(asset, { logo, size, content, textScale = 1 }, format = 'pdf') {
-  const canvas = await renderLabelCanvas(asset, { logo, size, content, textScale })
+export async function downloadLabel(asset, { logo, size, content, textScale = 1, pxPerMm = 8 }, format = 'pdf') {
+  const canvas = await renderLabelCanvas(asset, { logo, size, content, textScale, pxPerMm })
   if (format === 'png') {
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
     saveBlob(blob, `${fileBase(asset, size)}.png`)

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { LABEL_SIZES, labelFonts, labelGeometry, labelHtml, printAssetQr, qrModules } from '../lib/assetQr'
-import { blackLogo, downloadLabel, thermalLogo } from '../lib/labelImage'
+import { LABEL_SIZES, labelGeometry, labelLayout, printLabelImage, qrModules } from '../lib/assetQr'
+import { blackLogo, downloadLabel, renderLabelCanvas, thermalLogo } from '../lib/labelImage'
 
 // Print QR Label: choose the label size (thermal label printers such as the Clabel CT320B print at exactly
 // this size) and what the QR holds. Shows a true-proportion preview and warns when the QR squares would be too
@@ -14,7 +14,7 @@ function loadPrefs() {
 
 export default function PrintLabelDialog({ asset, logo, onClose }) {
   const saved = loadPrefs()
-  const [key, setKey] = useState(saved.key || '61x48')
+  const [key, setKey] = useState(saved.key || '70x40')
   const [cw, setCw] = useState(saved.w || 75)
   const [ch, setCh] = useState(saved.h || 40)
   const preset = LABEL_SIZES.find(s => s.key === key)
@@ -46,8 +46,8 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
     setLogoThermal(null)
     const src = logoBlack || logo
     if (!src || !logoReady) return
-    const fz = labelFonts(size.w, size.h, geo)
-    thermalLogo(src, geo.textW * 0.9, fz.logo).then(url => { if (alive) setLogoThermal(url) })
+    const L = labelLayout(size.w, size.h)
+    thermalLogo(src, L.logo.maxW, L.logo.size, size.a4 ? 12 : 8).then(url => { if (alive) setLogoThermal(url) })
     return () => { alive = false }
   }, [logoBlack, logoReady, size.w, size.h])
   const logoUse = logoThermal || logoBlack || logo
@@ -61,20 +61,20 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const sq = squares(content)
   const d = dots(content)
   const level = size.a4 ? 'ok' : d < 4 ? 'bad' : d < 6 ? 'warn' : 'ok'
-  const html = useMemo(() => labelHtml(asset, { autoPrint: false, logo: logoUse, size, content, textScale }),
-    [asset, logoUse, size.w, size.h, size.a4, content, textScale])
-  // after the preview lays out, see whether the text had to be reduced to fit the label
+  // the finished label image: shown as the preview and used as-is for Print, so they match exactly
+  const pxPerMm = size.a4 ? 12 : 8
+  const [labelImg, setLabelImg] = useState(null)
   const [reduced, setReduced] = useState(false)
-  const checkFit = (e) => {
-    const doc = e.currentTarget.contentDocument
-    setTimeout(() => {
-      try {
-        const t = doc.querySelector('.txt'), note = doc.querySelector('.note'), name = doc.querySelector('.name')
-        const z = parseFloat(t?.style.zoom || '1')
-        setReduced(z < 1 || (note && note.style.display === 'none' && !note.hasAttribute('data-hidden')) || (name && name.style.webkitLineClamp === '2'))
-      } catch { setReduced(false) }
-    }, 350)
-  }
+  useEffect(() => {
+    let alive = true
+    if (!logoReady) return
+    renderLabelCanvas(asset, { logo: logoUse, size, content, textScale, pxPerMm }).then(cv => {
+      if (!alive) return
+      setLabelImg(cv.toDataURL('image/png'))
+      setReduced(!!cv.reduced)
+    })
+    return () => { alive = false }
+  }, [asset, logoUse, logoReady, size.w, size.h, size.a4, content, textScale])
   const stepText = (d) => setTextScale(v => Math.round(Math.min(1.6, Math.max(0.7, v + d)) * 10) / 10)
 
   // preview at true proportions, scaled to fit the window
@@ -84,13 +84,13 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content, textScale })) } catch { /* ignore */ } }
   const print = () => {
     remember()
-    printAssetQr(asset, logoUse, { size, content, textScale })
+    if (labelImg) printLabelImage(labelImg, size, `${asset.asset_code} label`)
     onClose()
   }
   const download = async (format) => {
     remember()
     setBusy(format)
-    try { await downloadLabel(asset, { logo: logoUse, size, content, textScale }, format) } finally { setBusy('') }
+    try { await downloadLabel(asset, { logo: logoUse, size, content, textScale, pxPerMm }, format) } finally { setBusy('') }
   }
 
   return (
@@ -157,7 +157,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             </div>
             {textScale !== 1 && <button onClick={() => setTextScale(1)} className="text-xs text-muted underline hover:text-ink">Reset</button>}
             {reduced && textScale > 1 && (
-              <span className="text-xs text-[#7a5a12]">Reduced a little to fit this label — choose a bigger label for larger text.</span>
+              <span className="text-xs text-[#7a5a12]">Reduced a little so nothing overlaps on this label — choose a bigger label for larger text.</span>
             )}
           </div>
 
@@ -165,8 +165,9 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             <div className="text-xs text-muted mb-1">Preview ({size.w} × {size.h} mm)</div>
             <div className="border border-hairline rounded bg-[#e9e7e2] p-3 flex justify-center">
               <div style={{ width: pxW * scale, height: pxH * scale, overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }}>
-                <iframe title="Label preview" srcDoc={html} scrolling="no" onLoad={checkFit}
-                  style={{ width: pxW, height: pxH, border: 0, transform: `scale(${scale})`, transformOrigin: '0 0', pointerEvents: 'none' }} />
+                {labelImg
+                  ? <img src={labelImg} alt="Label preview" style={{ width: pxW * scale, height: pxH * scale, display: 'block' }} />
+                  : <div className="w-full h-full flex items-center justify-center text-xs text-muted">Preparing…</div>}
               </div>
             </div>
           </div>
@@ -189,7 +190,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             className="px-4 py-2 text-sm border border-hairline rounded hover:bg-theme-hover disabled:opacity-50">
             {busy === 'png' ? 'Saving…' : 'Download PNG'}
           </button>
-          <button onClick={print} disabled={!logoReady} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">Print</button>
+          <button onClick={print} disabled={!logoReady || !labelImg} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">Print</button>
         </div>
       </div>
     </div>

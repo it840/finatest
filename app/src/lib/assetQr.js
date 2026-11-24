@@ -66,18 +66,42 @@ export const LABEL_SIZES = [
   { key: 'a4', w: 170, h: 96, a4: true },
 ]
 
-// Size and position of every part of the label, in mm, worked out from the label size.
-// Layout (matches the label printed on the Clabel roll): a large plain QR on the left, filling most of the height;
-// on the right, centred in the column (lined up with the logo): property line, logo, Asset No., name (largest) and note,
-// spread evenly from top to bottom.
+// The label design, measured from the label laid out in the Clabel app (70 x 40 mm, positions from the
+// label's top-left corner, font sizes in points as shown in the app). Other label sizes scale from this.
+export const LABEL_TEMPLATE = {
+  w: 70, h: 40,
+  qr: { x: 6.4, y: 3.7, size: 30.7 },
+  cx: 55.9,                                            // centre line of the text column
+  prop: { y: 4.7, pt: 6, bold: true },                 // "Property of …"
+  logo: { y: 14.1, size: 14.6 },                       // logo, centred on cx
+  num: { y: 24.1, pt: 6, bold: true },                 // "Asset No. …"
+  name: { y: 27.5, pt: 9, bold: false },               // asset name
+  note: { y: 31.9, pt: 5, bold: true },                // "Scan to look up. Do not remove."
+}
+const PT = 25.4 / 72                                   // 1 point in mm
+
+// Every part of the label in mm for a given label size (y values are centres)
+export function labelLayout(w, h) {
+  const T = LABEL_TEMPLATE
+  const sx = w / T.w, sy = h / T.h, sf = Math.min(sx, sy)
+  const qr = T.qr.size * sf
+  const qx = T.qr.x * sx
+  const qy = Math.min(T.qr.y * sy, h - qr - 1)
+  const cx = T.cx * sx
+  const left = qx + qr + 1.2 * sf, right = w - 1.2 * sf
+  const maxW = 2 * Math.max(4, Math.min(cx - left, right - cx))      // widest a text line may be
+  const item = (t) => ({ y: t.y * sy, size: t.pt * PT * sf, bold: t.bold })
+  return {
+    sx, sy, sf, qr, qx, qy, cx, maxW,
+    logo: { y: T.logo.y * sy, size: T.logo.size * sf, maxW: maxW * 0.95 },
+    prop: item(T.prop), num: item(T.num), name: item(T.name), note: item(T.note),
+  }
+}
+
+// QR size (mm) for the square-size check in the print window
 export function labelGeometry(w, h) {
-  const m = Math.max(1.5, h * 0.085)                             // left margin before the QR
-  const qr = Math.min(h * 0.8, w * 0.52, h - 3)                  // square QR
-  const gap = Math.max(1.2, h * 0.04)                            // space between QR and text
-  const mv = Math.max(1.5, h * 0.08)                             // top / bottom margin of the text column
-  const mr = Math.max(1.5, h * 0.05)                             // right margin
-  const textW = w - m - qr - gap - mr
-  return { m, qr, frame: qr, border: 0, pad: 0, gap, mv, mr, textW }
+  const L = labelLayout(w, h)
+  return { qr: L.qr }
 }
 
 export function propertyLogoUrl(properties, propertyId) {
@@ -89,103 +113,39 @@ export function propertyLogoUrl(properties, propertyId) {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
-// Text sizes (mm) for a label, shared by the printed label and the downloadable file
-export function labelFonts(w, h, g = labelGeometry(w, h), textScale = 1) {
-  const small = h < 30 || g.textW < 18           // very little room: leave out the "Scan to look up" note
-  return {
-    prop: textScale * Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.34, g.textW * 0.62), id: textScale * Math.min(h * 0.2, g.textW / 4.4),
-    num: textScale * Math.min(h * 0.063, g.textW * 0.09), name: textScale * Math.min(h * 0.089, g.textW * 0.13), note: textScale * Math.min(h * 0.042, g.textW * 0.065),
-    small,
-  }
-}
 
-// Label: QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
-// size = { w, h } in mm (a4: true prints a 170 x 96 mm label on an A4 sheet for office printers).
-// content = 'full' (all details as text) or 'simple' (Asset ID, Asset No., name).
-export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 170, h: 96, a4: true }, content = 'full', textScale = 1 } = {}) {
-  const qr = buildLabelQrUrl(asset, content)
-  const name = asset.asset_name || ''
-  const { w, h } = size
+// Print page: the finished label image at exactly the label size (the same image the preview and the
+// downloads use, so what you see is exactly what prints). size.a4 prints it on an A4 sheet.
+export function labelPrintHtml(imageUrl, size, title = 'Label') {
+  const f = (n) => `${Math.round(n * 100) / 100}mm`
   const a4 = !!size.a4
-  const g = labelGeometry(w, h)
-  const fs = labelFonts(w, h, g, textScale)
-  const f = (n) => `${(Math.round(n * 100) / 100)}mm`
   return `<!doctype html>
-<html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+<html><head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>
-  @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(w)} ${f(h)}; margin: 0;`} }
-  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(size.w)} ${f(size.h)}; margin: 0;`} }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: Inter, Arial, sans-serif; color: #000; ${a4 ? 'padding: 14mm; display: flex; flex-direction: column; align-items: center; gap: 6mm;' : ''} }
-  .label { position: relative; width: ${f(w)}; height: ${f(h)}; overflow: hidden; background: #fff;
-    display: flex; align-items: center; gap: ${f(g.gap)}; padding: 0 ${f(g.mr)} 0 ${f(g.m)};
-    ${a4 ? 'border: 0.3mm solid #c4c8cc; border-radius: 5mm;' : ''} }
-  .qr { flex: 0 0 auto; width: ${f(g.qr)}; height: ${f(g.qr)}; display: block; image-rendering: pixelated; }
-  .txt { min-width: 0; flex: 1; height: ${f(h - 2 * g.mv)}; display: flex; flex-direction: column; justify-content: space-between;
-    align-items: center; text-align: center; }
-  .txt > * { flex-shrink: 0; }   /* never squeeze a line; the fit script below reduces the text instead */
-  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .logo { align-self: center; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
-  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; image-rendering: pixelated; }
-  .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; white-space: nowrap; }
-  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
-  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 800; line-height: 1.12; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: ${f(fs.note)}; font-weight: 600; line-height: 1.2; ${fs.small ? 'display: none;' : ''} }
-  .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
-  @media print { .hint { display: none; } body { padding: 0 !important; } }
+  ${a4 ? 'body { padding: 14mm; display: flex; justify-content: center; }' : ''}
+  img { display: block; width: ${f(size.w)}; height: ${f(size.h)}; image-rendering: pixelated; }
+  @media print { body { padding: 0 !important; } }
 </style></head>
 <body>
-  <div class="label">
-    <img class="qr" id="qr" src="${qr}" alt="QR code">
-    <div class="txt">
-      <div class="prop">Property of ${esc(asset.property_name || 'Asset Registry System')}</div>
-      ${logo
-        ? `<div class="logo"><img id="logo" src="${esc(logo)}" alt="${esc(asset.property_name || '')}"></div>`
-        : `<div class="id">${esc(asset.asset_code)}</div>`}
-      ${asset.asset_number ? `<div class="num">Asset No. ${esc(asset.asset_number)}</div>` : ''}
-      <div class="name" title="${esc(name)}">${esc(name)}</div>
-      <div class="note">Scan to look up. Do not remove.</div>
-    </div>
-  </div>
-  ${a4 ? `<div class="hint">Actual size ${w} × ${h} mm on A4.</div>` : ''}
+  <img id="label" src="${imageUrl}" alt="${esc(title)}">
   <script>
-    // fit the text to the label: drop the note, then 2-line name, then shrink a little until nothing overflows
-    (function () {
-      var t = document.querySelector('.txt'); if (!t) return
-      var over = function () {
-        var kids = [].slice.call(t.children).filter(function (e) { return getComputedStyle(e).display !== 'none' })
-        var sum = kids.reduce(function (s, e) { return s + e.getBoundingClientRect().height }, 0)
-        return sum > t.clientHeight + 1 || kids.some(function (e) { return e.scrollWidth > t.clientWidth + 1 })
-      }
-      var fit = function () {
-        var note = document.querySelector('.note'), name = document.querySelector('.name')
-        if (over() && note) note.style.display = 'none'
-        if (over() && name) name.style.webkitLineClamp = '2'
-        for (var s = 0.95; over() && s >= 0.6; s -= 0.05) t.style.zoom = s
-      }
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); else fit()
-      window.addEventListener('load', fit)
-    })();
-  </script>
-  ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
-      var imgs = [document.getElementById('qr'), document.getElementById('logo')].filter(Boolean), left = imgs.length;
-      var ready = function () { (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go) };
-      var one = function () { if (--left <= 0) ready() };
-      imgs.forEach(function (i) { if (i.complete) one(); else { i.onload = one; i.onerror = one; } });
-      setTimeout(go, 4000);
+      var i = document.getElementById('label');
+      if (i.complete) go(); else { i.onload = go; i.onerror = go; }
+      setTimeout(go, 3000);
     })();
-  </script>` : ''}
+  </script>
 </body></html>`
 }
 
-// Opens the label in a new window and prints it
-export function printAssetQr(asset, logo = null, opts = {}) {
+// Opens the finished label image in a new window and prints it
+export function printLabelImage(imageUrl, size, title) {
   const w = window.open('', '_blank', 'width=640,height=480')
   if (!w) return
-  w.document.write(labelHtml(asset, { logo, ...opts }))
+  w.document.write(labelPrintHtml(imageUrl, size, title))
   w.document.close()
 }
