@@ -66,15 +66,18 @@ export const LABEL_SIZES = [
   { key: 'a4', w: 170, h: 96, a4: true },
 ]
 
-// Size and position of every part of the label, in mm, worked out from the label size
+// Size and position of every part of the label, in mm, worked out from the label size.
+// Layout (matches the label printed on the Clabel roll): a large plain QR on the left, filling most of the height;
+// on the right, left-aligned: property line, logo (centred in the column), Asset No., name (largest) and note,
+// spread evenly from top to bottom.
 export function labelGeometry(w, h) {
-  const m = Math.max(1.5, Math.min(4, h * 0.05))                // edge margin (thermal printers can't print the very edge)
-  const frame = Math.min(h - 2 * m, w * 0.5)                     // framed QR: as big as the height allows, at most half the width
-  const border = Math.max(0.7, frame * 0.03)
-  const pad = Math.max(0.7, frame * 0.025)
-  const qr = frame - 2 * border - 2 * pad                        // the code itself
-  const textW = w - frame - 3 * m
-  return { m, frame, border, pad, qr, textW }
+  const m = Math.max(1.5, h * 0.085)                             // left margin before the QR
+  const qr = Math.min(h * 0.8, w * 0.52, h - 3)                  // square QR
+  const gap = Math.max(1.2, h * 0.04)                            // space between QR and text
+  const mv = Math.max(1.5, h * 0.08)                             // top / bottom margin of the text column
+  const mr = Math.max(1.5, h * 0.05)                             // right margin
+  const textW = w - m - qr - gap - mr
+  return { m, qr, frame: qr, border: 0, pad: 0, gap, mv, mr, textW }
 }
 
 export function propertyLogoUrl(properties, propertyId) {
@@ -88,15 +91,15 @@ const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 
 // Text sizes (mm) for a label, shared by the printed label and the downloadable file
 export function labelFonts(w, h, g = labelGeometry(w, h)) {
-  const small = h < 35 || g.textW < 26          // little room: leave out the "Scan to look up" note
+  const small = h < 30 || g.textW < 18           // very little room: leave out the "Scan to look up" note
   return {
-    prop: Math.min(h * 0.075, g.textW * 0.115), logo: Math.min(h * 0.26, g.textW * 0.5), id: Math.min(h * 0.2, g.textW / 4.4),
-    num: Math.min(h * 0.085, g.textW * 0.13), name: Math.min(h * 0.1, g.textW * 0.16), note: Math.min(h * 0.055, g.textW * 0.085),
+    prop: Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.3, g.textW * 0.6), id: Math.min(h * 0.2, g.textW / 4.4),
+    num: Math.min(h * 0.063, g.textW * 0.09), name: Math.min(h * 0.089, g.textW * 0.13), note: Math.min(h * 0.042, g.textW * 0.065),
     small,
   }
 }
 
-// Label: framed QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
+// Label: QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
 // size = { w, h } in mm (a4: true prints a 170 x 96 mm label on an A4 sheet for office printers).
 // content = 'full' (all details as text) or 'simple' (Asset ID, Asset No., name).
 export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 170, h: 96, a4: true }, content = 'full' } = {}) {
@@ -105,48 +108,42 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   const { w, h } = size
   const a4 = !!size.a4
   const g = labelGeometry(w, h)
-  const f = (n) => `${(Math.round(n * 100) / 100)}mm`
-  const small = h < 35
   const fs = labelFonts(w, h, g)
+  const f = (n) => `${(Math.round(n * 100) / 100)}mm`
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(w)} ${f(h)}; margin: 0;`} }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: Inter, Arial, sans-serif; ${a4 ? 'padding: 14mm; display: flex; flex-direction: column; align-items: center; gap: 6mm;' : ''} }
+  body { font-family: Inter, Arial, sans-serif; color: #000; ${a4 ? 'padding: 14mm; display: flex; flex-direction: column; align-items: center; gap: 6mm;' : ''} }
   .label { position: relative; width: ${f(w)}; height: ${f(h)}; overflow: hidden; background: #fff;
-    display: flex; align-items: center; gap: ${f(g.m)}; padding: 0 ${f(g.m)};
-    ${a4 ? 'border: 0.3mm solid #c4c8cc; border-radius: 5mm; padding: 0 9mm 0 7.5mm;' : ''} }
-  .rivet { position: absolute; top: 50%; width: 2.4mm; height: 2.4mm; margin-top: -1.2mm; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d5d8db 55%, #a4a8ad 100%); border: 0.2mm solid #9a9ea3; }
-  .rivet.l { left: 2.3mm; } .rivet.r { right: 2.3mm; }
-  .frame { flex: 0 0 auto; width: ${f(g.frame)}; height: ${f(g.frame)}; border: ${f(g.border)} solid #000; border-radius: ${f(g.frame * 0.05)};
-    background: #fff; padding: ${f(g.pad)}; }
-  .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #000; max-height: ${f(h - 2 * g.m)}; }
-  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .logo { margin-top: ${f(h * 0.02)}; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
+    display: flex; align-items: center; gap: ${f(g.gap)}; padding: 0 ${f(g.mr)} 0 ${f(g.m)};
+    ${a4 ? 'border: 0.3mm solid #c4c8cc; border-radius: 5mm;' : ''} }
+  .qr { flex: 0 0 auto; width: ${f(g.qr)}; height: ${f(g.qr)}; display: block; image-rendering: pixelated; }
+  .txt { min-width: 0; flex: 1; height: ${f(h - 2 * g.mv)}; display: flex; flex-direction: column; justify-content: space-between;
+    align-items: flex-start; text-align: left; }
+  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 500; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .logo { align-self: center; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
   .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; filter: grayscale(1); }
-  .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; margin-top: ${f(h * 0.01)}; white-space: nowrap; }
-  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 700; margin-top: ${f(h * 0.015)}; line-height: 1.2; overflow-wrap: anywhere; }
-  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 800; margin-top: ${f(h * 0.012)}; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: ${f(fs.note)}; margin-top: ${f(h * 0.015)}; line-height: 1.2; color: #000; font-weight: 600; ${small ? 'display: none;' : ''} }
+  .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; white-space: nowrap; }
+  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
+  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 500; line-height: 1.12; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
+  .note { max-width: 100%; font-size: ${f(fs.note)}; font-weight: 400; line-height: 1.2; ${fs.small ? 'display: none;' : ''} }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
   @media print { .hint { display: none; } body { padding: 0 !important; } }
 </style></head>
 <body>
   <div class="label">
-    ${a4 ? '<span class="rivet l"></span><span class="rivet r"></span>' : ''}
-    <div class="frame"><img id="qr" src="${qr}" alt="QR code"></div>
+    <img class="qr" id="qr" src="${qr}" alt="QR code">
     <div class="txt">
       <div class="prop">Property of ${esc(asset.property_name || 'Asset Registry System')}</div>
       ${logo
         ? `<div class="logo"><img id="logo" src="${esc(logo)}" alt="${esc(asset.property_name || '')}"></div>`
         : `<div class="id">${esc(asset.asset_code)}</div>`}
-      ${asset.asset_number ? `<div class="num">Asset No. <b>${esc(asset.asset_number)}</b></div>` : ''}
+      ${asset.asset_number ? `<div class="num">Asset No. ${esc(asset.asset_number)}</div>` : ''}
       <div class="name" title="${esc(name)}">${esc(name)}</div>
       <div class="note">Scan to look up. Do not remove.</div>
     </div>
@@ -156,7 +153,11 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
     // fit the text to the label: drop the note, then 2-line name, then shrink a little until nothing overflows
     (function () {
       var t = document.querySelector('.txt'); if (!t) return
-      var over = function () { return t.scrollHeight > t.clientHeight + 1 || t.getBoundingClientRect().height > ${(h - 2 * g.m).toFixed(2)} * 3.7795 + 1 }
+      var over = function () {
+        var kids = [].slice.call(t.children).filter(function (e) { return getComputedStyle(e).display !== 'none' })
+        var sum = kids.reduce(function (s, e) { return s + e.getBoundingClientRect().height }, 0)
+        return sum > t.clientHeight + 1 || kids.some(function (e) { return e.scrollWidth > t.clientWidth + 1 })
+      }
       var fit = function () {
         var note = document.querySelector('.note'), name = document.querySelector('.name')
         if (over() && note) note.style.display = 'none'
