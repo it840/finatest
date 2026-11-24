@@ -37,13 +37,25 @@ export async function blackLogo(url) {
   }
 }
 
-// Logo prepared for a 203 dpi thermal printer: shrunk once to the exact number of printer dots it will
-// occupy (fits a box of wmm x hmm), every dot that is even partly covered becomes solid black, and on small
-// logos the strokes are thickened by one dot so thin lines (sun rays, script lettering) don't break up.
+// Logo prepared for a 203 dpi thermal printer, shrunk once to the exact number of printer dots it will occupy
+// (fits a box of wmm x hmm). Two kinds of logo are handled differently:
+//  - line logos (thin dark strokes, e.g. Virgin's sun and script): partly-dark dots become black and thin
+//    strokes are thickened by one dot, so they don't break up;
+//  - solid logos (mostly black with white details, e.g. Z Hostel's white Z on a black circle): partly-white
+//    dots stay white and thin white details are widened by one dot, so they don't fill in.
 export async function thermalLogo(url, wmm, hmm, k = 8) {
   if (!url) return null
   try {
     const img = await loadImage(url)
+    // how much of the logo is dark ink, measured at full resolution: mostly dark = a solid logo
+    const full = document.createElement('canvas'); full.width = img.naturalWidth; full.height = img.naturalHeight
+    const fctx = full.getContext('2d'); fctx.drawImage(img, 0, 0)
+    const fd = fctx.getImageData(0, 0, full.width, full.height).data
+    let dark = 0
+    for (let i = 0; i < fd.length; i += 4) {
+      if (fd[i + 3] >= 10 && 0.299 * fd[i] + 0.587 * fd[i + 1] + 0.114 * fd[i + 2] < 235) dark++
+    }
+    const solid = dark / (full.width * full.height) > 0.35
     const r = Math.min((wmm * k) / img.naturalWidth, (hmm * k) / img.naturalHeight)
     const W = Math.max(1, Math.round(img.naturalWidth * r)), H = Math.max(1, Math.round(img.naturalHeight * r))
     const c = document.createElement('canvas'); c.width = W; c.height = H
@@ -55,13 +67,26 @@ export async function thermalLogo(url, wmm, hmm, k = 8) {
     for (let i = 0, j = 0; i < px.length; i += 4, j++) {
       const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
       const cover = (px[i + 3] / 255) * (1 - lum / 255)       // how much of this dot is dark logo
-      ink[j] = cover > 0.22 ? 1 : 0
+      ink[j] = cover > (solid ? 0.6 : 0.22) ? 1 : 0
     }
-    if (H < 160) {                                              // small logo: thicken strokes by one dot
+    if (H < 160) {
+      // small logo: thicken the thin parts by one dot - dark strokes for line logos, white details for solid logos
+      const want = solid ? 0 : 1
       const t = new Uint8Array(ink)
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        if (ink[y * W + x]) continue
-        if ((x > 0 && ink[y * W + x - 1]) || (x < W - 1 && ink[y * W + x + 1]) || (y > 0 && ink[(y - 1) * W + x]) || (y < H - 1 && ink[(y + 1) * W + x])) t[y * W + x] = 1
+        if (ink[y * W + x] === want) continue
+        const n = (xx, yy) => xx >= 0 && xx < W && yy >= 0 && yy < H && ink[yy * W + xx] === want
+        // for solid logos only widen white that is inside the logo (keep the outline of the shape)
+        if (solid && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) continue
+        if (n(x - 1, y) || n(x + 1, y) || n(x, y - 1) || n(x, y + 1)) {
+          if (solid) {
+            // white neighbour must be a white detail, not the outside: require dark on the opposite side too
+            const inside = (n(x - 1, y) && ink[y * W + x + 1] === 1) || (n(x + 1, y) && ink[y * W + x - 1] === 1) ||
+                           (n(x, y - 1) && y + 1 < H && ink[(y + 1) * W + x] === 1) || (n(x, y + 1) && y > 0 && ink[(y - 1) * W + x] === 1)
+            if (!inside) continue
+          }
+          t[y * W + x] = want
+        }
       }
       ink = t
     }
