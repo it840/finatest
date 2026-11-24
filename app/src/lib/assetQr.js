@@ -86,6 +86,16 @@ export function propertyLogoUrl(properties, propertyId) {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
+// Text sizes (mm) for a label, shared by the printed label and the downloadable file
+export function labelFonts(w, h, g = labelGeometry(w, h)) {
+  const small = h < 35
+  return {
+    prop: Math.min(h * 0.062, g.textW * 0.085), logo: h * (small ? 0.24 : 0.28), id: Math.min(h * 0.19, g.textW / 4.4),
+    num: Math.min(h * 0.068, g.textW * 0.08), name: Math.min(h * 0.088, g.textW * 0.1), note: Math.min(h * 0.045, g.textW * 0.06),
+    small,
+  }
+}
+
 // Label: framed QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
 // size = { w, h } in mm (a4: true prints a 170 x 96 mm label on an A4 sheet for office printers).
 // content = 'full' (all details as text) or 'simple' (Asset ID, Asset No., name).
@@ -97,10 +107,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   const g = labelGeometry(w, h)
   const f = (n) => `${(Math.round(n * 100) / 100)}mm`
   const small = h < 35
-  const fs = {
-    prop: Math.min(h * 0.062, g.textW * 0.085), logo: h * (small ? 0.24 : 0.28), id: Math.min(h * 0.19, g.textW / 4.4),
-    num: Math.min(h * 0.068, g.textW * 0.08), name: Math.min(h * 0.088, g.textW * 0.1), note: Math.min(h * 0.045, g.textW * 0.06),
-  }
+  const fs = labelFonts(w, h, g)
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -122,7 +129,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #000; }
   .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 600; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .logo { margin-top: ${f(h * 0.02)}; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
-  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; }
+  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; filter: grayscale(1); }
   .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; margin-top: ${f(h * 0.01)}; white-space: nowrap; }
   .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 600; margin-top: ${f(h * 0.015)}; line-height: 1.2; overflow-wrap: anywhere; }
   .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 700; margin-top: ${f(h * 0.012)}; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }

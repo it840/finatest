@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { LABEL_SIZES, labelGeometry, labelHtml, printAssetQr, qrModules } from '../lib/assetQr'
+import { blackLogo, downloadLabel } from '../lib/labelImage'
 
 // Print QR Label: choose the label size (thermal label printers such as the Clabel CT320B print at exactly
 // this size) and what the QR holds. Shows a true-proportion preview and warns when the QR squares would be too
@@ -27,6 +28,18 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   // default content: full details when they print cleanly at this size, otherwise simple
   const [content, setContent] = useState(saved.content || (dots('full') >= 4 ? 'full' : 'simple'))
 
+  // the property logo in black only (thermal printers print black); used for the preview, print and downloads
+  const [logoBlack, setLogoBlack] = useState(null)
+  const [logoReady, setLogoReady] = useState(!logo)
+  useEffect(() => {
+    let alive = true
+    if (!logo) return
+    blackLogo(logo).then(url => { if (alive) { setLogoBlack(url); setLogoReady(true) } })
+    return () => { alive = false }
+  }, [logo])
+  const logoUse = logoBlack || logo
+  const [busy, setBusy] = useState('')
+
   useEffect(() => {
     const k = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', k)
@@ -36,17 +49,23 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const sq = squares(content)
   const d = dots(content)
   const level = size.a4 ? 'ok' : d < 4 ? 'bad' : d < 6 ? 'warn' : 'ok'
-  const html = useMemo(() => labelHtml(asset, { autoPrint: false, logo, size, content }),
-    [asset, logo, size.w, size.h, size.a4, content])
+  const html = useMemo(() => labelHtml(asset, { autoPrint: false, logo: logoUse, size, content }),
+    [asset, logoUse, size.w, size.h, size.a4, content])
 
   // preview at true proportions, scaled to fit the window
   const pxW = size.w * 3.7795, pxH = size.h * 3.7795
   const scale = Math.min(460 / pxW, 260 / pxH)
 
+  const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content })) } catch { /* ignore */ } }
   const print = () => {
-    try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content })) } catch { /* ignore */ }
-    printAssetQr(asset, logo, { size, content })
+    remember()
+    printAssetQr(asset, logoUse, { size, content })
     onClose()
+  }
+  const download = async (format) => {
+    remember()
+    setBusy(format)
+    try { await downloadLabel(asset, { logo: logoUse, size, content }, format) } finally { setBusy('') }
   }
 
   return (
@@ -120,9 +139,17 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
           )}
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
-          <button onClick={print} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90">Print</button>
+        <div className="flex flex-wrap items-center justify-end gap-3 px-6 pb-6">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-muted hover:text-ink mr-auto">Cancel</button>
+          <button onClick={() => download('pdf')} disabled={!!busy || !logoReady} title={`Save the label as a PDF, page size ${size.w} × ${size.h} mm`}
+            className="px-4 py-2 text-sm border border-hairline rounded hover:bg-theme-hover disabled:opacity-50">
+            {busy === 'pdf' ? 'Saving…' : 'Download PDF'}
+          </button>
+          <button onClick={() => download('png')} disabled={!!busy || !logoReady} title="Save the label as an image (about 300 dpi), e.g. for the Clabel phone app"
+            className="px-4 py-2 text-sm border border-hairline rounded hover:bg-theme-hover disabled:opacity-50">
+            {busy === 'png' ? 'Saving…' : 'Download PNG'}
+          </button>
+          <button onClick={print} disabled={!logoReady} className="px-4 py-2 text-sm bg-theme-accent text-white rounded hover:bg-theme-accent/90 disabled:opacity-50">Print</button>
         </div>
       </div>
     </div>
