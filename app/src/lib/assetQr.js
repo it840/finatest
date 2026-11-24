@@ -93,7 +93,7 @@ const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 export function labelFonts(w, h, g = labelGeometry(w, h)) {
   const small = h < 30 || g.textW < 18           // very little room: leave out the "Scan to look up" note
   return {
-    prop: Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.3, g.textW * 0.6), id: Math.min(h * 0.2, g.textW / 4.4),
+    prop: Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.34, g.textW * 0.62), id: Math.min(h * 0.2, g.textW / 4.4),
     num: Math.min(h * 0.063, g.textW * 0.09), name: Math.min(h * 0.089, g.textW * 0.13), note: Math.min(h * 0.042, g.textW * 0.065),
     small,
   }
@@ -113,7 +113,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(w)} ${f(h)}; margin: 0;`} }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -125,13 +125,13 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   .qr { flex: 0 0 auto; width: ${f(g.qr)}; height: ${f(g.qr)}; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; height: ${f(h - 2 * g.mv)}; display: flex; flex-direction: column; justify-content: space-between;
     align-items: flex-start; text-align: left; }
-  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 500; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .logo { align-self: center; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
-  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; filter: grayscale(1); }
+  .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; image-rendering: pixelated; }
   .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; white-space: nowrap; }
-  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
-  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 500; line-height: 1.12; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: ${f(fs.note)}; font-weight: 400; line-height: 1.2; ${fs.small ? 'display: none;' : ''} }
+  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 800; line-height: 1.12; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
+  .note { max-width: 100%; font-size: ${f(fs.note)}; font-weight: 600; line-height: 1.2; ${fs.small ? 'display: none;' : ''} }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
   @media print { .hint { display: none; } body { padding: 0 !important; } }
 </style></head>

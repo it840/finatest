@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { LABEL_SIZES, labelGeometry, labelHtml, printAssetQr, qrModules } from '../lib/assetQr'
-import { blackLogo, downloadLabel } from '../lib/labelImage'
+import { LABEL_SIZES, labelFonts, labelGeometry, labelHtml, printAssetQr, qrModules } from '../lib/assetQr'
+import { blackLogo, downloadLabel, thermalLogo } from '../lib/labelImage'
 
 // Print QR Label: choose the label size (thermal label printers such as the Clabel CT320B print at exactly
 // this size) and what the QR holds. Shows a true-proportion preview and warns when the QR squares would be too
@@ -37,8 +37,19 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
     blackLogo(logo).then(url => { if (alive) { setLogoBlack(url); setLogoReady(true) } })
     return () => { alive = false }
   }, [logo])
-  const logoUse = logoBlack || logo
   const [busy, setBusy] = useState('')
+  // logo at the exact printer-dot size for this label (crisp black strokes); falls back to the black logo
+  const [logoThermal, setLogoThermal] = useState(null)
+  useEffect(() => {
+    let alive = true
+    setLogoThermal(null)
+    const src = logoBlack || logo
+    if (!src || !logoReady) return
+    const fz = labelFonts(size.w, size.h, geo)
+    thermalLogo(src, geo.textW * 0.9, fz.logo).then(url => { if (alive) setLogoThermal(url) })
+    return () => { alive = false }
+  }, [logoBlack, logoReady, size.w, size.h])
+  const logoUse = logoThermal || logoBlack || logo
 
   useEffect(() => {
     const k = (e) => { if (e.key === 'Escape') onClose() }

@@ -37,6 +37,42 @@ export async function blackLogo(url) {
   }
 }
 
+// Logo prepared for a 203 dpi thermal printer: shrunk once to the exact number of printer dots it will
+// occupy (fits a box of wmm x hmm), every dot that is even partly covered becomes solid black, and on small
+// logos the strokes are thickened by one dot so thin lines (sun rays, script lettering) don't break up.
+export async function thermalLogo(url, wmm, hmm, k = 8) {
+  if (!url) return null
+  try {
+    const img = await loadImage(url)
+    const r = Math.min((wmm * k) / img.naturalWidth, (hmm * k) / img.naturalHeight)
+    const W = Math.max(1, Math.round(img.naturalWidth * r)), H = Math.max(1, Math.round(img.naturalHeight * r))
+    const c = document.createElement('canvas'); c.width = W; c.height = H
+    const ctx = c.getContext('2d')
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, 0, 0, W, H)
+    const d = ctx.getImageData(0, 0, W, H), px = d.data
+    let ink = new Uint8Array(W * H)
+    for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+      const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
+      const cover = (px[i + 3] / 255) * (1 - lum / 255)       // how much of this dot is dark logo
+      ink[j] = cover > 0.22 ? 1 : 0
+    }
+    if (H < 160) {                                              // small logo: thicken strokes by one dot
+      const t = new Uint8Array(ink)
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (ink[y * W + x]) continue
+        if ((x > 0 && ink[y * W + x - 1]) || (x < W - 1 && ink[y * W + x + 1]) || (y > 0 && ink[(y - 1) * W + x]) || (y < H - 1 && ink[(y + 1) * W + x])) t[y * W + x] = 1
+      }
+      ink = t
+    }
+    for (let i = 0, j = 0; i < px.length; i += 4, j++) { px[i] = px[i + 1] = px[i + 2] = 0; px[i + 3] = ink[j] ? 255 : 0 }
+    ctx.putImageData(d, 0, 0)
+    return c.toDataURL('image/png')
+  } catch {
+    return null
+  }
+}
+
 // --- drawing helpers -----------------------------------------------------------------------------------
 // Split text into at most maxLines lines that fit maxW; a line that is cut ends with …
 function wrap(ctx, text, maxW, maxLines) {
@@ -77,7 +113,7 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
   const ctx = c.getContext('2d')
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height)
 
-  try { await Promise.all(['400', '500', '700'].map(wt => document.fonts.load(`${wt} 20px Inter`))) } catch { /* use fallback fonts */ }
+  try { await Promise.all(['600', '700', '800'].map(wt => document.fonts.load(`${wt} 20px Inter`))) } catch { /* use fallback fonts */ }
   const font = (wt, mm, fam = 'Inter, Arial, sans-serif') => `${wt} ${mm * k}px ${fam}`
 
   // QR (plain, no frame), vertically centred
@@ -99,11 +135,12 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
   const tx = (g.m + g.qr + g.gap) * k, tw = g.textW * k, cx = tx + tw / 2
   let logoImg = null
   if (logo) { try { logoImg = await loadImage(logo) } catch { logoImg = null } }
+  if (logoImg) ctx.imageSmoothingEnabled = false
   const build = (sc, nameLines, withNote) => {
     const F = { prop: fs.prop * sc, logo: fs.logo * sc, id: fs.id * sc, num: fs.num * sc, name: fs.name * sc, note: fs.note * sc }
     const out = []
-    ctx.font = font(500, F.prop)
-    out.push({ kind: 'lines', lines: wrap(ctx, `Property of ${asset.property_name || 'Asset Registry System'}`, tw, 2), font: font(500, F.prop), lh: F.prop * 1.15 * k })
+    ctx.font = font(700, F.prop)
+    out.push({ kind: 'lines', lines: wrap(ctx, `Property of ${asset.property_name || 'Asset Registry System'}`, tw, 2), font: font(700, F.prop), lh: F.prop * 1.15 * k })
     if (logoImg) {
       const maxW = tw * 0.9, maxH = F.logo * k
       const r = Math.min(maxW / logoImg.naturalWidth, maxH / logoImg.naturalHeight)
@@ -116,14 +153,14 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
       out.push({ kind: 'lines', lines: [asset.asset_code || ''], font: idFont(idSize), lh: idSize * 1.05 * k })
     }
     if (asset.asset_number) {
-      ctx.font = font(500, F.num)
-      out.push({ kind: 'lines', lines: wrap(ctx, `Asset No. ${asset.asset_number}`, tw, 2), font: font(500, F.num), lh: F.num * 1.2 * k })
+      ctx.font = font(700, F.num)
+      out.push({ kind: 'lines', lines: wrap(ctx, `Asset No. ${asset.asset_number}`, tw, 2), font: font(700, F.num), lh: F.num * 1.2 * k })
     }
-    ctx.font = font(500, F.name)
-    out.push({ kind: 'lines', lines: wrap(ctx, asset.asset_name || '', tw, nameLines), font: font(500, F.name), lh: F.name * 1.12 * k })
+    ctx.font = font(800, F.name)
+    out.push({ kind: 'lines', lines: wrap(ctx, asset.asset_name || '', tw, nameLines), font: font(800, F.name), lh: F.name * 1.12 * k })
     if (withNote) {
-      ctx.font = font(400, F.note)
-      out.push({ kind: 'lines', lines: wrap(ctx, 'Scan to look up. Do not remove.', tw, 2), font: font(400, F.note), lh: F.note * 1.2 * k })
+      ctx.font = font(600, F.note)
+      out.push({ kind: 'lines', lines: wrap(ctx, 'Scan to look up. Do not remove.', tw, 2), font: font(600, F.note), lh: F.note * 1.2 * k })
     }
     return out
   }
