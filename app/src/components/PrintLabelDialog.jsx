@@ -14,7 +14,7 @@ function loadPrefs() {
 
 export default function PrintLabelDialog({ asset, logo, onClose }) {
   const saved = loadPrefs()
-  const [key, setKey] = useState(saved.key || '75x40')
+  const [key, setKey] = useState(saved.key || '61x48')
   const [cw, setCw] = useState(saved.w || 75)
   const [ch, setCh] = useState(saved.h || 40)
   const preset = LABEL_SIZES.find(s => s.key === key)
@@ -145,7 +145,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             className="px-4 py-2 text-sm border border-hairline rounded hover:bg-theme-hover disabled:opacity-50">
             {busy === 'pdf' ? 'Saving…' : 'Download PDF'}
           </button>
-          <button onClick={() => download('png')} disabled={!!busy || !logoReady} title="Save the label as an image (about 300 dpi), e.g. for the Clabel phone app"
+          <button onClick={() => download('png')} disabled={!!busy || !logoReady} title="Save the label as an image (203 dpi, black and white), e.g. for the Clabel phone app"
             className="px-4 py-2 text-sm border border-hairline rounded hover:bg-theme-hover disabled:opacity-50">
             {busy === 'png' ? 'Saving…' : 'Download PNG'}
           </button>

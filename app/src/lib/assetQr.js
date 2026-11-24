@@ -60,7 +60,7 @@ export function qrModules(asset, content = 'full') {
 // Label sizes. Thermal labels print at exactly the label size (no page shrinking).
 export const LABEL_SIZES = [
   { key: '40x30', w: 40, h: 30 }, { key: '50x30', w: 50, h: 30 }, { key: '50x40', w: 50, h: 40 },
-  { key: '60x40', w: 60, h: 40 }, { key: '70x40', w: 70, h: 40 }, { key: '75x40', w: 75, h: 40 },
+  { key: '60x40', w: 60, h: 40 }, { key: '61x48', w: 61, h: 48 }, { key: '70x40', w: 70, h: 40 }, { key: '75x40', w: 75, h: 40 },
   { key: '75x50', w: 75, h: 50 }, { key: '80x40', w: 80, h: 40 }, { key: '80x50', w: 80, h: 50 },
   { key: '80x60', w: 80, h: 60 },
   { key: 'a4', w: 170, h: 96, a4: true },
@@ -69,7 +69,7 @@ export const LABEL_SIZES = [
 // Size and position of every part of the label, in mm, worked out from the label size
 export function labelGeometry(w, h) {
   const m = Math.max(1.5, Math.min(4, h * 0.05))                // edge margin (thermal printers can't print the very edge)
-  const frame = Math.min(h - 2 * m, w * 0.55)                    // framed QR: as big as the height allows
+  const frame = Math.min(h - 2 * m, w * 0.5)                     // framed QR: as big as the height allows, at most half the width
   const border = Math.max(0.7, frame * 0.03)
   const pad = Math.max(0.7, frame * 0.025)
   const qr = frame - 2 * border - 2 * pad                        // the code itself
@@ -88,10 +88,10 @@ const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 
 // Text sizes (mm) for a label, shared by the printed label and the downloadable file
 export function labelFonts(w, h, g = labelGeometry(w, h)) {
-  const small = h < 35
+  const small = h < 35 || g.textW < 26          // little room: leave out the "Scan to look up" note
   return {
-    prop: Math.min(h * 0.062, g.textW * 0.085), logo: h * (small ? 0.24 : 0.28), id: Math.min(h * 0.19, g.textW / 4.4),
-    num: Math.min(h * 0.068, g.textW * 0.08), name: Math.min(h * 0.088, g.textW * 0.1), note: Math.min(h * 0.045, g.textW * 0.06),
+    prop: Math.min(h * 0.075, g.textW * 0.115), logo: Math.min(h * 0.26, g.textW * 0.5), id: Math.min(h * 0.2, g.textW / 4.4),
+    num: Math.min(h * 0.085, g.textW * 0.13), name: Math.min(h * 0.1, g.textW * 0.16), note: Math.min(h * 0.055, g.textW * 0.085),
     small,
   }
 }
@@ -111,7 +111,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   @page { ${a4 ? 'size: A4; margin: 12mm;' : `size: ${f(w)} ${f(h)}; margin: 0;`} }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -126,14 +126,14 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   .frame { flex: 0 0 auto; width: ${f(g.frame)}; height: ${f(g.frame)}; border: ${f(g.border)} solid #000; border-radius: ${f(g.frame * 0.05)};
     background: #fff; padding: ${f(g.pad)}; }
   .frame img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #000; }
-  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 600; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; color: #000; max-height: ${f(h - 2 * g.m)}; }
+  .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .logo { margin-top: ${f(h * 0.02)}; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
   .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; filter: grayscale(1); }
   .id { font-family: Oswald, "Arial Narrow", Impact, sans-serif; font-weight: 700; font-size: ${f(fs.id)}; line-height: 1.02; margin-top: ${f(h * 0.01)}; white-space: nowrap; }
-  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 600; margin-top: ${f(h * 0.015)}; line-height: 1.2; overflow-wrap: anywhere; }
-  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 700; margin-top: ${f(h * 0.012)}; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
-  .note { max-width: 100%; font-size: ${f(fs.note)}; margin-top: ${f(h * 0.015)}; line-height: 1.2; color: #222; ${small ? 'display: none;' : ''} }
+  .num { max-width: 100%; font-size: ${f(fs.num)}; font-weight: 700; margin-top: ${f(h * 0.015)}; line-height: 1.2; overflow-wrap: anywhere; }
+  .name { max-width: 100%; font-size: ${f(fs.name)}; font-weight: 800; margin-top: ${f(h * 0.012)}; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
+  .note { max-width: 100%; font-size: ${f(fs.note)}; margin-top: ${f(h * 0.015)}; line-height: 1.2; color: #000; font-weight: 600; ${small ? 'display: none;' : ''} }
   .hint { font: 12px Inter, Arial, sans-serif; color: #666; }
   @media print { .hint { display: none; } body { padding: 0 !important; } }
 </style></head>
@@ -152,6 +152,21 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
     </div>
   </div>
   ${a4 ? `<div class="hint">Actual size ${w} × ${h} mm on A4.</div>` : ''}
+  <script>
+    // fit the text to the label: drop the note, then 2-line name, then shrink a little until nothing overflows
+    (function () {
+      var t = document.querySelector('.txt'); if (!t) return
+      var over = function () { return t.scrollHeight > t.clientHeight + 1 || t.getBoundingClientRect().height > ${(h - 2 * g.m).toFixed(2)} * 3.7795 + 1 }
+      var fit = function () {
+        var note = document.querySelector('.note'), name = document.querySelector('.name')
+        if (over() && note) note.style.display = 'none'
+        if (over() && name) name.style.webkitLineClamp = '2'
+        for (var s = 0.95; over() && s >= 0.6; s -= 0.05) t.style.zoom = s
+      }
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); else fit()
+      window.addEventListener('load', fit)
+    })();
+  </script>
   ${autoPrint ? `<script>
     (function () {
       var done = false, go = function () { if (!done) { done = true; setTimeout(function () { window.print() }, 150) } };
