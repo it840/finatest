@@ -26,6 +26,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const squares = (content) => geo.qr / qrModules(asset, content)
   const dots = (content) => squares(content) * DOTS_PER_MM
   // default content: full details when they print cleanly at this size, otherwise simple
+  const [textScale, setTextScale] = useState(saved.textScale || 1)   // text size, 0.7 - 1.6
   const [content, setContent] = useState(saved.content || (dots('full') >= 4 ? 'full' : 'simple'))
 
   // the property logo in black only (thermal printers print black); used for the preview, print and downloads
@@ -60,23 +61,36 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const sq = squares(content)
   const d = dots(content)
   const level = size.a4 ? 'ok' : d < 4 ? 'bad' : d < 6 ? 'warn' : 'ok'
-  const html = useMemo(() => labelHtml(asset, { autoPrint: false, logo: logoUse, size, content }),
-    [asset, logoUse, size.w, size.h, size.a4, content])
+  const html = useMemo(() => labelHtml(asset, { autoPrint: false, logo: logoUse, size, content, textScale }),
+    [asset, logoUse, size.w, size.h, size.a4, content, textScale])
+  // after the preview lays out, see whether the text had to be reduced to fit the label
+  const [reduced, setReduced] = useState(false)
+  const checkFit = (e) => {
+    const doc = e.currentTarget.contentDocument
+    setTimeout(() => {
+      try {
+        const t = doc.querySelector('.txt'), note = doc.querySelector('.note'), name = doc.querySelector('.name')
+        const z = parseFloat(t?.style.zoom || '1')
+        setReduced(z < 1 || (note && note.style.display === 'none' && !note.hasAttribute('data-hidden')) || (name && name.style.webkitLineClamp === '2'))
+      } catch { setReduced(false) }
+    }, 350)
+  }
+  const stepText = (d) => setTextScale(v => Math.round(Math.min(1.6, Math.max(0.7, v + d)) * 10) / 10)
 
   // preview at true proportions, scaled to fit the window
   const pxW = size.w * 3.7795, pxH = size.h * 3.7795
   const scale = Math.min(460 / pxW, 260 / pxH)
 
-  const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content })) } catch { /* ignore */ } }
+  const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content, textScale })) } catch { /* ignore */ } }
   const print = () => {
     remember()
-    printAssetQr(asset, logoUse, { size, content })
+    printAssetQr(asset, logoUse, { size, content, textScale })
     onClose()
   }
   const download = async (format) => {
     remember()
     setBusy(format)
-    try { await downloadLabel(asset, { logo: logoUse, size, content }, format) } finally { setBusy('') }
+    try { await downloadLabel(asset, { logo: logoUse, size, content, textScale }, format) } finally { setBusy('') }
   }
 
   return (
@@ -132,11 +146,26 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             {level === 'ok' && <> — prints sharply and scans well.</>}
           </div>
 
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-muted">Text size</span>
+            <div className="flex items-center rounded border border-hairline overflow-hidden">
+              <button onClick={() => stepText(-0.1)} disabled={textScale <= 0.7} aria-label="Smaller text"
+                className="w-9 h-9 text-lg leading-none hover:bg-theme-hover disabled:opacity-40">−</button>
+              <span className="w-16 text-center text-sm tabular-nums" aria-live="polite" aria-label="Text size">{Math.round(textScale * 100)}%</span>
+              <button onClick={() => stepText(0.1)} disabled={textScale >= 1.6} aria-label="Bigger text"
+                className="w-9 h-9 text-lg leading-none hover:bg-theme-hover disabled:opacity-40">+</button>
+            </div>
+            {textScale !== 1 && <button onClick={() => setTextScale(1)} className="text-xs text-muted underline hover:text-ink">Reset</button>}
+            {reduced && textScale > 1 && (
+              <span className="text-xs text-[#7a5a12]">Reduced a little to fit this label — choose a bigger label for larger text.</span>
+            )}
+          </div>
+
           <div>
             <div className="text-xs text-muted mb-1">Preview ({size.w} × {size.h} mm)</div>
             <div className="border border-hairline rounded bg-[#e9e7e2] p-3 flex justify-center">
               <div style={{ width: pxW * scale, height: pxH * scale, overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }}>
-                <iframe title="Label preview" srcDoc={html} scrolling="no"
+                <iframe title="Label preview" srcDoc={html} scrolling="no" onLoad={checkFit}
                   style={{ width: pxW, height: pxH, border: 0, transform: `scale(${scale})`, transformOrigin: '0 0', pointerEvents: 'none' }} />
               </div>
             </div>

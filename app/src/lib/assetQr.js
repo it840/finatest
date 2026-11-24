@@ -90,11 +90,11 @@ export function propertyLogoUrl(properties, propertyId) {
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
 // Text sizes (mm) for a label, shared by the printed label and the downloadable file
-export function labelFonts(w, h, g = labelGeometry(w, h)) {
+export function labelFonts(w, h, g = labelGeometry(w, h), textScale = 1) {
   const small = h < 30 || g.textW < 18           // very little room: leave out the "Scan to look up" note
   return {
-    prop: Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.34, g.textW * 0.62), id: Math.min(h * 0.2, g.textW / 4.4),
-    num: Math.min(h * 0.063, g.textW * 0.09), name: Math.min(h * 0.089, g.textW * 0.13), note: Math.min(h * 0.042, g.textW * 0.065),
+    prop: textScale * Math.min(h * 0.058, g.textW * 0.085), logo: Math.min(h * 0.34, g.textW * 0.62), id: textScale * Math.min(h * 0.2, g.textW / 4.4),
+    num: textScale * Math.min(h * 0.063, g.textW * 0.09), name: textScale * Math.min(h * 0.089, g.textW * 0.13), note: textScale * Math.min(h * 0.042, g.textW * 0.065),
     small,
   }
 }
@@ -102,13 +102,13 @@ export function labelFonts(w, h, g = labelGeometry(w, h)) {
 // Label: QR on the left; property, logo (or Asset ID), Asset No., name and note on the right.
 // size = { w, h } in mm (a4: true prints a 170 x 96 mm label on an A4 sheet for office printers).
 // content = 'full' (all details as text) or 'simple' (Asset ID, Asset No., name).
-export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 170, h: 96, a4: true }, content = 'full' } = {}) {
+export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 170, h: 96, a4: true }, content = 'full', textScale = 1 } = {}) {
   const qr = buildLabelQrUrl(asset, content)
   const name = asset.asset_name || ''
   const { w, h } = size
   const a4 = !!size.a4
   const g = labelGeometry(w, h)
-  const fs = labelFonts(w, h, g)
+  const fs = labelFonts(w, h, g, textScale)
   const f = (n) => `${(Math.round(n * 100) / 100)}mm`
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${esc(asset.asset_code)} label</title>
@@ -125,6 +125,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
   .qr { flex: 0 0 auto; width: ${f(g.qr)}; height: ${f(g.qr)}; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; height: ${f(h - 2 * g.mv)}; display: flex; flex-direction: column; justify-content: space-between;
     align-items: flex-start; text-align: left; }
+  .txt > * { flex-shrink: 0; }   /* never squeeze a line; the fit script below reduces the text instead */
   .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .logo { align-self: center; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
   .logo img { max-height: ${f(fs.logo)}; max-width: ${f(g.textW * 0.9)}; object-fit: contain; display: block; image-rendering: pixelated; }

@@ -94,10 +94,10 @@ function wrap(ctx, text, maxW, maxLines) {
 // Draws the label at its real size (one pixel per printer dot at 203 dpi), same layout as the printed label:
 // plain QR on the left; on the right, left-aligned, property line, logo (centred), Asset No., name and note,
 // spread evenly from top to bottom. Pure black and white so a thermal printer prints it crisply.
-export async function renderLabelCanvas(asset, { logo = null, size, content = 'full', pxPerMm = 8, mono = true }) {
+export async function renderLabelCanvas(asset, { logo = null, size, content = 'full', pxPerMm = 8, mono = true, textScale = 1 }) {
   const { w, h } = size
   const g = labelGeometry(w, h)
-  const fs = labelFonts(w, h, g)
+  const fs = labelFonts(w, h, g, textScale)
   const k = pxPerMm
   const c = document.createElement('canvas')
   c.width = Math.round(w * k); c.height = Math.round(h * k)
@@ -207,8 +207,8 @@ function saveBlob(blob, name) {
 
 // Downloads the label as a PNG image (203 dpi, pure black and white, one pixel per printer dot) or a PDF
 // whose page is exactly the label size
-export async function downloadLabel(asset, { logo, size, content }, format = 'pdf') {
-  const canvas = await renderLabelCanvas(asset, { logo, size, content })
+export async function downloadLabel(asset, { logo, size, content, textScale = 1 }, format = 'pdf') {
+  const canvas = await renderLabelCanvas(asset, { logo, size, content, textScale })
   if (format === 'png') {
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
     saveBlob(blob, `${fileBase(asset, size)}.png`)
