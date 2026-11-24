@@ -92,7 +92,7 @@ function wrap(ctx, text, maxW, maxLines) {
 }
 
 // Draws the label at its real size (one pixel per printer dot at 203 dpi), same layout as the printed label:
-// plain QR on the left; on the right, left-aligned, property line, logo (centred), Asset No., name and note,
+// plain QR on the left; on the right, centred in the column, property line, logo, Asset No., name and note,
 // spread evenly from top to bottom. Pure black and white so a thermal printer prints it crisply.
 export async function renderLabelCanvas(asset, { logo = null, size, content = 'full', pxPerMm = 8, mono = true, textScale = 1 }) {
   const { w, h } = size
@@ -177,9 +177,9 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
     if (b.kind === 'img') {
       ctx.drawImage(b.img, cx - b.w / 2, y + (b.box - b.h) / 2, b.w, b.h)   // logo centred in the column
     } else {
-      ctx.font = b.font; ctx.textAlign = 'left'
+      ctx.font = b.font; ctx.textAlign = 'center'                          // centred, lined up with the logo
       let ly = y
-      for (const line of b.lines) { ctx.fillText(line, tx, ly + b.lh / 2); ly += b.lh }
+      for (const line of b.lines) { ctx.fillText(line, cx, ly + b.lh / 2); ly += b.lh }
     }
     y += heightOf(b) + step
   }

@@ -68,7 +68,7 @@ export const LABEL_SIZES = [
 
 // Size and position of every part of the label, in mm, worked out from the label size.
 // Layout (matches the label printed on the Clabel roll): a large plain QR on the left, filling most of the height;
-// on the right, left-aligned: property line, logo (centred in the column), Asset No., name (largest) and note,
+// on the right, centred in the column (lined up with the logo): property line, logo, Asset No., name (largest) and note,
 // spread evenly from top to bottom.
 export function labelGeometry(w, h) {
   const m = Math.max(1.5, h * 0.085)                             // left margin before the QR
@@ -124,7 +124,7 @@ export function labelHtml(asset, { autoPrint = true, logo = null, size = { w: 17
     ${a4 ? 'border: 0.3mm solid #c4c8cc; border-radius: 5mm;' : ''} }
   .qr { flex: 0 0 auto; width: ${f(g.qr)}; height: ${f(g.qr)}; display: block; image-rendering: pixelated; }
   .txt { min-width: 0; flex: 1; height: ${f(h - 2 * g.mv)}; display: flex; flex-direction: column; justify-content: space-between;
-    align-items: flex-start; text-align: left; }
+    align-items: center; text-align: center; }
   .txt > * { flex-shrink: 0; }   /* never squeeze a line; the fit script below reduces the text instead */
   .prop { max-width: 100%; font-size: ${f(fs.prop)}; font-weight: 700; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .logo { align-self: center; height: ${f(fs.logo)}; display: flex; align-items: center; justify-content: center; }
