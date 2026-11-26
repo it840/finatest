@@ -12,7 +12,8 @@ const STATUS_COLOR = {
   'IN PROGRESS': 'text-gold', COMPLETED: 'text-success', CANCELLED: 'text-muted',
 }
 
-const EMPTY = { asset_id: '', scheduled_date: '', pms_status: 'SCHEDULED', maintenance_type: '', technician: '', findings: '', maintenance_cost: '', remarks: '' }
+const EMPTY = { asset_id: '', scheduled_date: '', pms_status: 'SCHEDULED', maintenance_type: '', technician: '', findings: '', maintenance_cost: '', remarks: '',
+  breakdown_date: '', problem: '', parts_replaced: '', parts_cost: '' }
 
 const OPEN = ['SCHEDULED', 'DUE', 'OVERDUE', 'IN PROGRESS']
 const today = () => new Date().toISOString().slice(0, 10)
@@ -35,6 +36,7 @@ function CompleteModal({ entry, onClose, onDone }) {
   const [form, setForm] = useState({
     completed_date: today(), technician: entry.technician || '', maintenance_cost: entry.maintenance_cost ?? '',
     findings: entry.findings || '', remarks: entry.remarks || '',
+    breakdown_date: entry.breakdown_date || '', problem: entry.problem || '', parts_replaced: entry.parts_replaced || '', parts_cost: entry.parts_cost ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -45,6 +47,8 @@ function CompleteModal({ entry, onClose, onDone }) {
       pms_status: 'COMPLETED', completed_date: form.completed_date || today(),
       technician: form.technician || null, findings: form.findings || null, remarks: form.remarks || null,
       maintenance_cost: form.maintenance_cost === '' ? null : Number(form.maintenance_cost),
+      breakdown_date: form.breakdown_date || null, problem: form.problem?.trim() || null,
+      parts_replaced: form.parts_replaced?.trim() || null, parts_cost: form.parts_cost === '' ? null : Number(form.parts_cost),
     }).eq('id', entry.id)
     if (error) { setSaving(false); setError(error.message); return }
     // tell the user when the next visit was scheduled automatically
@@ -61,10 +65,18 @@ function CompleteModal({ entry, onClose, onDone }) {
           <input type="date" value={form.completed_date} onChange={set('completed_date')} className="input" /></label>
         <label className="block"><span className="block text-xs text-muted mb-1">Cost</span>
           <input type="number" step="0.01" min="0" value={form.maintenance_cost} onChange={set('maintenance_cost')} className="input" /></label>
-        <label className="block col-span-2"><span className="block text-xs text-muted mb-1">Technician</span>
+        <label className="block"><span className="block text-xs text-muted mb-1">Date broken / reported</span>
+          <input type="date" value={form.breakdown_date} onChange={set('breakdown_date')} className="input" /></label>
+        <label className="block"><span className="block text-xs text-muted mb-1">Person in charge / technician</span>
           <input value={form.technician} onChange={set('technician')} className="input" /></label>
+        <label className="block col-span-2"><span className="block text-xs text-muted mb-1">Problem / issue</span>
+          <input value={form.problem} onChange={set('problem')} placeholder="e.g. Not cooling" className="input" /></label>
         <label className="block col-span-2"><span className="block text-xs text-muted mb-1">Findings / work done</span>
           <input value={form.findings} onChange={set('findings')} className="input" /></label>
+        <label className="block"><span className="block text-xs text-muted mb-1">Parts replaced (one per line)</span>
+          <textarea rows={2} value={form.parts_replaced} onChange={set('parts_replaced')} placeholder={'e.g. Capacitor 35uF\nFan motor'} className="input" /></label>
+        <label className="block"><span className="block text-xs text-muted mb-1">Parts cost</span>
+          <input type="number" step="0.01" min="0" value={form.parts_cost} onChange={set('parts_cost')} className="input" /></label>
         <label className="block col-span-2"><span className="block text-xs text-muted mb-1">Remarks</span>
           <input value={form.remarks} onChange={set('remarks')} className="input" /></label>
       </div>
@@ -158,7 +170,7 @@ export default function MaintenanceLog({ profile }) {
       r.scheduled_date, timeOf(r.created_at), r.asset_code, r.asset_name, r.category, r.sub_category, r.brand, r.model, r.serial_number,
       r.registered_location, r.actual_location, r.department, r.assigned_to, r.asset_status, r.condition,
       r.last_maintenance, r.maintenance_frequency_days, r.maintenance_due, r.pms_status, r.maintenance_type,
-      r.technician, r.findings, r.maintenance_cost, r.remarks, r.logged_by_name,
+      r.technician, r.findings, r.maintenance_cost, r.remarks, r.logged_by_name, r.breakdown_date, r.problem, r.parts_replaced, r.parts_cost,
     ])) &&
     (!statusFilter || r.pms_status === statusFilter)
   )
@@ -185,6 +197,10 @@ export default function MaintenanceLog({ profile }) {
       findings: form.findings || null,
       maintenance_cost: form.maintenance_cost === '' ? null : Number(form.maintenance_cost),
       remarks: form.remarks || null,
+      breakdown_date: form.breakdown_date || null,
+      problem: form.problem?.trim() || null,
+      parts_replaced: form.parts_replaced?.trim() || null,
+      parts_cost: form.parts_cost === '' ? null : Number(form.parts_cost),
       logged_by: profile?.id,
     })
     setSaving(false)
@@ -248,16 +264,32 @@ export default function MaintenanceLog({ profile }) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs text-muted mb-1">Technician / Service Provider</span>
+          <span className="block text-xs text-muted mb-1">Person in Charge / Technician</span>
           <input value={form.technician} onChange={e => setForm(f => ({ ...f, technician: e.target.value }))} className="input" />
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Maintenance Cost</span>
           <input type="number" step="0.01" value={form.maintenance_cost} onChange={e => setForm(f => ({ ...f, maintenance_cost: e.target.value }))} className="input" />
         </label>
+        <label className="block">
+          <span className="block text-xs text-muted mb-1">Date Broken / Reported</span>
+          <input type="date" value={form.breakdown_date} onChange={e => setForm(f => ({ ...f, breakdown_date: e.target.value }))} className="input" />
+        </label>
+        <label className="block col-span-2">
+          <span className="block text-xs text-muted mb-1">Problem / Issue</span>
+          <input value={form.problem} onChange={e => setForm(f => ({ ...f, problem: e.target.value }))} placeholder="e.g. Not cooling" className="input" />
+        </label>
         <label className="block col-span-2">
           <span className="block text-xs text-muted mb-1">Action Taken / Findings</span>
           <input value={form.findings} onChange={e => setForm(f => ({ ...f, findings: e.target.value }))} className="input" />
+        </label>
+        <label className="block col-span-2">
+          <span className="block text-xs text-muted mb-1">Parts Replaced (one per line)</span>
+          <textarea rows={2} value={form.parts_replaced} onChange={e => setForm(f => ({ ...f, parts_replaced: e.target.value }))} placeholder={'e.g. Capacitor 35uF\nFan motor'} className="input" />
+        </label>
+        <label className="block">
+          <span className="block text-xs text-muted mb-1">Parts Cost</span>
+          <input type="number" step="0.01" min="0" value={form.parts_cost} onChange={e => setForm(f => ({ ...f, parts_cost: e.target.value }))} className="input" />
         </label>
         <label className="block">
           <span className="block text-xs text-muted mb-1">Remarks</span>
@@ -293,7 +325,7 @@ export default function MaintenanceLog({ profile }) {
         <table className="w-full text-sm">
           <thead className="bg-theme-active text-theme-text text-xs uppercase tracking-wide">
             <tr>
-              {['Date', 'Time', 'Asset ID', 'Asset Name', 'Category', 'Sub-Category', 'Brand', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Technician', 'Findings', 'Cost', 'Remarks', 'Logged By', ''].map(h => (
+              {['Date', 'Time', 'Asset ID', 'Asset Name', 'Category', 'Sub-Category', 'Brand', 'Model', 'Serial', 'Location', 'Actual Location', 'Department', 'Assigned To', 'Asset Status', 'Condition', 'Last Maintenance', 'Freq. (Days)', 'Maintenance Due', 'PMS Status', 'Type', 'Date Broken', 'Problem', 'Person in Charge', 'Findings', 'Parts Replaced', 'Parts Cost', 'Downtime', 'Cost', 'Remarks', 'Logged By', ''].map(h => (
                 <th key={h} className="text-left px-3 py-2 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -324,8 +356,13 @@ export default function MaintenanceLog({ profile }) {
                   {r.pms_status === 'COMPLETED' && r.completed_date && <span className="block text-xs font-normal text-muted">on {r.completed_date}</span>}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.maintenance_type}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.breakdown_date || <span className="text-muted">—</span>}</td>
+                <td className="px-3 py-2 min-w-[10rem]">{r.problem || <span className="text-muted">—</span>}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.technician}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.findings}</td>
+                <td className="px-3 py-2 min-w-[10rem] whitespace-pre-line">{r.parts_replaced || <span className="text-muted">—</span>}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{r.parts_cost == null ? <span className="text-muted">—</span> : peso2(r.parts_cost)}</td>
+                <td className="px-3 py-2 whitespace-nowrap" title="Days from broken to repaired">{r.downtime_days == null ? <span className="text-muted">—</span> : `${r.downtime_days} ${r.downtime_days === 1 ? 'day' : 'days'}`}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{peso(r.maintenance_cost)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.remarks}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{r.logged_by_name}</td>
@@ -343,12 +380,12 @@ export default function MaintenanceLog({ profile }) {
                 </td>
               </tr>
             ))}
-            {pageRows.length === 0 && <tr><td colSpan={26} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
+            {pageRows.length === 0 && <tr><td colSpan={31} className="px-3 py-6 text-center text-muted">No maintenance entries yet.</td></tr>}
           </tbody>
           {filteredRows.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-theme-accent bg-theme-bg font-medium">
-                <td className="px-3 py-2 whitespace-nowrap" colSpan={22}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed{plannedCost > 0 ? ` · ${peso2(plannedCost)} planned` : ''}</td>
+                <td className="px-3 py-2 whitespace-nowrap" colSpan={27}>Total · {filteredRows.length} {filteredRows.length === 1 ? 'entry' : 'entries'} · {completedCount} completed{plannedCost > 0 ? ` · ${peso2(plannedCost)} planned` : ''}</td>
                 <td className="px-3 py-2 whitespace-nowrap" title="Cost of completed visits only">{peso2(totalCost)}</td>
                 <td className="px-3 py-2" colSpan={3}></td>
               </tr>

@@ -49,6 +49,16 @@ export function AssetDetailModal({ asset, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [big, onClose])
 
+  // repair & maintenance history of this asset (from the PMS module), latest first
+  const [maint, setMaint] = useState(null)
+  useEffect(() => {
+    supabase.from('maintenance_log_computed')
+      .select('id, scheduled_date, completed_date, pms_status, maintenance_type, technician, findings, problem, parts_replaced, parts_cost, maintenance_cost, breakdown_date, downtime_days, remarks')
+      .eq('asset_id', asset.id)
+      .order('scheduled_date', { ascending: false }).order('id', { ascending: false })
+      .then(({ data }) => setMaint(data || []))
+  }, [asset.id])
+
   useEffect(() => {
     supabase.from('activity_log_computed').select('*')
       .eq('table_name', 'assets').eq('record_id', String(asset.id))
@@ -123,6 +133,45 @@ export function AssetDetailModal({ asset, onClose }) {
             <div className="text-sm">{asset.remarks}</div>
           </div>
         )}
+
+        <div className="mx-6 mb-4 border border-hairline rounded-lg">
+          <div className="px-4 py-3 border-b border-hairline flex items-center justify-between gap-3">
+            <span className="font-medium text-sm">Repair &amp; Maintenance History</span>
+            {maint && maint.length > 0 && (
+              <span className="text-xs text-muted">
+                {maint.filter(m => m.pms_status === 'COMPLETED').length} done · total cost {peso(maint.filter(m => m.pms_status === 'COMPLETED').reduce((s, m) => s + Number(m.maintenance_cost || 0), 0))}
+              </span>
+            )}
+          </div>
+          <div className="max-h-72 overflow-y-auto divide-y divide-hairline">
+            {maint === null && <div className="px-4 py-4 text-sm text-muted">Loading…</div>}
+            {maint && maint.length === 0 && <div className="px-4 py-4 text-sm text-muted">No repairs or maintenance recorded yet. Log them in Maintenance (PMS).</div>}
+            {(maint || []).map(m => {
+              const done = m.pms_status === 'COMPLETED'
+              const tone = done ? 'text-success' : m.pms_status === 'OVERDUE' ? 'text-danger' : m.pms_status === 'CANCELLED' ? 'text-muted' : 'text-gold'
+              return (
+                <div key={m.id} className="px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-medium">{m.maintenance_type || 'Maintenance'}</span>
+                    <span className={`text-xs font-medium ${tone}`}>{m.pms_status}{done && m.completed_date ? ` · ${m.completed_date}` : ` · ${m.scheduled_date}`}</span>
+                  </div>
+                  <dl className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                    {m.breakdown_date && <div><dt className="inline text-muted">Broke: </dt><dd className="inline">{m.breakdown_date}</dd></div>}
+                    {done && m.completed_date && <div><dt className="inline text-muted">Repaired / done: </dt><dd className="inline">{m.completed_date}</dd></div>}
+                    {m.downtime_days != null && <div><dt className="inline text-muted">Downtime: </dt><dd className="inline">{m.downtime_days} {m.downtime_days === 1 ? 'day' : 'days'}</dd></div>}
+                    {m.technician && <div><dt className="inline text-muted">Person in charge: </dt><dd className="inline">{m.technician}</dd></div>}
+                    {m.problem && <div className="sm:col-span-2"><dt className="inline text-muted">Problem: </dt><dd className="inline">{m.problem}</dd></div>}
+                    {m.findings && <div className="sm:col-span-2"><dt className="inline text-muted">Work done: </dt><dd className="inline">{m.findings}</dd></div>}
+                    {m.parts_replaced && <div className="sm:col-span-2"><dt className="inline text-muted">Parts replaced: </dt><dd className="inline">{m.parts_replaced.split(/\n+/).filter(Boolean).join(', ')}</dd></div>}
+                    {m.parts_cost != null && <div><dt className="inline text-muted">Parts cost: </dt><dd className="inline">{peso(m.parts_cost)}</dd></div>}
+                    {m.maintenance_cost != null && <div><dt className="inline text-muted">Total cost: </dt><dd className="inline">{peso(m.maintenance_cost)}</dd></div>}
+                    {m.remarks && <div className="sm:col-span-2"><dt className="inline text-muted">Remarks: </dt><dd className="inline">{m.remarks}</dd></div>}
+                  </dl>
+                </div>
+              )
+            })}
+          </div>
+        </div>
 
         <div className="mx-6 mb-6 border border-hairline rounded-lg">
           <div className="px-4 py-3 border-b border-hairline font-medium text-sm">History</div>

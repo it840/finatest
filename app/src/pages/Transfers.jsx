@@ -458,7 +458,7 @@ export default function Transfers({ profile }) {
     setLoading(true)
     const [t, a, l, d] = await Promise.all([
       supabase.from('asset_transfers_computed').select('*').order('sent_at', { ascending: false }),
-      supabase.from('assets_computed').select('id, asset_code, asset_name, asset_number, brand, model, serial_number, category, sub_category, photo_url, registered_qty, disposal_qty, location, actual_location, condition, status, property_id, property_name, assigned_to, department, purchase_cost, current_asset_value'),
+      supabase.from('assets_computed').select('id, asset_code, asset_name, asset_number, brand, model, serial_number, category, sub_category, photo_url, acquisition_date, last_maintenance, next_pms_date, maint_history, registered_qty, disposal_qty, location, actual_location, condition, status, property_id, property_name, assigned_to, department, purchase_cost, current_asset_value'),
       supabase.from('locations').select('*').order('name'),
       supabase.from('departments').select('*').order('name'),
     ])

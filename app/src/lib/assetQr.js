@@ -24,6 +24,11 @@ export function qrText(a) {
     'STATUS',
     `Status: ${a.status || '—'}`,
     `Condition: ${a.condition || '—'}`,
+    '',
+    'MAINTENANCE',
+    `Last Maintenance: ${a.last_maintenance || '—'}`,
+    `Next PMS: ${a.next_pms_date || '—'}`,
+    ...(a.maint_history ? ['Repair History (latest first):', ...String(a.maint_history).split('\n').map(l => `- ${l}`)] : ['Repair History: none yet']),
     ...(a.photo_url ? ['', 'PHOTO', a.photo_url] : []),
   ].join('\n')
 }
