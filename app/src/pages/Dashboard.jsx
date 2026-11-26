@@ -186,6 +186,7 @@ function describe(a, codeOf) {
       return a.action === 'insert'
         ? `logged maintenance for ${code} (${(d.pms_status || '').toLowerCase()})`
         : `marked ${code} maintenance ${(d.pms_status || '').toLowerCase()}`
+    case 'qr_scan': return `scanned ${d.asset_code || 'an asset'} (QR)`
     case 'profiles': return `${a.action === 'insert' ? 'added' : a.action === 'delete' ? 'removed' : 'updated'} user ${d.full_name || ''}`.trim()
     default: return `${a.action} ${a.table_name.replace(/_/g, ' ')}`
   }

@@ -33,8 +33,15 @@ export function qrText(a) {
   ].join('\n')
 }
 
+// The QR holds a short link to the protected scan page: …/?scan=Asset-001 . Opening it asks for the person's
+// 4-digit scan code before showing anything (set per user by an admin in Settings > Users).
+export function assetLink(a) {
+  const base = window.location.origin + window.location.pathname.replace(/index\.html$/, '')
+  return `${base}?scan=${encodeURIComponent(a.asset_code || '')}`
+}
+
 export function buildQrUrl(a) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&qzone=2&data=${encodeURIComponent(qrText(a))}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&format=svg&ecc=M&qzone=2&data=${encodeURIComponent(assetLink(a))}`
 }
 
 // Short QR text for small labels: Asset ID, Asset No. and name (big squares, prints cleanly on 203 dpi thermal printers)
@@ -42,10 +49,8 @@ export function qrSimpleText(a) {
   return [a.asset_code, a.asset_number, a.asset_name].map(v => String(v ?? '').trim()).filter(Boolean).join('\n')
 }
 
-export function buildLabelQrUrl(a, content = 'full') {
-  const simple = content === 'simple'
-  const text = simple ? qrSimpleText(a) : qrText(a)
-  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=${simple ? 'M' : 'L'}&margin=0&format=svg&data=${encodeURIComponent(text)}`
+export function buildLabelQrUrl(a) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&ecc=M&margin=0&format=svg&data=${encodeURIComponent(assetLink(a))}`
 }
 
 // How many squares across a QR code needs for this text (byte mode), so the print window can warn when
@@ -54,11 +59,9 @@ const CAP = {
   L: [17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953],
   M: [14,26,42,62,84,106,122,152,180,213,251,287,331,362,412,450,504,560,624,666,711,779,857,911,997,1059,1125,1190,1264,1370,1452,1538,1628,1722,1809,1911,1989,2099,2213,2331],
 }
-export function qrModules(asset, content = 'full') {
-  const text = content === 'simple' ? qrSimpleText(asset) : qrText(asset)
-  const bytes = new TextEncoder().encode(text).length
-  const caps = CAP[content === 'simple' ? 'M' : 'L']
-  const v = caps.findIndex(c => c >= bytes) + 1 || 40
+export function qrModules(asset) {
+  const bytes = new TextEncoder().encode(assetLink(asset)).length
+  const v = CAP.M.findIndex(c => c >= bytes) + 1 || 40
   return 17 + 4 * v
 }
 

@@ -173,6 +173,38 @@ function EditUserForm({ user, onCancel, onSaved }) {
   )
 }
 
+// Admin: set or change a user's 4-digit scan code (used to open assets from their QR label)
+function ScanCodeModal({ user, hasCode, onClose, onSaved }) {
+  const [pin, setPin] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const save = async () => {
+    if (!/^\d{4}$/.test(pin)) { setError('Enter exactly 4 digits.'); return }
+    setSaving(true); setError('')
+    const { error } = await supabase.rpc('set_scan_pin', { p_user: user.id, p_pin: pin })
+    setSaving(false)
+    if (error) { setError(error.message); return }
+    onSaved(`Scan code ${hasCode ? 'changed' : 'set'} for ${user.full_name}. Tell them their code privately.`)
+  }
+  return (
+    <div className="fixed inset-0 z-50 bg-ink/40 flex items-start justify-center py-16 px-4" onClick={onClose}>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div>
+          <h2 className="font-display text-xl">{hasCode ? 'Change' : 'Set'} scan code</h2>
+          <p className="text-sm text-muted mt-1">{user.full_name} uses this 4-digit code to open assets by scanning their QR labels. Each user’s code must be different.</p>
+        </div>
+        <input autoFocus value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} onKeyDown={e => { if (e.key === 'Enter') save() }}
+          inputMode="numeric" placeholder="4 digits" aria-label="4-digit scan code" className="input text-center text-2xl tracking-[0.6em] font-semibold" />
+        {error && <div className="text-sm text-danger">{error}</div>}
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
+          <button onClick={save} disabled={saving || pin.length !== 4} className="px-4 py-2 text-sm bg-theme-accent text-white rounded disabled:opacity-50">{saving ? 'Saving…' : 'Save code'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function UsersPanel({ currentUserId }) {
   const { properties } = useProperty()
   const [users, setUsers] = useState([])
@@ -184,11 +216,25 @@ function UsersPanel({ currentUserId }) {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase.from('profiles').select('*').order('created_at')
+    const [{ data }, codes] = await Promise.all([
+      supabase.from('profiles').select('*').order('created_at'),
+      supabase.rpc('scan_pin_status'),
+    ])
     setUsers(data || [])
+    setCodes(Object.fromEntries((codes.data || []).map(c => [c.user_id, c.set_at])))
     setLoading(false)
   }
   useEffect(() => { load() }, [])
+  // scan codes: which users have one (the codes themselves are never shown)
+  const [codes, setCodes] = useState({})
+  const [codeFor, setCodeFor] = useState(null)
+  const [codeNotice, setCodeNotice] = useState('')
+  const removeCode = async (u) => {
+    if (!confirm(`Remove ${u.full_name}'s scan code? They will no longer be able to open assets by scanning.`)) return
+    const { error } = await supabase.rpc('clear_scan_pin', { p_user: u.id })
+    if (error) { setError(error.message); return }
+    setCodeNotice(`Scan code removed for ${u.full_name}.`); load()
+  }
 
   const setRole = async (id, role) => {
     await supabase.from('profiles').update({ role }).eq('id', id)
@@ -224,6 +270,7 @@ function UsersPanel({ currentUserId }) {
               <th className="text-left px-3 py-2">Department</th>
               <th className="text-left px-3 py-2">Property</th>
               <th className="text-left px-3 py-2">Role</th>
+              <th className="text-left px-3 py-2">Scan Code</th>
               <th className="text-left px-3 py-2"></th>
             </tr>
           </thead>
@@ -245,6 +292,13 @@ function UsersPanel({ currentUserId }) {
                     <option value="staff">Staff</option>
                   </select>
                 </td>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {codes[u.id]
+                    ? <span className="text-success" title={`Set on ${new Date(codes[u.id]).toLocaleDateString()}`}>● Set</span>
+                    : <span className="text-muted">Not set</span>}
+                  <button onClick={() => setCodeFor(u)} className="ml-3 text-ink underline">{codes[u.id] ? 'Change' : 'Set'}</button>
+                  {codes[u.id] && <button onClick={() => removeCode(u)} className="ml-3 text-danger underline">Remove</button>}
+                </td>
                 <td className="px-3 py-2 whitespace-nowrap space-x-3">
                   <button onClick={() => setEditing(u)} className="text-ink underline">Edit</button>
                   <button
@@ -259,6 +313,9 @@ function UsersPanel({ currentUserId }) {
           </tbody>
         </table>
       </div>
+      {codeNotice && <div className="mt-3 text-sm rounded border border-[#97C459] bg-[#F4FAEC] text-[#27500A] px-3 py-2">{codeNotice}</div>}
+      {codeFor && <ScanCodeModal user={codeFor} hasCode={!!codes[codeFor.id]} onClose={() => setCodeFor(null)}
+        onSaved={(msg) => { setCodeFor(null); setCodeNotice(msg); load() }} />}
       {showAdd && (
         <AddUserForm onCancel={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load() }} />
       )}

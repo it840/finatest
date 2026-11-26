@@ -8,15 +8,17 @@ const TABLE_LABELS = {
   physical_inventory: 'Physical Inventory',
   movement_log: 'Movement Log',
   profiles: 'User',
+  qr_scan: 'QR Scan',
 }
 
-const ACTION_LABELS = { insert: 'Created', update: 'Updated', delete: 'Deleted' }
-const ACTION_COLOR = { insert: 'text-success', update: 'text-gold', delete: 'text-danger' }
-const ACTION_BG = { insert: 'bg-success/10', update: 'bg-gold/10', delete: 'bg-danger/10' }
+const ACTION_LABELS = { insert: 'Created', update: 'Updated', delete: 'Deleted', scan: 'Scanned' }
+const ACTION_COLOR = { insert: 'text-success', update: 'text-gold', delete: 'text-danger', scan: 'text-theme-accent' }
+const ACTION_BG = { insert: 'bg-success/10', update: 'bg-gold/10', delete: 'bg-danger/10', scan: 'bg-theme-hover' }
 
 const svgProps = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }
 const ACTION_ICONS = {
   insert: (<svg width="14" height="14" viewBox="0 0 20 20" {...svgProps}><path d="M10 4v12M4 10h12" /></svg>),
+  scan: (<svg width="14" height="14" viewBox="0 0 20 20" {...svgProps}><path d="M3 7V4h3M14 4h3v3M17 13v3h-3M6 16H3v-3M6 10h8" /></svg>),
   update: (<svg width="14" height="14" viewBox="0 0 20 20" {...svgProps}><path d="M13.2 3.8a3 3 0 00-4 3.6L3.8 13a1.6 1.6 0 002.3 2.3l5.6-5.4a3 3 0 003.6-4l-2 2-1.7-.5-.5-1.7 2.1-2.1z" /></svg>),
   delete: (<svg width="14" height="14" viewBox="0 0 20 20" {...svgProps}><path d="M4.5 6h11l-.8 10.2a1.5 1.5 0 01-1.5 1.3H6.8a1.5 1.5 0 01-1.5-1.3L4.5 6z" /><path d="M7.5 3.5h5a1 1 0 011 1V6h-7V4.5a1 1 0 011-1z" /><path d="M8.3 9v5M11.7 9v5" /></svg>),
 }
@@ -33,7 +35,7 @@ const PAGE_SIZE_OPTIONS = [30, 40, 50, 100]
 
 function subjectFor(row, assetMap) {
   const d = row.new_data || row.old_data || {}
-  if (row.table_name === 'assets') return `${d.asset_code || ''} — ${d.asset_name || ''}`.trim()
+  if (row.table_name === 'assets' || row.table_name === 'qr_scan') return `${d.asset_code || ''} — ${d.asset_name || ''}`.trim()
   if (row.table_name === 'physical_inventory') {
     const code = assetMap[d.asset_id]
     return code ? `${code} count` : `Asset #${d.asset_id ?? '?'} count`

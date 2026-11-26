@@ -1,6 +1,6 @@
 // Label image for download (PNG / PDF) and the black-only logo used on printed labels.
 import QRCode from 'qrcode'
-import { labelLayout, qrText, qrSimpleText } from './assetQr'
+import { labelLayout, assetLink } from './assetQr'
 
 const loadImage = (src) => new Promise((resolve, reject) => {
   const img = new Image()
@@ -110,8 +110,7 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
   const width = (text, bold, mm, fam) => { ctx.font = font(bold, mm, fam); return ctx.measureText(text).width / k }
 
   // QR at its measured place and size
-  const simple = content === 'simple'
-  const qr = QRCode.create(simple ? qrSimpleText(asset) : qrText(asset), { errorCorrectionLevel: simple ? 'M' : 'L' })
+  const qr = QRCode.create(assetLink(asset), { errorCorrectionLevel: 'M' })   // link to the protected scan page
   const n = qr.modules.size
   const qx = L.qx * k, qy = L.qy * k, Q = L.qr * k
   ctx.fillStyle = '#000'

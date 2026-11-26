@@ -27,7 +27,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const dots = (content) => squares(content) * DOTS_PER_MM
   // default content: full details when they print cleanly at this size, otherwise simple
   const [textScale, setTextScale] = useState(saved.textScale || 1)   // text size, 0.7 - 1.6
-  const [content, setContent] = useState(saved.content || (dots('full') >= 4 ? 'full' : 'simple'))
+  const content = 'link'   // the QR always holds the link to the protected scan page
 
   // the property logo in black only (thermal printers print black); used for the preview, print and downloads
   const [logoBlack, setLogoBlack] = useState(null)
@@ -81,7 +81,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const pxW = size.w * 3.7795, pxH = size.h * 3.7795
   const scale = Math.min(460 / pxW, 260 / pxH)
 
-  const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, content, textScale })) } catch { /* ignore */ } }
+  const remember = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ key, w: size.w, h: size.h, textScale })) } catch { /* ignore */ } }
   const print = () => {
     remember()
     if (labelImg) printLabelImage(labelImg, size, `${asset.asset_code} label`)
@@ -124,25 +124,18 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
             </label>
 
             <div>
-              <span className="block text-xs text-muted mb-1">QR code holds</span>
-              <div className="space-y-1.5 text-sm">
-                <label className="flex items-start gap-2">
-                  <input type="radio" name="qrc" checked={content === 'full'} onChange={() => setContent('full')} className="mt-1" />
-                  <span>Full details <span className="text-muted">— everything, as text</span></span>
-                </label>
-                <label className="flex items-start gap-2">
-                  <input type="radio" name="qrc" checked={content === 'simple'} onChange={() => setContent('simple')} className="mt-1" />
-                  <span>Simple <span className="text-muted">— Asset ID, Asset No., name (big squares)</span></span>
-                </label>
-              </div>
+              <span className="block text-xs text-muted mb-1">QR code</span>
+              <p className="text-sm leading-snug">
+                Opens a protected page. Whoever scans must enter their <b>4-digit scan code</b> to see the asset’s details and repair history.
+              </p>
             </div>
           </div>
 
           <div className={`text-sm rounded border px-3 py-2 ${level === 'bad' ? 'border-danger/40 bg-danger/5 text-danger' : level === 'warn' ? 'border-gold/50 bg-gold/5 text-[#7a5a12]' : 'border-[#97C459] bg-[#F4FAEC] text-[#27500A]'}`}>
             QR squares on this label: <b>{sq.toFixed(2)} mm</b>
             {!size.a4 && <> (about {Math.round(d)} printer dots at 203 dpi)</>}
-            {level === 'bad' && <> — too small to print sharply on a 203 dpi thermal printer. Choose <b>Simple</b> or a bigger label.</>}
-            {level === 'warn' && <> — prints, but may be slow to scan. <b>Simple</b> or a bigger label scans faster.</>}
+            {level === 'bad' && <> — too small to print sharply on a 203 dpi thermal printer. Choose a bigger label.</>}
+            {level === 'warn' && <> — prints, but may be slow to scan. A bigger label scans faster.</>}
             {level === 'ok' && <> — prints sharply and scans well.</>}
           </div>
 
