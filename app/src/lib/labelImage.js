@@ -220,6 +220,24 @@ export async function renderLabelCanvas(asset, { logo = null, size, content = 'f
   return c
 }
 
+// Writes the print resolution into a PNG (a pHYs chunk right after the header), so apps and printers that read
+// it print the label at exactly its real size. pxPerMm 8 = 203 dpi (Clabel CT320B).
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0 } return t })()
+const crc32 = (bytes) => { let c = 0xffffffff; for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0 }
+async function pngWithDpi(blob, pxPerMm) {
+  const src = new Uint8Array(await blob.arrayBuffer())
+  const ppm = Math.round(pxPerMm * 1000)                       // pixels per metre
+  const chunk = new Uint8Array(21), dv = new DataView(chunk.buffer)
+  dv.setUint32(0, 9)                                          // data length
+  chunk.set([0x70, 0x48, 0x59, 0x73], 4)                      // 'pHYs'
+  dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1  // x, y, unit = metre
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)))
+  const ihdrEnd = 8 + 25                                      // signature + IHDR chunk
+  const out = new Uint8Array(src.length + 21)
+  out.set(src.subarray(0, ihdrEnd), 0); out.set(chunk, ihdrEnd); out.set(src.subarray(ihdrEnd), ihdrEnd + 21)
+  return new Blob([out], { type: 'image/png' })
+}
+
 const fileBase = (asset, size) => `${(asset.asset_code || 'asset').replace(/[^\w-]+/g, '_')}_label_${size.w}x${size.h}mm`
 
 function saveBlob(blob, name) {
@@ -235,7 +253,7 @@ function saveBlob(blob, name) {
 export async function downloadLabel(asset, { logo, size, content, textScale = 1, pxPerMm = 8 }, format = 'pdf') {
   const canvas = await renderLabelCanvas(asset, { logo, size, content, textScale, pxPerMm })
   if (format === 'png') {
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
+    const blob = await pngWithDpi(await new Promise(res => canvas.toBlob(res, 'image/png')), pxPerMm)
     saveBlob(blob, `${fileBase(asset, size)}.png`)
     return
   }

@@ -19,7 +19,7 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
   const [ch, setCh] = useState(saved.h || 40)
   const preset = LABEL_SIZES.find(s => s.key === key)
   const size = key === 'custom'
-    ? { w: Math.min(Math.max(Number(cw) || 0, 20), 200), h: Math.min(Math.max(Number(ch) || 0, 15), 150) }
+    ? { w: Math.min(Math.max(Number(cw) || 0, 20), 80), h: Math.min(Math.max(Number(ch) || 0, 15), 150) }   // CT320B takes labels 20-80 mm wide
     : { w: preset.w, h: preset.h, a4: !!preset.a4 }
 
   const geo = labelGeometry(size.w, size.h)
@@ -115,10 +115,11 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
               </select>
               {key === 'custom' && (
                 <div className="flex items-center gap-2 mt-2 text-sm">
-                  <input type="number" min="20" max="200" value={cw} onChange={e => setCw(e.target.value)} className="input w-20" aria-label="Label width (mm)" />
+                  <input type="number" min="20" max="80" value={cw} onChange={e => setCw(e.target.value)} className="input w-20" aria-label="Label width (mm)" />
                   <span className="text-muted">×</span>
                   <input type="number" min="15" max="150" value={ch} onChange={e => setCh(e.target.value)} className="input w-20" aria-label="Label height (mm)" />
                   <span className="text-muted">mm (width × height)</span>
+                  {Number(cw) > 80 && <span className="text-xs text-[#7a5a12] w-full">The label printer takes labels up to 80 mm wide — using 80 mm.</span>}
                 </div>
               )}
             </label>
@@ -130,6 +131,12 @@ export default function PrintLabelDialog({ asset, logo, onClose }) {
               </p>
             </div>
           </div>
+
+          {!size.a4 && (
+            <p className="text-xs text-muted -mt-2">
+              Made for the <b>Clabel CT320B</b> label printer: 203 dpi (one dot per pixel), black only, labels 20–80 mm wide. Its standard roll is 70 × 40 mm.
+            </p>
+          )}
 
           <div className={`text-sm rounded border px-3 py-2 ${level === 'bad' ? 'border-danger/40 bg-danger/5 text-danger' : level === 'warn' ? 'border-gold/50 bg-gold/5 text-[#7a5a12]' : 'border-[#97C459] bg-[#F4FAEC] text-[#27500A]'}`}>
             QR squares on this label: <b>{sq.toFixed(2)} mm</b>
